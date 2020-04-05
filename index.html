@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="d3_map_styles.css"> 
+  <title>COVID-19 Rate Map - EIU GIScience Center</title>
+  <script src="jquery-3.4.1.js"></script>
+  <script src="https://d3js.org/d3.v5.js" charset="utf-8"></script>
+  <script src="USA_pop2010.js"></script>
+  <script src="d3-simple-slider.min.js"></script>
+  <script src="ResizeSensor.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
+  <script src="legend_susielu.js"></script>
+</head>
+
+<body>
+	<div id="container">
+	<div id="maparea">
+		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
+		<h3  style="margin-top:0ex; margin-bottom: 0ex;">COVID-19 Rates in the USA</h3>
+		</div>			
+		<div id="map"></div>
+		<div id="mapbottom">
+			<table style="border:none;width: 90%;">
+				<tr>
+					<td>
+						<div id="slider" style="align: center; ">
+						</div>							
+					</td>
+					<td class="optional">
+						Map Variable:
+					</td>
+					<td>
+							<select class="select-css" id="variableselector">
+								<option><u>C</u>ases (cumulative)</option>
+								<option>Tests (cumulative)</option>
+								<option>New Cases (3-day wt. avg.)</option>
+								<!--<option>Deaths</option>-->
+								<!--<option>Positive Test Rate</option>-->
+								<!--<option>Mortality Rate</option>-->
+							</select>						
+					</td>
+					
+				</tr>
+				<tr>
+					<td>
+						<div id="legend" ></div>								
+					</td>
+					<td class="optional">
+						Map Type:
+					</td>
+					<td>
+						<span>
+							<u>L</u>and
+							<label class = "switch">
+							<input id="carttoggle" type="checkbox"">
+							<span class="slider round"></span>
+							</label>
+							<u>P</u>opulation
+						</span>					
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+		<div id="infocontainer" style="display: table; overflow: hidden;">
+		  <div style="display: table-cell; vertical-align: middle; padding: 0;">
+			<div id="mapinfo"  padding: 0;>
+				<H3> About </H3>
+				<p>The maps on this page highlight relative rates (per population, per test) of 
+				cases, testing and mortality related to COVID-19 in the USA (currently 48 
+				states plus the District of Columbia). While many websites map COVID-19 cases, 
+				only a few show rates per population. In most cases, rates are more appropriate than 
+				raw numbers for assessing the local severity of an epidemic. For example, a thousand cases 
+				in the state of California represents approx. 25 cases per 1,000,000 people, where as the same 
+				number of cases in Louisiana represents approx. 200 cases per 1,000,000 people. Rates better 
+				express the likelihood of an individual becoming sick, as well as the burden 
+				on the hospital system, although state-level data does not capture within-state variability 
+				which can be significant. Challenges 
+				that are currently being worked on include (a) developing map symbol schemes to communicate exponential 
+				growth while maintaining discernability, and (b) visualizing the lagged correlation between 
+				social distancing behavior and changes in rates of growth.</p>
+				<br><br>
+				Keyboard shortcuts (these work inconsistently at the moment):<BR>
+				<table style="border: none">
+					<tr>
+						<td>U</td>
+						<td>Place focus on the variable selector</td>
+					</tr>
+					<tr>
+						<td>&larr; &rarr;</td>
+						<td>Move along timeline (when focus off var. sel.)</td>
+					</tr>
+					<tr>
+						<td>L,P</td>
+						<td>Toggle between land and population map types</td>
+					</tr>
+				</table>
+				<br><br>
+				This is a work in progress. Data comes from <a href="https://covidtracking.com/">covidtracking.com</a>. 
+				<a href="mailto: bjkronenfeld@eiu.edu">Feedback is welcome</a>.
+				<br><br>
+				<p><i>(click on any state for data values)</i></p>
+			</div>
+		  </div>
+		</div>
+	</div>
+<script>
+	// load default dataset
+	const cr10 = Math.cbrt(10);
+	var base = states_base;
+	var cartogram = states_cartogram;
+	var active_feature = null;
+	var active;
+	var oncartogram = false;
+	var dates;
+	var states;
+	var vals;
+	var curDate = null;
+	var slider;
+	var slider_update_duration = 750;
+	var mapvar = document.getElementById("variableselector").value;
+	var choroplethValue; // function to get value given feature, date
+	var choroplethValueText; // function to get text for given value, given feature, date
+	var choroplethLegColorScale; // scale function for legend (doesn't include white for zero)
+	var choroplethColorScale; // scale function for map (includes white for zero) 
+	var choroplethCellsAndLabels; // function returning [C,L] : legend symbol cells and corresponding labels;
+	var choroplethLegTitle; // string text for legend title
+	var mapsvg; // svg containing map
+	var statepaths; // svg group containing paths for each state
+	var smallcircles; // svg group containing smaller circle for each state
+	var smallCircleRadius; // function to determine size of small circles
+	var smallCircleFill='#f47'; // fill color
+	var smallCircleStroke='#a05'; // stroke color
+
+	// load functions that don't require data, map or slider to be loaded
+	function monthString(monthID){
+		if (monthID==1){return "Jan";}
+		if (monthID==2){return "Feb";}
+		if (monthID==3){return "Mar";}
+		if (monthID==4){return "Apr";}
+		if (monthID==5){return "May";}
+		if (monthID==6){return "Jun";}
+		if (monthID==7){return "Jul";}
+		if (monthID==8){return "Aug";}
+		if (monthID==9){return "Sep";}
+		if (monthID==10){return "Oct";}
+		if (monthID==11){return "Nov";}
+		if (monthID==12){return "Dec";}
+		return ""; // if monthID is invalid, don't break the code - just show nothing
+	}
+
+	function parseDate(date){
+		var year = Math.floor(date/10000);
+		var date = date-year*10000;
+		var month = Math.floor(date/100);
+		var day = date - month*100;
+		return [year, month, day];
+	}
+
+	function previousDate(date){
+		if(date==null){return null;}
+		var dateID = dates.indexOf(date);
+		if(dateID==dates.length-1){
+			return null;
+		} else {
+			return dates[dateID+1];
+		}
+	}
+
+	function withCommas(num) {
+		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+	}
+	
+	function withK(num){
+		return withCommas(num).replace(',000','k');
+		
+	}
+
+	function rateText(rate){
+		if(rate < 1){return rate.toFixed(2);}
+		else if (rate < 10){return rate.toFixed(1);}
+		else {return rate.toFixed(0);}
+	}
+
+	const nthPowScale = function(n){
+		return d3.scalePow()
+			.exponent(n);
+		};
+
+	function area(coords){
+		var a=0;
+		for(let i=0; i<coords.length;i++){
+			var j = i + 1;
+			if(j==coords.length){j=0;}
+			var xi=coords[i][0],yi=coords[i][1],xj=coords[j][0],yj=coords[j][1];
+			a += (coords[j][0]-coords[i][0])*(coords[i][1]+coords[j][1]);
+		}
+		return a/2;
+	}
+
+	function coordCentroid(coords, A=-1){
+		var cX=0, cY=0;
+		if(A==-1){A = area(coords)}
+		for(let i=0; i<coords.length;i++){
+			var j = i + 1;
+			if(j==coords.length){j=0;}
+			var xi=coords[i][0],yi=coords[i][1],xj=coords[j][0],yj=coords[j][1];
+			var cross = (xi*yj-xj*yi);
+			cX += (xi+xj)*cross;
+			cY += (yi+yj)*cross;
+		}
+		return [-cX/(6*A),-cY/(6*A)];
+	}
+
+	function centroid(feat,A=-1){
+		var geo = feat['geometry'];
+		var coordlists = geo['coordinates'];
+		var maxArea=-1;
+		var C;
+		for(let i=0;i<coordlists.length;i++){
+			var coords = coordlists[i][0];
+			var A = area(coords);
+			if(A > maxArea){	
+				maxArea = A;
+				C = coordCentroid(coords,A);
+			}
+		}
+		return C;		
+	}
+
+	function getValue(feat, date, varname, perMillion=true, negIsZero=true, undefIsZero=true, getIncrease = false){
+		if(date==null){return 0;}
+		var stateAbbrev = feat.properties.ABBREV;
+		var stateVals = vals[date][stateAbbrev];
+		var val = stateVals[varname];
+
+		if(negIsZero){if(val<0){val=0;}}
+		if(undefIsZero || perMillion){if(val==undefined){val=0;}}
+		if(perMillion){
+			var pop = feat.properties.POP_2010;
+			val = 1000000*val/pop;
+		}
+		if(getIncrease){
+			var yesterday = previousDate(date);
+			if (yesterday != null){
+				var yesterdayVal = getValue(feat,yesterday,varname,perMillion,negIsZero,undefIsZero,false);				
+				val = val-yesterdayVal
+			}
+		}		
+		return val;
+	}
+
+	function periodAverage(feat, date, valFunc, periodWts){
+		// computes the weighted average for days ending on the input date
+		// function must take only feat and date as input
+		// example: if weights are [1,0.5,0.25] then the return value
+		// will be (1*today+0.5*yesterday+0.25*2daysage)/1.75
+		// if the weights extend before the data start date, 
+		// data will be averaged from the data start date
+		var count=0;
+		var valSum=0;
+		var weightSum=0;
+		var i=0;
+		var d=date;
+		// debugging: get actual values for 'positive'
+		var pop = feat.properties.POP_2010;
+		var dayMinus0 = getValue(feat,date,'positive',false);
+		var dayMinus1 = getValue(feat,previousDate(date),'positive',false);
+		var dayMinus2 = getValue(feat,previousDate(previousDate(date)),'positive',false);
+		var dayMinus3 = getValue(feat,previousDate(previousDate(previousDate(date))),'positive',false);
+		while(d != null && i < periodWts.length){
+			var curval = valFunc(feat,d);
+			valSum += periodWts[i] * valFunc(feat, d);
+			weightSum += periodWts[i];
+			i += 1;
+			d = previousDate(d);
+		}
+		return valSum/weightSum;
+	}
+
+	function addZeroToScale(initScale,zeroOutVal='#FFF'){
+		return function(inVal){
+			if(inVal <= 0){
+				return zeroOutVal;
+			}
+			else{
+				return initScale(inVal);
+			}
+		}
+	}
+
+	function expBase10CellsAndLabelsFunc(minVal=1,maxVal=100000){
+		var outFunc = function(){			
+			var curVal = minVal;
+			var legendCells = [];
+			var legendLabels = [];
+			while (curVal < maxVal + 1){
+				// add to legend values and labels
+				legendCells.push(curVal);
+				if (Math.round(curVal)%10 == 0 || Math.round(curVal)==1){
+					legendLabels.push(withCommas(Math.round(curVal)));
+				} else {
+					legendLabels.push("");
+				}
+				// increment
+				curVal *= cr10; 
+			}
+			return [legendCells, legendLabels];
+		}
+		return outFunc;
+	}
+
+	function handleVarChange(){
+		// determine the new map variable
+		mapvar = document.getElementById("variableselector").value;
+		// determine the following functions or values, to be used to update the display
+		// choroplethValue, 
+		// choroplethValueText, 
+		// choroplethLegTitle, 
+		// choroplethLegColorScale, 
+		// choroplethCellsAndLabels, 
+		// choroplethColor functions
+		// smallCircleFill 
+		// smallCircleStroke
+		if(mapvar == 'Cases (cumulative)'){
+			choroplethValue = function(feat,date){
+				return getValue(feat,date,'positive',true);
+			}
+			choroplethValueText = function(feat, date){
+				var rate = choroplethValue(feat,date);
+				return rateText(rate) + " cases per million";
+			}
+			var legendMax = 10000;
+			var logScale = d3.scaleLog()
+				.domain([legendMax, 10*cr10]);
+			choroplethLegColorScale = d3.scaleSequential((d) => 
+				d3.interpolateGreys(0.1));
+				// d3.interpolateMagma(nthPowScale(0.3)(logScale(d))));
+			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
+			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(10*cr10,legendMax);
+			choroplethLegTitle = "Cases Per Million (total cases indicated by circle size)";
+			smallCircleRadius = function(feat,curDate){
+				var todayCases = getValue(feat,curDate,'positive',false);
+				// for now, set radius as 1/10th of sqrt of cases
+				return Math.sqrt(todayCases)/6;
+			}
+			smallCircleFill = '#f47';
+			smallCircleStroke = '#a05';
+		} else if (mapvar == 'Tests (cumulative)'){
+			choroplethValue = function(feat,date){
+				var posRate = getValue(feat,date,'positive',true);
+				var negRate = getValue(feat,date,'negative',true);
+				return posRate + negRate;
+			}
+			choroplethValueText = function(feat, date){
+				var rate = choroplethValue(feat,date);
+				return rateText(rate) + " tests per million";
+			}			
+			var legendMax = 100000;
+			var logScale = d3.scaleLog()
+				.domain([legendMax, 1]);
+			choroplethLegColorScale = d3.scaleSequential((d) => 
+				d3.interpolateCubehelixDefault(nthPowScale(0.6)(logScale(d))));
+			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
+			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(10,legendMax);
+			choroplethLegTitle = "Tests Per Million";
+			smallCircleRadius = function(feat,curDate){
+				var todayTests = getValue(feat,curDate,'positive',false) + getValue(feat,curDate,'negative',perMillion=false);
+				// for now, set radius as 1/12th of sqrt of tests
+				return Math.sqrt(todayTests)/12;
+			}
+			smallCircleFill = '#6ae';
+			smallCircleStroke = '#27c';
+
+		} else if (mapvar == 'New Cases (3-day wt. avg.)'){
+			choroplethValue = function(feat,date){
+				// DEBUGGING
+				var pA = periodAverage(feat, date, function(f, d){return getValue(f,d,'positive', true, true, true, true)}, [1,0.9,0.8]);
+				if(pA < 0){
+					var pB = periodAverage(feat, date, function(){return getValue(feat,date,'positive', true, true, true, true)}, [1,0.9,0.8]);
+				}
+				// END DEBUGGING
+				return periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', true, true, true, true)}, [1,0.9,0.8]);
+			}
+			choroplethValueText = function(feat, date){
+				var rate = choroplethValue(feat,date);
+				return rateText(rate) + " new cases per million";
+			}			
+			var legendMax = 10000;
+			var logScale = d3.scaleLog()
+				.domain([legendMax, 1]);
+			choroplethLegColorScale = d3.scaleSequential((d) => 
+				d3.interpolateMagma(nthPowScale(0.6)(logScale(d))));
+			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
+			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(1,legendMax);
+			choroplethLegTitle = "New Cases Per Million";
+			smallCircleRadius = function(feat,curDate){return 0;};
+			smallCircleRadius = function(feat,curDate){
+				var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'positive',false, true, true, true);}, [1,0.9,0.8]);
+				// for now, set radius as sqrt of cases/fixed constant
+				return Math.sqrt(todayCases)/3;
+			}
+			smallCircleFill = '#f47';
+			smallCircleStroke = '#a05';
+		}
+		// update the map and legend
+		updateMap();
+		loadLegend();
+	}
+
+
+	function choroplethColor(feat,date){
+		// assign a color based on rate per million
+		// variable is determined by mapvar
+		var featval =choroplethValue(feat,date);
+		return choroplethColorScale(featval);
+	}			
+	
+	function prjXFunction(scale,trans){
+		var f = function(x){		
+			return x*scale+trans;
+		}
+		return f;
+	}
+
+	function prjYFunction(scale,trans){
+		// Why is this formula different for y than for x?? 
+		// I have no idea, something to do with flipped coordinates... anyway this just works.
+		var f = function(y){		
+			return trans-y*scale;
+		}
+		return f;
+	}
+
+	
+	function fitProjection(data, box, center) {
+		// get the bounding box for the data - might be more efficient approaches
+		var left = Infinity,
+			bottom = Infinity,
+			right = -Infinity,
+			top = -Infinity;
+		// get "projection"
+		var projection = d3.geoIdentity().reflectY(true);
+		// reset projection
+		projection
+			.scale(1)
+			.translate([0, 0]);
+		data.features.forEach(function(feature) {
+			coords = feature.geometry.coordinates[0][0];
+			var minX = d3.min(coords, function(array) {return array[0];});
+			var maxX = d3.max(coords, function(array) {return array[0];});
+			var minY = d3.min(coords, function(array) {return array[1];});
+			var maxY = d3.max(coords, function(array) {return array[1];});
+			if (minX < left) {left = minX;};
+			if (maxX > right) {right = maxX;};
+			if (minY < bottom) {bottom = minY;};
+			if (maxY > top) {top = maxY;};
+			
+			});
+		var temp = bottom;
+		bottom = top;
+		top =  temp;
+		
+		// project the bounding box, find aspect ratio
+		function width(bb) {
+			return (bb[1][0] - bb[0][0])
+			}
+
+		function height(bb) {
+			return (bb[1][1] - bb[0][1]);
+			}
+		  
+		function aspect(bb) {
+			return width(bb) / height(bb);
+			}
+		var startbox = [[left, top],  [right, bottom]],
+			a1 = aspect(startbox),
+			a2 = aspect(box),
+			widthDetermined = a1 > a2,
+			scale = widthDetermined ?
+			// scales determined by width & height
+			width(box) / width(startbox) :
+			height(box) / height(startbox),
+			// set x & y translations
+			transX = box[0][0] - startbox[0][0] * scale,
+			transY = box[0][1] - startbox[0][1] * scale;
+		// center if requested
+		if (center) {
+			transY = transY - (transY + startbox[1][1] * scale - box[1][1])/2;
+			transX = transX - (transX + startbox[1][0] * scale - box[1][0])/2;
+		}
+		
+		// if using real projection (as opposed to geoIdentity), 
+		// set precision to zero to prevent D3 from adding points through "adaptive sampling"
+		console.log("Scale: " + scale);
+		return [projection.scale(scale).translate([transX, transY]),scale,transX,transY];
+	}	
+
+	// switches map features to the given features
+	function switchto(divid, newFeatSet, fromdata,milliseconds,callback){
+		var ele = document.getElementById(divid); // Do not use #
+		var width = ele.clientWidth;
+		var height = ele.clientHeight;
+		divid = '#' + divid;
+		var prj,scale,transX,transY;
+		[prj,prjscale,transX,transY]=fitProjection(newFeatSet, [[0, 0],  [width, height]], true)
+		var path = d3.geoPath().projection(prj);
+		
+		var bounds = path.bounds(newFeatSet), 
+			dx = bounds[1][0] - bounds[0][0],
+			dy = bounds[1][1] - bounds[0][1],
+			x = (bounds[0][0] + bounds[1][0]) / 2,
+			y = (bounds[0][1] + bounds[1][1]) / 2,
+			boundsscale = .9 / Math.max(dx / width, dy / height),
+			translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
+
+		
+		m.selectAll('path')
+			.transition()
+			.attr("d",function(d,i){return path(newFeatSet.features[i]);})
+			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+			.duration(milliseconds)
+			.on("end",callback);	
+		
+		mapsvg.selectAll('circle')
+			.transition()
+			.attr("cx", function(d,i){
+				console.log(d);
+				var thisFeat = newFeatSet.features[i];				
+				var prjX = prjXFunction(prjscale,transX); 
+				return prjX(centroid(thisFeat)[0]);
+			})
+			.attr("cy", function(d,i){
+				var thisFeat = newFeatSet.features[i];			
+				var prjY = prjYFunction(prjscale,transY); 
+				return prjY(centroid(thisFeat)[1]);
+			})
+			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+			.duration(milliseconds);
+	}
+
+	// toggles between the current base map and cartogram
+	function toggle_map(milliseconds=1500, callback){
+		if (oncartogram){
+			switchto('map', base, cartogram, milliseconds, callback);
+			}
+		else{
+			switchto('map', cartogram, base, milliseconds, callback);
+			}
+		oncartogram = !oncartogram;
+	}
+
+
+	// handle resizing
+	new ResizeSensor(jQuery('#map'), function(){ 
+		// rearrange divs
+		if (window.outerWidth < 1.8*window.outerHeight){
+			d3.select("#container")
+				.style('grid-template-columns', '100vw');
+			d3.select("#infocontainer")
+				.style('grid-column',1)
+				.style('grid-row',4);
+			d3.select("#map")
+				.style('width','100vw');
+			d3.selectAll('.optional')
+				.style('visibility','hidden');
+		} else {
+			d3.select("#container")
+				.style('grid-template-columns', '65vw 33vw')
+			d3.select("#infocontainer")
+				.style('grid-column',2)
+				.style('grid-row','1/3');
+			d3.select("#map")
+				.style('width','60vw');
+			d3.selectAll('.optional')
+				.style('visibility','visible');
+		}
+		// make sure variable is updated
+		handleVarChange();
+		// update map
+		if (curDate != null){
+			if(oncartogram==true){
+				m = loadMap(cartogram);
+			} else {
+				m = loadMap(base);
+			}
+			updateMap();
+		}
+	});		
+
+	function featureInfoHTML(feature){
+		if(feature != null){
+			// show data for selected feature
+			// population data is from feature itself
+			var pop = feature.properties.POP_2010
+			// remaining data is from "vals" object, lookup by date and state
+			var stateAbbrev = feature.properties.ABBREV;
+			let [year, month, day] = parseDate(curDate);
+			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ")</B><BR>" 
+			showHTML += choroplethValueText(feature,curDate);
+			return showHTML;
+		} else {
+			return "";
+		}
+	}
+
+
+	function loadMap(featdata,categories, category){
+		divid='map';
+		var ele = document.getElementById(divid); // Do not use #
+		var width = ele.clientWidth;
+		var height = ele.clientHeight;
+		
+		divid = '#' + divid;
+		d3.select(divid).selectAll('svg').remove();			
+		mapsvg = d3.select(divid)
+				.append('svg')
+				.attr('width',width)
+				.attr('height',height)
+				.on('click',reset);
+		statepaths = mapsvg.append('g');
+		var prj,scale,transX,transY;
+
+		[prj,prjscale,transX,transY]=fitProjection(featdata, [[0, 0],  [width, height]], true)
+		console.log("Scale: " + scale);
+		console.log("transX: " + transX);
+		console.log("transY: " + transY);
+		var path = d3.geoPath()
+			.projection(prj);
+		var bounds = path.bounds(featdata), 
+			dx = bounds[1][0] - bounds[0][0],
+			dy = bounds[1][1] - bounds[0][1],
+			x = (bounds[0][0] + bounds[1][0]) / 2,
+			y = (bounds[0][1] + bounds[1][1]) / 2,
+			boundsscale = .9 / Math.max(dx / width, dy / height),
+			translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
+		statepaths.selectAll('path')
+			.data(featdata.features)
+			.enter()
+			.append('path')
+			.attr('d',path)
+			.attr("class","feature")
+			.attr("stroke", "#DDD")
+			.attr("stroke-width", "1px")
+			.attr("fill",function(d){return choroplethColor(d, curDate);})
+			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+			.on("click",feature_click)
+			.on("mouseover",feature_mouseover)
+			.on("mouseout",feature_mouseout);	
+
+		smallcircles = mapsvg.append('g');
+
+		smallcircles.selectAll('circle')
+			.data(featdata.features)
+			.enter()
+			.append('circle')
+			.attr("cx", function(d){
+				var prjX = prjXFunction(prjscale,transX); 
+				return prjX(centroid(d)[0]);
+			})
+			.attr("cy", function(d){
+				var prjY = prjYFunction(prjscale,transY); 
+				return prjY(centroid(d)[1]);
+			})
+			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+			.style('fill',smallCircleFill)
+			.style('stroke',smallCircleStroke)
+			.style('stroke-width',1)
+			.style('opacity',0.7);		
+		statepaths.exit().remove();
+		return statepaths;
+	}
+
+	function updateMap(delay=0,duration=750, callback){
+		if(curDate != null){
+			console.log(smallCircleFill);
+			statepaths.selectAll('path')
+				.transition()
+				.attr("fill",function(d){return choroplethColor(d, curDate);})
+				.delay(delay)
+				.duration(duration)
+				.on('end',callback);
+			smallcircles.selectAll('circle')
+				.transition()
+				.attr('r',function(d){return smallCircleRadius(d,curDate);})
+				.style('fill',smallCircleFill)
+				.style('stroke',smallCircleStroke)
+				.delay(delay)
+				.duration(duration);
+			if(active_feature != null){showFeatureInfo(active_feature);}
+		}
+	}
+
+	function loadLegend(){
+		/*
+		var choroplethValue; // function to get value given feature, date
+		var choroplethValueText; // function to get text for given value, given feature, date
+		var choroplethLegColorScale; // scale function for legend (doesn't include white for zero)
+		var choroplethColorScale; // scale function for map (includes white for zero) 
+		var choroplethCellsAndLabels; // function returning [C,L] : legend symbol cells and corresponding labels;
+		var choroplethLegTitle; // string text for legend title
+		*/
+		d3.select("#legend").selectAll('svg').remove();			
+		var legendsvg = d3.select("#legend")
+			.attr('align','center')
+			.append('svg')
+			.attr('width',500)
+			.attr('height',60);
+		
+		legendsvg.append("g")
+		  .attr("class", "legendSequential")
+		  .attr("transform", "translate(20,20)");
+
+		var legendCells = [];
+		var legendLabels = [];
+		[legendCells, legendLabels] = choroplethCellsAndLabels();	
+
+		var legendSequential = d3.legendColor()
+			.shapeWidth(30)
+			.title(choroplethLegTitle)
+			.cells(legendCells)
+			.orient("horizontal")
+			.labels(legendLabels)
+			.scale(choroplethLegColorScale)
+			.shapePadding(-1)
+			.shapeWidth(22)
+			.shapeHeight(15)
+			.labelOffset(6); 
+
+		legendsvg.select(".legendSequential")
+		  .call(legendSequential);
+	}
+
+
+	// *** FUNCTIONS TO SHOW FEATURE INFO TO BE REPLACED BY TOOLTIP ***
+	// show information when user selects or mouses over a feature
+	
+	function showFeatureInfo(d){		
+		// determine if tooltip will go above or below cursor
+		d3.select('#tooltip')
+			.style('opacity',1)
+			.html(featureInfoHTML(d))
+			.raise();
+		if(d3.event != null){
+			if(d3.event.pageY < window.innerHeight/3){
+				d3.select('#tooltip')
+					.style('left',(d3.event.pageX+10) + 'px')
+					.style('top',(d3.event.pageY+10) + 'px')
+					.style('bottom',null);		
+			} else {			
+				d3.select('#tooltip')
+					.style('left',(d3.event.pageX+10) + 'px')
+					.style('bottom',(window.innerHeight-d3.event.pageY) + 'px')
+					.style('top',null);		
+			}
+		}
+	}
+
+
+	// processes user click on a specific district
+	function feature_click(d,i) {
+	  // d is the geometry object
+	  // if user clicked on active feature, reset map
+	  if (active_feature === d){return reset()};
+	  // otherwise, set all features on both maps to inactive
+	  m.selectAll(".active").classed("active", false);
+	  // set user-clicked feature on both maps to active
+	  d3.select(m.node().children[i]).
+		classed("active", active = d);
+	  d3.event.stopPropagation();
+	  // record that we have an active feature
+	  active_feature = d;
+	  showFeatureInfo(d);
+	}
+
+
+	function feature_mouseover(d,i){
+		if (active_feature == null){
+			showFeatureInfo(d);
+		}
+	}
+
+	function feature_mouseout(d,i){
+		if (active_feature == null){
+			d3.select('#tooltip').style('opacity',0);
+		}
+	}
+
+
+	// unselect any selected features
+	function reset() {
+			m.selectAll(".active").classed("active", active = false);
+			active_feature = null;
+			m.transition().duration(750).attr("transform", "");
+			d3.select('#tooltip').style('opacity',0);
+	}
+
+
+	function loadTooltips(){
+		// load tooltips
+		d3.select('body').
+			append('div')
+			.attr('id','tooltip')
+			.style('position','absolute')
+			.style('opacity',0)
+			.style('padding','3px')
+			.style('user-select','none')
+			.style('stroke-alignment','inner');
+		/*
+		d3.select('#map').selectAll('svg').selectAll('path')
+			.on('mouseover',function(d){
+		d3.select('#tooltip')
+					.style('left',(d3.event.pageX+10) + 'px')
+					.style('bottom',(window.innerHeight-d3.event.pageY) + 'px');		
+			})
+			.on('mouseout',feature_mouseout)
+			.on('mousemove',function(){
+				
+			});
+		*/
+	}
+
+
+
+	// handle keypress
+	function handlekeydown(e){
+		if(e.key=="p" || e.key=="P"){
+			// switch to population map
+			if(oncartogram==false){
+				toggle_map(1500,function(){return false;});
+				document.getElementById("carttoggle").checked=true;
+			};
+		}
+		if(e.key=="l" || e.key=="L"){
+			// switch to land map
+			if(oncartogram==true){
+				toggle_map(1500,function(){return false;});
+				document.getElementById("carttoggle").checked=false;
+			};
+		}
+
+		if(e.key=="u" || e.key=="U"){
+			// set or remove focus for variable selector
+			var selbox = document.getElementById("variableselector");
+			if(selbox === document.activeElement){
+				selbox.blur();
+			} else {
+				selbox.focus();
+			}
+		}
+
+
+		if(e.keyCode==37){
+			if(document.activeElement === document.getElementById("variableselector")){
+				console.log("selecting variables...");
+			} else {
+				curval = slider.value();
+				if (curval > 0){slider.value(curval-1);}
+			}
+		}
+		if(e.keyCode==39){
+			if(document.activeElement === document.getElementById("variableselector")){
+				console.log("selecting variables...");
+			} else {
+				curval = slider.value();
+				if (curval < dates.length-1){slider.value(curval+1);}
+			}
+			
+		}
+		
+	}
+
+
+	// load data, then map, then slider
+	let loadData = new Promise(function(resolve, reject){
+		// load data from covidtracking api
+		// data will be hierarchical in form: date => state => [positive, negative, death]
+		$.getJSON('https://covidtracking.com/api/states/daily', function(data) {
+			//data is the JSON string
+			// get list of unique dates			
+			dates = new Set();
+			for(let i=0; i < data.length; i++){
+				dates.add(data[i]["date"]);
+				}
+			dates=Array.from(dates);
+			// create dictionary of values for each date
+			// initializing each date value to an empty dictionary
+			vals = {};
+			for(let i=0; i < dates.length; i++){
+				vals[dates[i]]={};
+				}
+			// get unique list of states
+			var states = new Set();
+			for(let i=0; i < states_base.features.length; i++){
+				states.add(states_base.features[i].properties["ABBREV"]);
+				}
+			states = Array.from(states);
+			// populate vals array with dummy values for each date/state
+			for(let i=0; i < dates.length; i++){
+				var cur_date = dates[i];
+				var cur_record = vals[cur_date];
+				for(let j=0; j < states.length; j++){
+					cur_state = states[j];
+					cur_record[cur_state] = {};
+				}
+			}
+			// go through data object and transfer values into vals object
+			for(let i=0; i < data.length; i++){
+				// get date and state
+				var cur_date = data[i]["date"];
+				var cur_state = data[i]["state"];
+				var curValObj = vals[cur_date][cur_state];
+				if(curValObj != undefined){
+					// transfer to vals object
+					vals[cur_date][cur_state]['positive'] = data[i]["positive"];
+					vals[cur_date][cur_state]['negative'] = data[i]["negative"];
+					vals[cur_date][cur_state]['death'] = data[i]["death"];
+				}
+			}
+			// finish and move on
+			resolve();
+			});	
+		});  
+
+
+  	var loadSlider=function(){return new Promise(function(resolve, reject){
+		function dateString(sliderID){
+			var realID = dates.length-sliderID-1;
+			var date = dates[realID];
+			var dateParsed = parseDate(date);
+			var year = dateParsed[0];
+			var month = dateParsed[1];
+			var day = dateParsed[2];
+			var r = day;
+			if (day==1 || sliderID==0){
+				r = monthString(month) + ". " + day;
+			}
+			return r;
+		}
+
+		// load slider
+		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
+		slider = d3
+			.sliderHorizontal()
+			.min(0)
+			.max(dates.length-1)
+			.step(1)
+			.width(300)
+			.fill('#CA6')
+			.handle(circlepath)
+			.tickFormat(dateString)
+			.displayValue(true)
+			.on('onchange', function(val) {
+				d3.select('#value').text(dates[val]);
+				sliderID=slider.value();
+				curDateID = dates.length-sliderID-1;
+				curDate = dates[curDateID];
+				updateMap(0,slider_update_duration,function(){return false;});
+				});
+		
+		d3.select('#slider')
+			.attr('align','center')
+			.append('svg')
+			.attr('width', 500)
+			.attr('height', 75)
+			.attr('tabindex',0)
+			.append('g')
+			.attr('transform', 'translate(30,30)')
+			.call(slider);
+		
+		
+
+		// report that function worked
+		resolve();
+
+	})}
+	
+	loadData.then(function(){ 
+		loadSlider().then(function(){
+			// define current date
+			curDate=dates[dates.length-1];
+			// load the map!		
+			m = loadMap(base);
+			// load the legend...
+			loadLegend();
+			// load the invisible tooltip div...
+			loadTooltips();
+
+
+
+			// set defaults, add event listeners
+			document.onkeydown=handlekeydown;			
+			document.getElementById("carttoggle").addEventListener("change",function(){toggle_map(1500);});
+			document.getElementById("carttoggle").checked = false;
+			document.getElementById("variableselector").addEventListener("change",function(){handleVarChange();});
+			$('variableselector').on('keydown', function(e){
+				if(e.keyCode === 37 || e.keyCode === 39) { //left or right
+					e.preventDefault();
+					return false;
+				}
+			});
+			
+			
+			// a bit of animation to show functionality
+			setTimeout(function()
+				{
+		//			document.getElementById("carttoggle").checked = true;
+		//			toggle_map(1500, function(){
+						orig_duration = slider_update_duration;
+						slider_update_duration = 1500;
+						slider.value(dates.length-1);
+						slider_update_duration = orig_duration;
+			//		});
+				},1000
+			);
+			console.log("finished loading.");
+		});
+	});
+
+  </script>
+</body>
+</html>
