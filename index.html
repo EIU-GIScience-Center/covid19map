@@ -35,6 +35,7 @@
 								<option><u>C</u>ases (cumulative)</option>
 								<option>Tests (cumulative)</option>
 								<option>New Cases (3-day wt. avg.)</option>
+								<option>Growth Rate</option>
 								<!--<option>Deaths</option>-->
 								<!--<option>Positive Test Rate</option>-->
 								<!--<option>Mortality Rate</option>-->
@@ -151,11 +152,40 @@
 	}
 
 	function parseDate(date){
-		var year = Math.floor(date/10000);
-		var date = date-year*10000;
-		var month = Math.floor(date/100);
-		var day = date - month*100;
-		return [year, month, day];
+		let range = (start, end) => {
+			return (new Array(end - start)).fill(undefined).map((_, i) => i + start)
+		}
+		let monthLength = {
+			1: () => 31,
+			2: year => {
+				if (0 == (year % 400)) {
+					return 29
+				} else if (0 == (year % 100)) {
+					return 28
+				} else if (0 == (year % 4)) {
+					return 29
+				} else {
+					return 28
+				}
+			},
+			3: () =>31,
+			4: () =>30,
+			5: () =>31,
+			6: () =>30,
+			7: () =>31,
+			8: () =>31,
+			9: () =>30,
+			10: () =>31,
+			11: () =>30,
+			12: () =>31
+		}
+
+		let year = Math.floor(date/10000)
+		let month = Math.floor((date - (10000 * year)) / 100)
+		let day = (date - 10000 * year - 100 * month)
+		let dayOfYear = range(1, month).map(m => monthLength[m](year)).reduce((a, b) => a + b, 0) + day
+		let daysInYear = range(1, 13).map(m => monthLength[m](year)).reduce((a, b) => a + b, 0)
+		return [year, month, day, dayOfYear, daysInYear];
 	}
 
 	function previousDate(date){
@@ -373,6 +403,27 @@
 			smallCircleFill = '#6ae';
 			smallCircleStroke = '#27c';
 
+		} else if (mapvar == 'Growth Rate') {
+			cloroplethValue = function(feat, date) {
+				return getValue(feat, date, 'exp', false)
+			}
+			cloroplethValueText = function(feat, date) {
+				return getValue(feat, date, 'exp', false)
+			}
+			var legendMax = 5;
+			var linearScale = d3.scaleLinear().domain([1, 5]);
+			choroplethLegColorScale = d3.scaleSequential((d) => 
+				d3.interpolateMagma(linearScale(d))
+			)
+			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
+			// choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(1,legendMax);
+			choroplethLegTitle = "Case growth rate";
+			smallCircleRadius = function(feat,curDate){return 0;};
+			smallCircleRadius = function(feat,curDate){
+				return Math.sqrt(getValue(feat, curDate, "expErr", false))
+			}
+			smallCircleFill = '#f47';
+			smallCircleStroke = '#a05';
 		} else if (mapvar == 'New Cases (3-day wt. avg.)'){
 			choroplethValue = function(feat,date){
 				// DEBUGGING
@@ -596,8 +647,8 @@
 			var pop = feature.properties.POP_2010
 			// remaining data is from "vals" object, lookup by date and state
 			var stateAbbrev = feature.properties.ABBREV;
-			let [year, month, day] = parseDate(curDate);
-			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ")</B><BR>" 
+			let [year, month, day, dayOfYear, daysInYear] = parseDate(curDate);
+			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ", " + dayOfYer + "/" + daysInYear + ")</B><BR>" 
 			showHTML += choroplethValueText(feature,curDate);
 			return showHTML;
 		} else {
@@ -871,6 +922,48 @@
 		
 	}
 
+	let addExpFits = function (data, dates, states) {
+		let expErr = function (series, extractX, extractY, a, b) {
+			return series.map(entry => {
+				let x = extractX(entry)
+				let y = extractY(entry)
+				let expectedY = a * Math.exp(b * x)
+				return (y - expectedY) * (y - expectedY)
+			}).reduce((a, b) => a + b, 0)
+		}
+		let expFit = function (series, extractX, extractY) {
+			let n = series.length
+			let pts = series.map(entry => [extractX(entry), extractY(entry)])
+			let sumX = pts.map(pt => pt[0]).reduce((a, b) => a + b, 0)
+			let sumX2 = pts.map(pt => pt[0] * pt[0]).reduce((a, b) => a + b, 0)
+			let sumY = pts.map(pt => pt[1]).reduce((a, b) => a + b, 0)
+			let sumXY = pts.map(pt => pt[0] * pt[1]).reduce((a, b) => a + b, 0)
+
+			let a = Math.exp((sumX2 * sumY - sumX * sumXY) / (n * sumX2 - sumX * sumX))
+			let b = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+
+			return [a, b]
+		}
+		for (s=0; s<states.length; s++) {
+			let state = states[s]
+			let stateData = data
+			    .filter(datum => datum.state == state)
+			    .sort((a, b) => a.doy - b.doy)
+			let minDay = stateData.map(datum => datum.doy).reduce((a, b) => Math.min(a, b))
+			let maxDay = stateData.map(datum => datum.doy).reduce((a, b) => Math.max(a, b))
+			for (d = minDay + 3; d <= maxDay; ++d) {
+				let dailyFit = expFit(stateData.slice(0, d - minDay),
+				                      datum => datum.doy,
+				                      datum => datum.total)
+				let dailyErr = expErr(stateData.slice(0, d - minDay),
+				                      datum => datum.doy,
+				                      datum => datum.total,
+				                      dailyFit[0], dailyFit[1])
+				stateData[d - minDay].exp = dailyFit[1]
+				stateData[d - minDay].expErr = dailyErr
+			}
+		}
+	}
 
 	// load data, then map, then slider
 	let loadData = new Promise(function(resolve, reject){
@@ -905,6 +998,15 @@
 					cur_record[cur_state] = {};
 				}
 			}
+
+			// Augment the data
+			for(let i=0; i < data.length; i++) {
+				var cur_date = data[i]["date"]
+				var dateParsed = parseDate(cur_date)
+				data[i]["doy"] = dateParsed[3]
+			}
+			addExpFits(data, dates, states)
+
 			// go through data object and transfer values into vals object
 			for(let i=0; i < data.length; i++){
 				// get date and state
@@ -916,6 +1018,11 @@
 					vals[cur_date][cur_state]['positive'] = data[i]["positive"];
 					vals[cur_date][cur_state]['negative'] = data[i]["negative"];
 					vals[cur_date][cur_state]['death'] = data[i]["death"];
+					if (data[i].exp) {
+						vals[cur_date][cur_state].exp = data[i].exp
+					} else {
+						vals[cur_date][cur_state].exp = 1.0
+					}
 				}
 			}
 			// finish and move on
@@ -934,7 +1041,7 @@
 			var day = dateParsed[2];
 			var r = day;
 			if (day==1 || sliderID==0){
-				r = monthString(month) + ". " + day;
+				r = monthString(month) + ". <br>" + day;
 			}
 			return r;
 		}
