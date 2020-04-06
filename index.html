@@ -11,6 +11,7 @@
   <script src="ResizeSensor.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
   <script src="legend_susielu.js"></script>
+  <script src="growth_rate.js"></script>
 </head>
 
 <body>
@@ -54,7 +55,7 @@
 						<span>
 							<u>L</u>and
 							<label class = "switch">
-							<input id="carttoggle" type="checkbox"">
+							<input id="carttoggle" type="checkbox">
 							<span class="slider round"></span>
 							</label>
 							<u>P</u>opulation
@@ -133,6 +134,17 @@
 	var smallCircleRadius; // function to determine size of small circles
 	var smallCircleFill='#f47'; // fill color
 	var smallCircleStroke='#a05'; // stroke color
+	var variables = [
+		GrowthRateModule
+    ]
+
+
+	// Add modules to the selector
+	const vSelect = document.getElementById("variableselector")
+	for (i=0; i<variables.length; ++i) {
+		const option = document.createElement("option")
+		option.text=variables[i].variableName
+    }
 
 	// load functions that don't require data, map or slider to be loaded
 	function monthString(monthID){
@@ -403,27 +415,6 @@
 			smallCircleFill = '#6ae';
 			smallCircleStroke = '#27c';
 
-		} else if (mapvar == 'Growth Rate') {
-			cloroplethValue = function(feat, date) {
-				return getValue(feat, date, 'exp', false)
-			}
-			cloroplethValueText = function(feat, date) {
-				return getValue(feat, date, 'exp', false)
-			}
-			var legendMax = 5;
-			var linearScale = d3.scaleLinear().domain([1, 5]);
-			choroplethLegColorScale = d3.scaleSequential((d) => 
-				d3.interpolateMagma(linearScale(d))
-			)
-			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
-			// choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(1,legendMax);
-			choroplethLegTitle = "Case growth rate";
-			smallCircleRadius = function(feat,curDate){return 0;};
-			smallCircleRadius = function(feat,curDate){
-				return Math.sqrt(getValue(feat, curDate, "expErr", false))
-			}
-			smallCircleFill = '#f47';
-			smallCircleStroke = '#a05';
 		} else if (mapvar == 'New Cases (3-day wt. avg.)'){
 			choroplethValue = function(feat,date){
 				// DEBUGGING
@@ -454,6 +445,20 @@
 			}
 			smallCircleFill = '#f47';
 			smallCircleStroke = '#a05';
+		} else {
+			// Look for the variable in our variable modules
+			const match = variables.find(v => v.variableName == mapvar)
+			if (match) {
+				choroplethValue = match.valueFcn
+				choroplethValueText = match.valueTextFcn
+				choroplethColorScale = match.colorScale
+				choroplethLegColorScale = match.legendColorScale
+				choroplethCellsAndLabels = match.cellsAndLablesFcn
+				choroplethLegTitle = match.legendTitle
+				smallCircleRadius = match.circleRadiusFcn
+				smallCircleFill = match.circleFill
+				smallCircleStroke = match.circleStroke
+			}
 		}
 		// update the map and legend
 		updateMap();
@@ -464,8 +469,11 @@
 	function choroplethColor(feat,date){
 		// assign a color based on rate per million
 		// variable is determined by mapvar
-		var featval =choroplethValue(feat,date);
-		return choroplethColorScale(featval);
+		if (choroplethValue && choroplethColorScale) {
+			return choroplethColorScale(choroplethValue(feat, date))
+		} else {
+			return 0.0
+		}
 	}			
 	
 	function prjXFunction(scale,trans){
@@ -648,7 +656,7 @@
 			// remaining data is from "vals" object, lookup by date and state
 			var stateAbbrev = feature.properties.ABBREV;
 			let [year, month, day, dayOfYear, daysInYear] = parseDate(curDate);
-			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ", " + dayOfYer + "/" + daysInYear + ")</B><BR>" 
+			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ", " + dayOfYear + "/" + daysInYear + ")</B><BR>" 
 			showHTML += choroplethValueText(feature,curDate);
 			return showHTML;
 		} else {
@@ -765,7 +773,9 @@
 
 		var legendCells = [];
 		var legendLabels = [];
-		[legendCells, legendLabels] = choroplethCellsAndLabels();	
+		if (choroplethCellsAndLabels) {
+			[legendCells, legendLabels] = choroplethCellsAndLabels()
+		}
 
 		var legendSequential = d3.legendColor()
 			.shapeWidth(30)
@@ -922,49 +932,6 @@
 		
 	}
 
-	let addExpFits = function (data, dates, states) {
-		let expErr = function (series, extractX, extractY, a, b) {
-			return series.map(entry => {
-				let x = extractX(entry)
-				let y = extractY(entry)
-				let expectedY = a * Math.exp(b * x)
-				return (y - expectedY) * (y - expectedY)
-			}).reduce((a, b) => a + b, 0)
-		}
-		let expFit = function (series, extractX, extractY) {
-			let n = series.length
-			let pts = series.map(entry => [extractX(entry), extractY(entry)])
-			let sumX = pts.map(pt => pt[0]).reduce((a, b) => a + b, 0)
-			let sumX2 = pts.map(pt => pt[0] * pt[0]).reduce((a, b) => a + b, 0)
-			let sumY = pts.map(pt => pt[1]).reduce((a, b) => a + b, 0)
-			let sumXY = pts.map(pt => pt[0] * pt[1]).reduce((a, b) => a + b, 0)
-
-			let a = Math.exp((sumX2 * sumY - sumX * sumXY) / (n * sumX2 - sumX * sumX))
-			let b = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
-
-			return [a, b]
-		}
-		for (s=0; s<states.length; s++) {
-			let state = states[s]
-			let stateData = data
-			    .filter(datum => datum.state == state)
-			    .sort((a, b) => a.doy - b.doy)
-			let minDay = stateData.map(datum => datum.doy).reduce((a, b) => Math.min(a, b))
-			let maxDay = stateData.map(datum => datum.doy).reduce((a, b) => Math.max(a, b))
-			for (d = minDay + 3; d <= maxDay; ++d) {
-				let dailyFit = expFit(stateData.slice(0, d - minDay),
-				                      datum => datum.doy,
-				                      datum => datum.total)
-				let dailyErr = expErr(stateData.slice(0, d - minDay),
-				                      datum => datum.doy,
-				                      datum => datum.total,
-				                      dailyFit[0], dailyFit[1])
-				stateData[d - minDay].exp = dailyFit[1]
-				stateData[d - minDay].expErr = dailyErr
-			}
-		}
-	}
-
 	// load data, then map, then slider
 	let loadData = new Promise(function(resolve, reject){
 		// load data from covidtracking api
@@ -1000,12 +967,17 @@
 			}
 
 			// Augment the data
+			// Add some more date information (the day of the year)
 			for(let i=0; i < data.length; i++) {
 				var cur_date = data[i]["date"]
 				var dateParsed = parseDate(cur_date)
 				data[i]["doy"] = dateParsed[3]
 			}
-			addExpFits(data, dates, states)
+			// Add information for each variable
+			for (i=0; i < variables.length; ++i) {
+				variables[i].addData(data, dates, states)
+			}
+			const ncData = data.filter(d => d.state == "NC")
 
 			// go through data object and transfer values into vals object
 			for(let i=0; i < data.length; i++){
@@ -1018,13 +990,19 @@
 					vals[cur_date][cur_state]['positive'] = data[i]["positive"];
 					vals[cur_date][cur_state]['negative'] = data[i]["negative"];
 					vals[cur_date][cur_state]['death'] = data[i]["death"];
-					if (data[i].exp) {
-						vals[cur_date][cur_state].exp = data[i].exp
-					} else {
-						vals[cur_date][cur_state].exp = 1.0
+
+					for (j=0; j < variables.length; ++j) {
+						variables[j].copyData(data[i], vals[cur_date][cur_state])
 					}
 				}
 			}
+
+			const ncVals = {}
+			const d0 = dates
+			const d1 = dates.length
+			for (i=0; i<dates.length; ++i) ncVals[dates[i]] = vals[dates[i]]["NC"]
+			const d2 = ncVals
+
 			// finish and move on
 			resolve();
 			});	
