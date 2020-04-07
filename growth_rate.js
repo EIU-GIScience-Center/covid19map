@@ -10,7 +10,17 @@ const GrowthRateModule = {
 	// The name under which this variable shows up in the variable selector
 	variableName: "Growth Rate",
 
-	// A function to add our data to the base data variable
+	/**
+      * A function to add our data to the base data variable
+	  *
+	  * @param data The complete set of standard data in its base form.
+	  *             Each datum includes tags for 'positive' (positively
+	  *             tested cases), 'negative', 'deaths', etc.
+	  * @param dates A list of all valid dates in the data
+	  * @param states A list of all valid states in the data
+	  * @return Nothing directly.  This function should add what information
+	  *         it wants to return directly into the data variable
+	  */
 	addData: function(data, dates, states) {
 		const expErr = function (series, a, b) {
 			return series.map(entry => {
