@@ -451,8 +451,8 @@
 			if (match) {
 				choroplethValue = match.valueFcn
 				choroplethValueText = match.valueTextFcn
-				choroplethColorScale = match.colorScale
-				choroplethLegColorScale = match.legendColorScale
+				choroplethLegColorScale = match.color
+				choroplethColorScale = addZeroToScale(match.color, '#FFF');
 				choroplethCellsAndLabels = match.cellsAndLablesFcn
 				choroplethLegTitle = match.legendTitle
 				smallCircleRadius = match.circleRadiusFcn
@@ -552,7 +552,6 @@
 		
 		// if using real projection (as opposed to geoIdentity), 
 		// set precision to zero to prevent D3 from adding points through "adaptive sampling"
-		console.log("Scale: " + scale);
 		return [projection.scale(scale).translate([transX, transY]),scale,transX,transY];
 	}	
 
@@ -585,7 +584,6 @@
 		mapsvg.selectAll('circle')
 			.transition()
 			.attr("cx", function(d,i){
-				console.log(d);
 				var thisFeat = newFeatSet.features[i];				
 				var prjX = prjXFunction(prjscale,transX); 
 				return prjX(centroid(thisFeat)[0]);
@@ -733,7 +731,6 @@
 
 	function updateMap(delay=0,duration=750, callback){
 		if(curDate != null){
-			console.log(smallCircleFill);
 			statepaths.selectAll('path')
 				.transition()
 				.attr("fill",function(d){return choroplethColor(d, curDate);})

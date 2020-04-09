@@ -6,11 +6,8 @@
 // exponential curve to it, and calculate the error of that fit.  We use the base
 // color of the state to show the exponent of the best-fit curve (i.e., the best
 // growth rate), and the dot to show the error.
+
 const GrowthRateModule = {
-	// module-specific initialization info, not part of the general module
-	// interface
-
-
 	/**
 	 * The name under which this variable shows up in the variable selector
 	 *
@@ -122,9 +119,9 @@ const GrowthRateModule = {
 	 * @param value A single numeric value of our feature
 	 * @return A color (in the form '#RGB' or '#RRGGBB')
 	 */
-	color: function (value) {
-		return d3.interpolateMagma(d3.scaleLinear().domain([1, 3]))(value)
-	},
+	color : d3.scaleLinear()
+		.domain([1, 2.0])
+		.range(['#e6eeff', '#003399']),
 
 	/**
 	 * A function returning the values and labels appropriate for use with
@@ -141,8 +138,8 @@ const GrowthRateModule = {
 	 */
 	cellsAndLabelsFcn: function (feat, date) {
 		return [
-			[1, 2, 3],
-			["1", "2", "3"]
+			[1, 1.25, 1.5, 1.75, 2],
+			["1", ".", "1.5", ".", "2"]
 		]
 	},
 
