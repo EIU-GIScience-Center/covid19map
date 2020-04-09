@@ -973,7 +973,7 @@
 				var dateParsed = parseDate(cur_date)
 				data[i]["doy"] = dateParsed[3]
 			}
-			// Add information for each variable
+			// Allow each variable module a chance to augment the data itself
 			for (i=0; i < variables.length; ++i) {
 				variables[i].addData(data, dates, states)
 			}
