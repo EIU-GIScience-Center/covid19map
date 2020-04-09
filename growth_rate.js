@@ -159,7 +159,7 @@ const GrowthRateModule = {
 	 *         circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		return Math.sqrt(getValue(feat, curDate, "expErr", false)) / 1000.0
+		return Math.log10(getValue(feat, curDate, "expErr", false))
 	},
 
 	/**
