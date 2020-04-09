@@ -7,7 +7,15 @@
 // color of the state to show the exponent of the best-fit curve (i.e., the best
 // growth rate), and the dot to show the error.
 const GrowthRateModule = {
-	// The name under which this variable shows up in the variable selector
+	// module-specific initialization info, not part of the general module
+	// interface
+
+
+	/**
+	 * The name under which this variable shows up in the variable selector
+	 *
+	 * type: string
+	 */
 	variableName: "Growth Rate",
 
 	/**
@@ -66,7 +74,14 @@ const GrowthRateModule = {
 		}
 	},
 
-	// A function to copy data from the root data structure to the vals structure used for display
+	/**
+	 * A function to copy data from the root data structure to the vals structure
+	 * used for display
+	 *
+	 * @param root The datum from which we are copying data.  This should be a
+	 *             single datum from the data array passed in to addData, above
+	 * @param display The individual datum that is seen by the visualization
+	 */
 	copyData: function (root, display) {
 		if (root.exp) {
 			display.exp = Math.exp(root.exp)
@@ -76,52 +91,93 @@ const GrowthRateModule = {
 			display.expErr = 0.0
 		}
 	},
-	
-	// A function that gives the value for a given feature
+
+	/**
+	 * A function that gives the value for a given feature
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return An appropriate number
+	 */
 	valueFcn: function (feat, date) {
 		return getValue(feat, date, 'exp', false)
 	},
 
-	// A function that gives the text to use for a given feature
+	/**
+	 * A function that gives the text to use for a given feature
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return A string to be used in the tooltip describing the given feature
+	 *         on the given date
+	 */
 	valueTextFcn: function (feat, date) {
 		return "Growth rate: " + getValue(feat, date, 'exp', false)
 	},
 
-	// The color scale to use for our main variable
-	colorScale: function (value) {
-		if (value <= 0) {
-			return '#FFF'
-		} else {
-			return d3.scaleSequential((d) =>
-				d3.interpolateMagma(d3.scaleLinear().domain([1, 3]))
-			)
-		}
+	/**
+	 * A color function to determine the color associated with a given
+	 * value
+	 *
+	 * @param value A single numeric value of our feature
+	 * @return A color (in the form '#RGB' or '#RRGGBB')
+	 */
+	color: function (value) {
+		return d3.interpolateMagma(d3.scaleLinear().domain([1, 3]))(value)
 	},
 
-	// The color scale to use for our legend
-	legendColorScale: d3.scaleSequential((d) =>
-		d3.interpolateMagma(d3.scaleLinear().domain([1, 3]))
-	),
-
-	// An array of two arrays; the first being the values of the legend tics, the second, the labels
-	cellsAndLablesFcn: function (feat, curDate) {
+	/**
+	 * A function returning the values and labels appropriate for use with
+	 * our feature on the legend
+	 *
+	 * @param feat The feature being shown
+	 * @param date The date at which the feature is shown
+	 * @return An array containing two arrays.
+	 *         The first is a numerical array containing the values at which
+	 *         ticks should be shown in the legend
+	 *         The second is a string array containing the labels to be used
+	 *         at said ticks.
+	 *         Obviously, the two arrays should be of the same length.
+	 */
+	cellsAndLabelsFcn: function (feat, date) {
 		return [
 			[1, 2, 3],
 			["1", "2", "3"]
 		]
 	},
 
-	// The title to use on the legend for this variable
+	/**
+	 * The title to be used on the legend for this module's feature
+	 *
+	 * type: string
+	 */
 	legendTitle: "Growth rate of total cases",
 
-	// The size of the small circle
+	/**
+	 * The size of the small circle.
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value, interpretted as the radius of the small
+	 *         circle, in pixels
+	 */
 	circleRadiusFcn: function (feat, curDate) {
 		return Math.sqrt(getValue(feat, curDate, "expErr", false)) / 1000.0
 	},
 
-	// The color of the small circle
+	/**
+	 * The fill color of the small circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
 	circleFill: '#f47',
 
-	// The color of the line of the small circle
+	/**
+	 * The border color of the small circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
 	circleStroke: '#a04'
 }
