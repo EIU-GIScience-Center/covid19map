@@ -109,8 +109,10 @@ const GrowthRateModule = {
 	 *         on the given date
 	 */
 	valueTextFcn: function (feat, date) {
-		return "<p>Growth rate: " + getValue(feat, date, 'exp', false) + "</p>" +
-			"<p>Daily error: " + getValue(feat, date, 'expErr', false) + "</p>"
+		var GR = getValue(feat, date, 'exp', false);
+		var DE = getValue(feat, date, 'expErr', false);
+		return "<p>Growth rate: " + GR.toFixed(2) + "x/day</p>" +
+			"<p>Daily error: " + DE.toFixed(2) + "</p>"
 	},
 
 	/**
@@ -160,7 +162,7 @@ const GrowthRateModule = {
 	 *         circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		return Math.log(getValue(feat, curDate, "expErr", false))/Math.log(2.0)
+		return 0;
 	},
 
 	/**

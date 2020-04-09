@@ -654,7 +654,7 @@
 			// remaining data is from "vals" object, lookup by date and state
 			var stateAbbrev = feature.properties.ABBREV;
 			let [year, month, day, dayOfYear, daysInYear] = parseDate(curDate);
-			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ", " + dayOfYear + "/" + daysInYear + ")</B><BR>" 
+			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ")</B><BR>" 
 			showHTML += choroplethValueText(feature,curDate);
 			return showHTML;
 		} else {
