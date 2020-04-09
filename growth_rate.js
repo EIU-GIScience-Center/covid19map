@@ -28,11 +28,11 @@ const GrowthRateModule = {
 	  */
 	addData: function(data, dates, states) {
 		const expErr = function (series, a, b) {
-			return series.map(entry => {
+			return Math.sqrt(series.map(entry => {
 				const [x, y] = entry
 				const expectedY = a * Math.exp(b * x)
 				return (y - expectedY) * (y - expectedY)
-			}).reduce((a, b) => a + b, 0) / series.length
+			}).reduce((a, b) => a + b, 0) / series.length)
 		}
 		const expFit = function (pts) {
 			const goodPts = pts.filter(pt => pt[1] > 0)
@@ -109,7 +109,8 @@ const GrowthRateModule = {
 	 *         on the given date
 	 */
 	valueTextFcn: function (feat, date) {
-		return "Growth rate: " + getValue(feat, date, 'exp', false)
+		return "<p>Growth rate: " + getValue(feat, date, 'exp', false) + "</p>" +
+			"<p>Daily error: " + getValue(feat, date, 'expErr', false) + "</p>"
 	},
 
 	/**
@@ -159,7 +160,7 @@ const GrowthRateModule = {
 	 *         circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		return Math.log10(getValue(feat, curDate, "expErr", false))
+		return Math.log(getValue(feat, curDate, "expErr", false))/Math.log(2.0)
 	},
 
 	/**
