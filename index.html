@@ -335,8 +335,8 @@
 			var logScale = d3.scaleLog()
 				.domain([legendMax, 10*cr10]);
 			choroplethLegColorScale = d3.scaleSequential((d) => 
-				d3.interpolateGreys(0.1));
-				// d3.interpolateMagma(nthPowScale(0.3)(logScale(d))));
+				//d3.interpolateGreys(0.1));
+				d3.interpolateMagma(nthPowScale(0.3)(logScale(d))));
 			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
 			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(10*cr10,legendMax);
 			choroplethLegTitle = "Cases Per Million (total cases indicated by circle size)";
@@ -345,7 +345,7 @@
 				// for now, set radius as 1/10th of sqrt of cases
 				return Math.sqrt(todayCases)/6;
 			}
-			smallCircleFill = '#f47';
+			smallCircleFill = '#45c';
 			smallCircleStroke = '#a05';
 		} else if (mapvar == 'Tests (cumulative)'){
 			choroplethValue = function(feat,date){
