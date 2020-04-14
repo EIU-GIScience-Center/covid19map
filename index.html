@@ -11,13 +11,15 @@
   <script src="ResizeSensor.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
   <script src="legend_susielu.js"></script>
+  <script src="utils.js"></script>
+  <script src="TestCaseRatioModule.js"></script>
 </head>
 
 <body>
 	<div id="container">
 	<div id="maparea">
 		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
-		<h3  style="margin-top:0ex; margin-bottom: 0ex;">COVID-19 Rates in the USA</h3>
+		<h3  style="margin-top:0ex; margin-bottom: 0ex;">Covid-19 Open Visualization (COViz) Toolkit </h3>
 		</div>			
 		<div id="map"></div>
 		<div id="mapbottom">
@@ -31,10 +33,9 @@
 						Map Variable:
 					</td>
 					<td>
-							<select class="select-css" id="variableselector">
-								<option><u>C</u>ases (cumulative)</option>
-								<option>Tests (cumulative)</option>
-								<option>New Cases (3-day wt. avg.)</option>
+							<select class="select-css" id="themeselector">
+								<option>Cases (cumulative)</option>
+								<option>New Cases</option>
 								<!--<option>Deaths</option>-->
 								<!--<option>Positive Test Rate</option>-->
 								<!--<option>Mortality Rate</option>-->
@@ -67,19 +68,17 @@
 		  <div style="display: table-cell; vertical-align: middle; padding: 0;">
 			<div id="mapinfo"  padding: 0;>
 				<H3> About </H3>
-				<p>The maps on this page highlight relative rates (per population, per test) of 
-				cases, testing and mortality related to COVID-19 in the USA (currently 48 
-				states plus the District of Columbia). While many websites map COVID-19 cases, 
-				only a few show rates per population. In most cases, rates are more appropriate than 
-				raw numbers for assessing the local severity of an epidemic. For example, a thousand cases 
-				in the state of California represents approx. 25 cases per 1,000,000 people, where as the same 
-				number of cases in Louisiana represents approx. 200 cases per 1,000,000 people. Rates better 
-				express the likelihood of an individual becoming sick, as well as the burden 
-				on the hospital system, although state-level data does not capture within-state variability 
-				which can be significant. Challenges 
-				that are currently being worked on include (a) developing map symbol schemes to communicate exponential 
-				growth while maintaining discernability, and (b) visualizing the lagged correlation between 
-				social distancing behavior and changes in rates of growth.</p>
+				<p>This web page provides a template for mapping information relevant to COVID-19, with the 
+				goal of supporting informed decision-making by individuals and organizations. 
+				Standardized map themes are being developed to communicate overall disease burden (case, 
+				hospitalization and mortality rates), resource and testing sufficiency, and effects of 
+				social distancing policy. All map themes will follow sound cartographic principles, and 
+				timelines, animation and interactive components will allow exploration of past and current 
+				trajectories of each variable. </p>
+				
+				<br>
+				This is an open-source project. You are free to download, customize, modify data sources and 
+				incorporate into your own website, with the caveat that no warranty is provided. 
 				<br><br>
 				Keyboard shortcuts (these work inconsistently at the moment):<BR>
 				<table style="border: none">
@@ -96,11 +95,14 @@
 						<td>Toggle between land and population map types</td>
 					</tr>
 				</table>
-				<br><br>
-				This is a work in progress. Data comes from <a href="https://covidtracking.com/">covidtracking.com</a>. 
-				<a href="mailto: bjkronenfeld@eiu.edu">Feedback is welcome</a>.
-				<br><br>
 				<p><i>(click on any state for data values)</i></p>
+				<br>
+				This website is being developed by the <a href="https://www.eiu.edu/gisci/">EIU GIScience Center</a>. 
+				Data comes from <a href="https://covidtracking.com/">covidtracking.com</a>.  
+				Latest project updates can be found on our <a href = "https://github.com/EIU-GIScience-Center/covid19map">github repository</a>.
+				This is a work in progress. Feel free to send <a href="mailto: bjkronenfeld@eiu.edu">comments or feedback</a>.
+				<br><br>
+
 			</div>
 		  </div>
 		</div>
@@ -119,11 +121,13 @@
 	var curDate = null;
 	var slider;
 	var slider_update_duration = 750;
-	var mapvar = document.getElementById("variableselector").value;
+	var mapvar = document.getElementById("themeselector").value;
 	var choroplethValue; // function to get value given feature, date
 	var choroplethValueText; // function to get text for given value, given feature, date
 	var choroplethLegColorScale; // scale function for legend (doesn't include white for zero)
-	var choroplethColorScale; // scale function for map (includes white for zero) 
+	var lowValColor = null;
+	var highValColor = null;
+	//var choroplethColorScale; // scale function for map (includes white for zero) 
 	var choroplethCellsAndLabels; // function returning [C,L] : legend symbol cells and corresponding labels;
 	var choroplethLegTitle; // string text for legend title
 	var mapsvg; // svg containing map
@@ -132,56 +136,20 @@
 	var smallCircleRadius; // function to determine size of small circles
 	var smallCircleFill='#f47'; // fill color
 	var smallCircleStroke='#a05'; // stroke color
+	var themes = [
+		TestCaseRatioModule
+    ]
 
-	// load functions that don't require data, map or slider to be loaded
-	function monthString(monthID){
-		if (monthID==1){return "Jan";}
-		if (monthID==2){return "Feb";}
-		if (monthID==3){return "Mar";}
-		if (monthID==4){return "Apr";}
-		if (monthID==5){return "May";}
-		if (monthID==6){return "Jun";}
-		if (monthID==7){return "Jul";}
-		if (monthID==8){return "Aug";}
-		if (monthID==9){return "Sep";}
-		if (monthID==10){return "Oct";}
-		if (monthID==11){return "Nov";}
-		if (monthID==12){return "Dec";}
-		return ""; // if monthID is invalid, don't break the code - just show nothing
-	}
+	// Add modules to the selector
+	const vSelect = document.getElementById("themeselector")
+	for (i=0; i<themes.length; ++i) {
+		const option = document.createElement("option")
+		option.text=themes[i].variableName
+		vSelect.add(option);
+    }
 
-	function parseDate(date){
-		var year = Math.floor(date/10000);
-		var date = date-year*10000;
-		var month = Math.floor(date/100);
-		var day = date - month*100;
-		return [year, month, day];
-	}
 
-	function previousDate(date){
-		if(date==null){return null;}
-		var dateID = dates.indexOf(date);
-		if(dateID==dates.length-1){
-			return null;
-		} else {
-			return dates[dateID+1];
-		}
-	}
 
-	function withCommas(num) {
-		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
-	}
-	
-	function withK(num){
-		return withCommas(num).replace(',000','k');
-		
-	}
-
-	function rateText(rate){
-		if(rate < 1){return rate.toFixed(2);}
-		else if (rate < 10){return rate.toFixed(1);}
-		else {return rate.toFixed(0);}
-	}
 
 	const nthPowScale = function(n){
 		return d3.scalePow()
@@ -279,14 +247,19 @@
 		return valSum/weightSum;
 	}
 
-	function addZeroToScale(initScale,zeroOutVal='#FFF'){
+	function extendColorScale(initScale,lowValColor, highValColor){
 		return function(inVal){
-			if(inVal <= 0){
-				return zeroOutVal;
+			if (lowValColor != null){
+				if (inVal <= lowValColor[0]){
+					return lowValColor[1];
+				} 
 			}
-			else{
-				return initScale(inVal);
+			if (highValColor != null){
+				if (inVal >= highValColor[0]){
+					return highValColor[1];
+				}
 			}
+			return initScale(inVal);
 		}
 	}
 
@@ -311,9 +284,9 @@
 		return outFunc;
 	}
 
-	function handleVarChange(){
+	function handleThemeChange(){
 		// determine the new map variable
-		mapvar = document.getElementById("variableselector").value;
+		mapvar = document.getElementById("themeselector").value;
 		// determine the following functions or values, to be used to update the display
 		// choroplethValue, 
 		// choroplethValueText, 
@@ -333,20 +306,21 @@
 			}
 			var legendMax = 10000;
 			var logScale = d3.scaleLog()
-				.domain([legendMax, 10*cr10]);
-			choroplethLegColorScale = d3.scaleSequential((d) => 
-				//d3.interpolateGreys(0.1));
-				d3.interpolateMagma(nthPowScale(0.3)(logScale(d))));
-			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
-			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(10*cr10,legendMax);
+				.domain([legendMax, 100*cr10]);
+			choroplethLegColorScale = d3.scaleSequential(function (d) { 
+				return d3.interpolateMagma(nthPowScale(0.7)(logScale(d)))}); // change to interpolateGreys, 6000 for illustrations
+			lowValColor = [0,'#fff'];
+			highValColor = null;
+			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(100*cr10,legendMax);
 			choroplethLegTitle = "Cases Per Million (total cases indicated by circle size)";
 			smallCircleRadius = function(feat,curDate){
 				var todayCases = getValue(feat,curDate,'positive',false);
 				// for now, set radius as 1/10th of sqrt of cases
-				return Math.sqrt(todayCases)/6;
+				// or return zero for illustrations with no circles
+				return Math.sqrt(todayCases)/8;
 			}
 			smallCircleFill = '#45c';
-			smallCircleStroke = '#a05';
+			smallCircleStroke = '#459';
 		} else if (mapvar == 'Tests (cumulative)'){
 			choroplethValue = function(feat,date){
 				var posRate = getValue(feat,date,'positive',true);
@@ -362,7 +336,8 @@
 				.domain([legendMax, 1]);
 			choroplethLegColorScale = d3.scaleSequential((d) => 
 				d3.interpolateCubehelixDefault(nthPowScale(0.6)(logScale(d))));
-			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
+			lowValColor = [0,'#fff'];
+			highValColor = null;
 			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(10,legendMax);
 			choroplethLegTitle = "Tests Per Million";
 			smallCircleRadius = function(feat,curDate){
@@ -373,14 +348,8 @@
 			smallCircleFill = '#6ae';
 			smallCircleStroke = '#27c';
 
-		} else if (mapvar == 'New Cases (3-day wt. avg.)'){
+		} else if (mapvar == 'New Cases'){
 			choroplethValue = function(feat,date){
-				// DEBUGGING
-				var pA = periodAverage(feat, date, function(f, d){return getValue(f,d,'positive', true, true, true, true)}, [1,0.9,0.8]);
-				if(pA < 0){
-					var pB = periodAverage(feat, date, function(){return getValue(feat,date,'positive', true, true, true, true)}, [1,0.9,0.8]);
-				}
-				// END DEBUGGING
 				return periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', true, true, true, true)}, [1,0.9,0.8]);
 			}
 			choroplethValueText = function(feat, date){
@@ -392,23 +361,48 @@
 				.domain([legendMax, 1]);
 			choroplethLegColorScale = d3.scaleSequential((d) => 
 				d3.interpolateMagma(nthPowScale(0.6)(logScale(d))));
-			choroplethColorScale=addZeroToScale(choroplethLegColorScale,'#FFF');
+			lowValColor = [0,'#fff'];
+			highValColor = null;
 			choroplethCellsAndLabels = expBase10CellsAndLabelsFunc(1,legendMax);
-			choroplethLegTitle = "New Cases Per Million";
+			choroplethLegTitle = "New Cases Per Million (3-day weighted average)";
 			smallCircleRadius = function(feat,curDate){return 0;};
 			smallCircleRadius = function(feat,curDate){
 				var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'positive',false, true, true, true);}, [1,0.9,0.8]);
-				// for now, set radius as sqrt of cases/fixed constant
-				return Math.sqrt(todayCases)/3;
+				if(todayCases > 0){
+					// for now, set radius as sqrt of cases/fixed constant
+					return Math.sqrt(todayCases)/3;
+				} else {
+					return 0;
+				}
 			}
-			smallCircleFill = '#f47';
+			smallCircleFill = '#45c';
 			smallCircleStroke = '#a05';
+		}  else {
+			// Look for the variable in our variable modules
+			const match = themes.find(v => v.variableName == mapvar)
+			if (match) {
+				choroplethValue = match.valueFcn;
+				choroplethValueText = match.valueTextFcn;
+				choroplethLegColorScale = match.color;
+				lowValColor = match.lowValColor;
+				highValColor = match.HighValColor;
+				choroplethCellsAndLabels = match.cellsAndLabelsFcn;
+				choroplethLegTitle = match.legendTitle;
+				smallCircleRadius = match.circleRadiusFcn;
+				smallCircleFill = match.circleFill;
+				smallCircleStroke = match.circleStroke;
+			}
 		}
 		// update the map and legend
 		updateMap();
 		loadLegend();
 	}
 
+	function choroplethColorScale(featVal){
+		var colorScale = choroplethLegColorScale;
+		colorScale = extendColorScale(colorScale, lowValColor,highValColor);
+		return colorScale(featVal);
+	}
 
 	function choroplethColor(feat,date){
 		// assign a color based on rate per million
@@ -577,7 +571,7 @@
 				.style('visibility','visible');
 		}
 		// make sure variable is updated
-		handleVarChange();
+		handleThemeChange();
 		// update map
 		if (curDate != null){
 			if(oncartogram==true){
@@ -641,7 +635,7 @@
 			.append('path')
 			.attr('d',path)
 			.attr("class","feature")
-			.attr("stroke", "#DDD")
+			.attr("stroke", "#EEE")
 			.attr("stroke-width", "1px")
 			.attr("fill",function(d){return choroplethColor(d, curDate);})
 			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
@@ -667,7 +661,7 @@
 			.style('fill',smallCircleFill)
 			.style('stroke',smallCircleStroke)
 			.style('stroke-width',1)
-			.style('opacity',0.7);		
+			.style('opacity',0.5);		
 		statepaths.exit().remove();
 		return statepaths;
 	}
@@ -842,7 +836,7 @@
 
 		if(e.key=="u" || e.key=="U"){
 			// set or remove focus for variable selector
-			var selbox = document.getElementById("variableselector");
+			var selbox = document.getElementById("themeselector");
 			if(selbox === document.activeElement){
 				selbox.blur();
 			} else {
@@ -852,16 +846,16 @@
 
 
 		if(e.keyCode==37){
-			if(document.activeElement === document.getElementById("variableselector")){
-				console.log("selecting variables...");
+			if(document.activeElement === document.getElementById("themeselector")){
+				console.log("selecting themes...");
 			} else {
 				curval = slider.value();
 				if (curval > 0){slider.value(curval-1);}
 			}
 		}
 		if(e.keyCode==39){
-			if(document.activeElement === document.getElementById("variableselector")){
-				console.log("selecting variables...");
+			if(document.activeElement === document.getElementById("themeselector")){
+				console.log("selecting themes...");
 			} else {
 				curval = slider.value();
 				if (curval < dates.length-1){slider.value(curval+1);}
@@ -884,6 +878,7 @@
 				dates.add(data[i]["date"]);
 				}
 			dates=Array.from(dates);
+			dates=dates.reverse();
 			// create dictionary of values for each date
 			// initializing each date value to an empty dictionary
 			vals = {};
@@ -905,6 +900,21 @@
 					cur_record[cur_state] = {};
 				}
 			}
+			
+			// Augment the data
+			// Add some more date information (the day of the year)
+			for(let i=0; i < data.length; i++) {
+				var cur_date = data[i]["date"]
+				var dateParsed = parseDate(cur_date)
+				data[i]["doy"] = dateParsed[3]
+			}
+			// Allow each variable module a chance to augment the data itself
+			for (i=0; i < themes.length; ++i) {
+				if(themes[i].addData != null){
+					themes[i].addData(data, dates, states);
+				}
+			}
+
 			// go through data object and transfer values into vals object
 			for(let i=0; i < data.length; i++){
 				// get date and state
@@ -916,6 +926,9 @@
 					vals[cur_date][cur_state]['positive'] = data[i]["positive"];
 					vals[cur_date][cur_state]['negative'] = data[i]["negative"];
 					vals[cur_date][cur_state]['death'] = data[i]["death"];
+					for (j=0; j < themes.length; ++j) {
+						themes[j].copyData(data[i], vals[cur_date][cur_state])
+					}
 				}
 			}
 			// finish and move on
@@ -925,15 +938,21 @@
 
 
   	var loadSlider=function(){return new Promise(function(resolve, reject){
+		
 		function dateString(sliderID){
-			var realID = dates.length-sliderID-1;
-			var date = dates[realID];
+			var date = dates[sliderID];
 			var dateParsed = parseDate(date);
 			var year = dateParsed[0];
 			var month = dateParsed[1];
 			var day = dateParsed[2];
 			var r = day;
-			if (day==1 || sliderID==0){
+			// try to get 10 tick values
+			
+			var tickVals = slider.tickValues();
+			console.log("Tick values: ");
+			console.log(tickVals);
+			// show Month if we're on the first day of the month
+			if (sliderID==0 || day < parseDate(dates[sliderID-1])[1]){
 				r = monthString(month) + ". " + day;
 			}
 			return r;
@@ -950,12 +969,12 @@
 			.fill('#CA6')
 			.handle(circlepath)
 			.tickFormat(dateString)
+			
 			.displayValue(true)
 			.on('onchange', function(val) {
-				d3.select('#value').text(dates[val]);
 				sliderID=slider.value();
-				curDateID = dates.length-sliderID-1;
-				curDate = dates[curDateID];
+				curDate = dates[sliderID];
+				d3.select('#value').text(curDate);
 				updateMap(0,slider_update_duration,function(){return false;});
 				});
 		
@@ -979,7 +998,7 @@
 	loadData.then(function(){ 
 		loadSlider().then(function(){
 			// define current date
-			curDate=dates[dates.length-1];
+			curDate=dates[0];
 			// load the map!		
 			m = loadMap(base);
 			// load the legend...
@@ -987,14 +1006,12 @@
 			// load the invisible tooltip div...
 			loadTooltips();
 
-
-
 			// set defaults, add event listeners
 			document.onkeydown=handlekeydown;			
 			document.getElementById("carttoggle").addEventListener("change",function(){toggle_map(1500);});
 			document.getElementById("carttoggle").checked = false;
-			document.getElementById("variableselector").addEventListener("change",function(){handleVarChange();});
-			$('variableselector').on('keydown', function(e){
+			document.getElementById("themeselector").addEventListener("change",function(){handleThemeChange();});
+			$('themeselector').on('keydown', function(e){
 				if(e.keyCode === 37 || e.keyCode === 39) { //left or right
 					e.preventDefault();
 					return false;
