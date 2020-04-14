@@ -8,7 +8,7 @@ rect {
   stroke: #DDD;
   stroke-linejoin: round;
   opacity: 1;
-  stroke-width: 1px;
+  stroke-width: 2px;
   cursor: pointer;
 }
 
