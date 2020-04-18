@@ -972,7 +972,9 @@
 			}
 			// Allow each variable module a chance to augment the data itself
 			for (i=0; i < variables.length; ++i) {
-				variables[i].addData(data, dates, states)
+				if(variables[i].addData != null){
+					variables[i].addData(data, dates, states)
+				}
 			}
 			const ncData = data.filter(d => d.state == "NC")
 
@@ -989,7 +991,9 @@
 					vals[cur_date][cur_state]['death'] = data[i]["death"];
 
 					for (j=0; j < variables.length; ++j) {
-						variables[j].copyData(data[i], vals[cur_date][cur_state])
+						if(variables[j].copyData != null){
+							variables[j].copyData(data[i], vals[cur_date][cur_state])
+						}
 					}
 				}
 			}

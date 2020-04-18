@@ -7,6 +7,71 @@
 // color of the state to show the exponent of the best-fit curve (i.e., the best
 // growth rate), and the dot to show the error.
 
+function sum(x){
+	var s = 0;
+	for(i=0;i<x.length;i++){
+		s+=x[i];
+	}
+	return s
+}
+
+function sumproduct(x,y){
+	var sp=0;
+	for(i=0;i<x.length;i++){
+		sp += x[i] * y[i];
+	}
+	return sp
+}
+
+function sumsq(x){
+	var ss = 0;
+	for(i=0;i<x.length;i++){
+		ss+=x[i]**2;
+	}
+	return ss
+}
+
+function mean(x){
+	var s = sum(x);
+	return s/x.length;
+}
+
+function stdev(x){
+	var mn = mean(x);
+	var sd = 0;
+	for (i=0; i<x.length; i++){
+		sd += (x[i]-mn)**2;
+	}
+	return Math.sqrt(sd/x.length);
+}
+
+/**
+  * A function to fit an equation in the form y = ax + b to data.
+  *
+  * @param x The x-values.
+  * @param y The y-values.
+  * @return [a,b]
+  */
+function linear_fit(x,y){
+	if(x.length < 2){return [1,1];}
+	const x_mean = mean(x);
+	const y_mean = mean(y);
+	const sx = stdev(x);
+	const sy = stdev(y);
+	if(sy==0){return [1,y_mean-x_mean];}
+	const xy_mean = sumproduct(x,y)/x.length;
+	const x2mean = sumsq(x)/x.length;
+	const y2mean = sumsq(y)/y.length;
+	const rxy_numerator = xy_mean-x_mean*y_mean;
+	const rxy_denominator = Math.sqrt((x2mean-x_mean**2)*(y2mean-y_mean**2));
+	const rxy = rxy_numerator/rxy_denominator;
+	const a = rxy*sy/sx;
+	const b = y_mean-a*x_mean;
+	return [a,b];
+}
+
+
+
 const GrowthRateModule = {
 	/**
 	 * The name under which this variable shows up in the variable selector
@@ -16,80 +81,6 @@ const GrowthRateModule = {
 	variableName: "Growth Rate",
 
 	/**
-      * A function to add our data to the base data variable
-	  *
-	  * @param data The complete set of standard data in its base form.
-	  *             Each datum includes tags for 'positive' (positively
-	  *             tested cases), 'negative', 'deaths', etc.
-	  * @param dates A list of all valid dates in the data
-	  * @param states A list of all valid states in the data
-	  * @return Nothing directly.  This function should add what information
-	  *         it wants to return directly into the data variable
-	  */
-	addData: function(data, dates, states) {
-		const expErr = function (series, a, b) {
-			return Math.sqrt(series.map(entry => {
-				const [x, y] = entry
-				const expectedY = a * Math.exp(b * x)
-				return (y - expectedY) * (y - expectedY)
-			}).reduce((a, b) => a + b, 0) / series.length)
-		}
-		const expFit = function (pts) {
-			const goodPts = pts.filter(pt => pt[1] > 0)
-			const n = goodPts.length
-
-			if (n > 2) {
-				const sumX = goodPts.map(pt => pt[0]).reduce((a, b) => a + b, 0)
-				const sumX2 = goodPts.map(pt => pt[0] * pt[0]).reduce((a, b) => a + b, 0)
-				const sumY = goodPts.map(pt => Math.log(pt[1])).reduce((a, b) => a + b, 0)
-				const sumXY = goodPts.map(pt => pt[0] * Math.log(pt[1])).reduce((a, b) => a + b, 0)
-				const a = Math.exp((sumX2 * sumY - sumX * sumXY) / (n * sumX2 - sumX * sumX))
-				const b = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
-				return [a, b]
-			} else {
-				return [0.0, 0.0]
-			}
-		}
-		for (s=0; s<states.length; s++) {
-			const state = states[s]
-			const stateData = data
-			    .filter(datum => datum.state == state)
-			      .sort((a, b) => a.doy - b.doy)
-			const pointData = stateData.map(datum => [datum.doy, datum.positive])
-			const minDay = pointData.map(datum => datum[0]).reduce((a, b) => Math.min(a, b))
-			const maxDay = pointData.map(datum => datum[0]).reduce((a, b) => Math.max(a, b))
-			for (d = minDay; d <= maxDay; ++d) {
-				const dailySlice = pointData.slice(0, d - minDay)
-				const dailyFit = expFit(dailySlice)
-				if (dailyFit[1] > 0) {
-					const dailyErr = expErr(dailySlice,
-											dailyFit[0], dailyFit[1])
-					stateData[d - minDay].exp = dailyFit[1]
-					stateData[d - minDay].expErr = dailyErr
-				}
-			}
-		}
-	},
-
-	/**
-	 * A function to copy data from the root data structure to the vals structure
-	 * used for display
-	 *
-	 * @param root The datum from which we are copying data.  This should be a
-	 *             single datum from the data array passed in to addData, above
-	 * @param display The individual datum that is seen by the visualization
-	 */
-	copyData: function (root, display) {
-		if (root.exp) {
-			display.exp = Math.exp(root.exp)
-			display.expErr = root.expErr
-		} else {
-			display.exp = 0.0
-			display.expErr = 0.0
-		}
-	},
-
-	/**
 	 * A function that gives the value for a given feature
 	 *
 	 * @param feat The feature whose value is desired
@@ -97,7 +88,22 @@ const GrowthRateModule = {
 	 * @return An appropriate number
 	 */
 	valueFcn: function (feat, date) {
-		return getValue(feat, date, 'exp', false)
+		var idx = dates.indexOf(date);
+		var start_idx = idx-5;
+		if(start_idx < 0){start_idx = 0;}		
+		xs = [];
+		ys = [];
+		for(i=start_idx; i < idx+1; i++){
+			var today_cases = getValue(feat,dates[i],'positive',false);
+			if(today_cases > 0){
+				xs.push(i);
+				ys.push(Math.log(today_cases));
+			}
+		}
+		var a=0;
+		var b=0;
+		[a,b] = linear_fit(xs,ys);
+		return Math.exp(a);
 	},
 
 	/**
@@ -109,10 +115,8 @@ const GrowthRateModule = {
 	 *         on the given date
 	 */
 	valueTextFcn: function (feat, date) {
-		var GR = getValue(feat, date, 'exp', false);
-		var DE = getValue(feat, date, 'expErr', false);
-		return "<p>Growth rate: " + GR.toFixed(2) + "x/day</p>" +
-			"<p>Daily error: " + DE.toFixed(2) + "</p>"
+		var GR = choroplethValue(feat,date);
+		return "<p>Growth rate: " + GR.toFixed(2) + "x/day</p>"
 	},
 
 	/**
@@ -123,7 +127,7 @@ const GrowthRateModule = {
 	 * @return A color (in the form '#RGB' or '#RRGGBB')
 	 */
 	color : d3.scaleLinear()
-		.domain([1, 2.0])
+		.domain([0.5, 2.0])
 		.range(['#e6eeff', '#003399']),
 
 	/**
@@ -141,8 +145,8 @@ const GrowthRateModule = {
 	 */
 	cellsAndLabelsFcn: function (feat, date) {
 		return [
-			[1, 1.25, 1.5, 1.75, 2],
-			["1", ".", "1.5", ".", "2"]
+			[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
+			["0.5", "", "1", "", "1.5", "", "2"]
 		]
 	},
 
