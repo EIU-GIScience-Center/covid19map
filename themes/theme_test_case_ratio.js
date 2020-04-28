@@ -4,7 +4,7 @@
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
 
-const testCaseRatio_logScale = d3.scaleLog()
+var newTestCaseRatio_logScale = d3.scaleLog()
 				.domain([0.01, 1]);
 
 const themeTestCaseRatio = {
@@ -13,7 +13,7 @@ const themeTestCaseRatio = {
 	 *
 	 * type: string
 	 */
-	themeName: "Ratio of Test/Cases",
+	themeName: "Tests/Cases",
 
 	/**
 	 * A function that gives the value for a given feature
@@ -26,7 +26,7 @@ const themeTestCaseRatio = {
 		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'positive');
 		var tests = cases + getValue(feat, date, 'negative');
-		if(tests==0){return 0;} else {return tests/cases;}
+		if(cases==0){return 0;} else {return tests/cases;}
 	},
 
 
@@ -39,7 +39,7 @@ const themeTestCaseRatio = {
 	 */
 	 
 	choroplethColorScale : d3.scaleSequential((d) => 
-				d3.interpolateBlues(1-(testCaseRatio_logScale(1/(Math.pow(d,1.3))))))
+				d3.interpolateBlues(1-(newTestCaseRatio_logScale(1/(Math.pow(d,1.3))))))
 	,
 
 	/**
