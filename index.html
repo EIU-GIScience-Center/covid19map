@@ -6,15 +6,18 @@
   <title>COVID-19 Rate Map - EIU GIScience Center</title>
   <script src="jquery-3.4.1.js"></script>
   <script src="https://d3js.org/d3.v5.js" charset="utf-8"></script>
-  <script src="USA_pop2010.js"></script>
+  <!--<script src="USA_pop2010.js"></script> -->
+  <script src="data/states_covidtracking/data_covidtracking_states.js"></script>
   <script src="d3-simple-slider.min.js"></script>
   <script src="ResizeSensor.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
   <script src="legend_susielu.js"></script>
   <script src="utils.js"></script>
-  <script src="theme_cases_cumulative.js"></script>
-  <script src="theme_test_case_ratio.js"></script>
-  <script src="theme_new_cases.js"></script>
+  <script src="themes/theme_cases_cumulative.js"></script>
+  <script src="themes/theme_new_cases.js"></script>
+  <script src="themes/theme_test_case_ratio.js"></script>
+  <script src="themes/theme_new_test_case_ratio.js"></script>
+
 </head>
 
 <body>
@@ -33,12 +36,14 @@
 					</td>
 					<td class="optional">
 						Map Theme:
+						<select class="select-css" id="themeSelector">
+						</select>
 					</td>
 					<td>
-							<select class="select-css" id="themeselector">
-							</select>						
+						Data Source:
+						<select class="select-css" id="dataSourceSelector">
+						</select>							
 					</td>
-					
 				</tr>
 				<tr>
 					<td>
@@ -104,17 +109,17 @@
 		  </div>
 		</div>
 	</div>
-<script>
+<script defer>
 	// load default dataset
 	const cr10 = Math.cbrt(10);
-	var base = states_base;
-	var cartogram = states_cartogram;
+	var base;
+	var cartogram;
 	var active_feature = null;
 	var active;
 	var oncartogram = false;
 	var dates;
-	var states;
-	var vals;
+	var districts;
+	var dateDistrictData;
 	var curDate = null;
 	var slider;
 	var slider_update_duration = 750;
@@ -137,15 +142,31 @@
 	var themes = [
 		themeCasesCumulative,
 		themeNewCases,
-		themeTestCaseRatio
+		themeTestCaseRatio,
+		themeNewTestCaseRatio
     ]
 
+	var dataSources = [
+		dataCovidTracking_states
+	]
+
+	console.log("THE DATA OBJECT WHEN WE TRY TO LOAD IT");
+	console.log(dataCovidTracking_states.dataSourceName);
+
 	// Add modules to the selector
-	const vSelect = document.getElementById("themeselector")
+	const themeSelector = document.getElementById("themeSelector");
 	for (i=0; i<themes.length; ++i) {
-		const option = document.createElement("option")
-		option.text=themes[i].themeName
-		vSelect.add(option);
+		const option = document.createElement("option");
+		option.text=themes[i].themeName;
+		themeSelector.add(option);
+    }
+
+	// Add datasets to the selector
+	const dataSourceSelector = document.getElementById("dataSourceSelector");
+	for (i=0; i<dataSources.length; ++i) {
+		const option = document.createElement("option");
+		option.text=dataSources[i].dataSourceName;
+		dataSourceSelector.add(option);
     }
 
 	const nthPowScale = function(n){
@@ -194,32 +215,6 @@
 		return C;		
 	}
 
-	function getPopulation(feat){
-		return feat.properties.POP_2010;
-	}
-
-	function getValue(feat, date, varname, perMillion=true, negIsZero=true, undefIsZero=true, getIncrease = false){
-		if(date==null){return 0;}
-		var stateAbbrev = feat.properties.ABBREV;
-		var stateVals = vals[date][stateAbbrev];
-		var val = stateVals[varname];
-
-		if(negIsZero){if(val<0){val=0;}}
-		if(undefIsZero || perMillion){if(val==undefined){val=0;}}
-		if(perMillion){
-			var pop = getPopulation(feat);
-			val = 1000000*val/pop;
-		}
-		if(getIncrease){
-			var yesterday = previousDate(date);
-			if (yesterday != null){
-				var yesterdayVal = getValue(feat,yesterday,varname,perMillion,negIsZero,undefIsZero,false);				
-				val = val-yesterdayVal
-			}
-		}		
-		return val;
-	}
-
 	function periodAverage(feat, date, valFunc, periodWts){
 		// computes the weighted average for days ending on the input date
 		// function must take only feat and date as input
@@ -228,24 +223,18 @@
 		// if the weights extend before the data start date, 
 		// data will be averaged from the data start date
 		var count=0;
-		var valSum=0;
+		var valsum=0;
 		var weightSum=0;
 		var i=0;
 		var d=date;
-		// debugging: get actual values for 'positive'
-		var pop = feat.properties.POP_2010;
-		var dayMinus0 = getValue(feat,date,'positive',false);
-		var dayMinus1 = getValue(feat,previousDate(date),'positive',false);
-		var dayMinus2 = getValue(feat,previousDate(previousDate(date)),'positive',false);
-		var dayMinus3 = getValue(feat,previousDate(previousDate(previousDate(date))),'positive',false);
 		while(d != null && i < periodWts.length){
 			var curval = valFunc(feat,d);
-			valSum += periodWts[i] * valFunc(feat, d);
+			valsum += periodWts[i] * valFunc(feat, d);
 			weightSum += periodWts[i];
 			i += 1;
 			d = previousDate(d);
 		}
-		return valSum/weightSum;
+		return valsum/weightSum;
 	}
 
 	function extendColorScale(initScale,lowValColor, highValColor){
@@ -287,7 +276,7 @@
 
 	function handleThemeChange(){
 		// determine the new map theme
-		var mapTheme = document.getElementById("themeselector").value;		
+		var mapTheme = document.getElementById("themeSelector").value;		
 		// Look for the theme in our theme modules
 		const match = themes.find(v => v.themeName == mapTheme)
 		if (match) {
@@ -306,6 +295,47 @@
 		updateMap();
 		loadLegend();
 	}
+
+  	var loadData=function(){
+		return new Promise(
+			function(resolve, reject){
+				// determine new data source
+				var dataSource = document.getElementById("dataSourceSelector").value;		
+				// find matching data source object
+				console.log("FINDING MATCH");
+				const match = dataSources.find(v => v.dataSourceName == dataSource);
+				if(match){
+					console.log("MATCH FOUND");
+					data_func = match.dataFunc;
+					console.log(data_func);
+					Promise.resolve(data_func).then(function(data_obj){
+						console.log("AFTER PROMISE RESOLVED");
+						base = data_obj.baseFeatures;
+						cartogram = data_obj.cartogramFeatures;
+						dates = data_obj.dates;
+						districtIDs = data_obj.districtIDs;
+						dateDistrictData = data_obj.dateDistrictData;
+						getID = data_obj.getID;
+						getPopulation = data_obj.getPopulation;
+						var getRawValue = data_obj.getValue;
+						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
+							var val = getRawValue(feat,date,varName);
+							if(perMillion){val = val*1000000/getPopulation(feat);}
+							if(getIncrease){
+								var yesterday = previousDate(date);
+								if (yesterday != null){
+									var yesterdayVal = getValue(feat,yesterday,varName,perMillion,false);				
+									val = val-yesterdayVal
+								}
+							}		
+							return val;
+						}
+					resolve()
+					})
+				}
+			}
+		)
+	};
 
 	function extendedChoroplethColorScale(featVal){
 		var colorScale = choroplethColorScale;
@@ -494,10 +524,10 @@
 			// show data for selected feature
 			// population data is from feature itself
 			var pop = feature.properties.POP_2010
-			// remaining data is from "vals" object, lookup by date and state
+			// remaining data is from "dateDistrictData" object, lookup by date and state
 			var stateAbbrev = feature.properties.ABBREV;
 			let [year, month, day] = parseDate(curDate);
-			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ")</B><BR>" 
+			showHTML = "<B>" + feature.properties.STATE_NAME + " (" + monthString(month) + " " + day + ")</B><BR>";
 			showHTML += tooltipText(feature,curDate);
 			return showHTML;
 		} else {
@@ -738,7 +768,7 @@
 
 		if(e.key=="t" || e.key=="T"){
 			// set or remove focus for theme selector
-			var selbox = document.getElementById("themeselector");
+			var selbox = document.getElementById("themeSelector");
 			if(selbox === document.activeElement){
 				selbox.blur();
 			} else {
@@ -748,7 +778,7 @@
 
 
 		if(e.keyCode==37){
-			if(document.activeElement === document.getElementById("themeselector")){
+			if(document.activeElement === document.getElementById("themeSelector")){
 				console.log("selecting themes...");
 			} else {
 				curval = slider.value();
@@ -756,7 +786,7 @@
 			}
 		}
 		if(e.keyCode==39){
-			if(document.activeElement === document.getElementById("themeselector")){
+			if(document.activeElement === document.getElementById("themeSelector")){
 				console.log("selecting themes...");
 			} else {
 				curval = slider.value();
@@ -766,61 +796,6 @@
 		}
 		
 	}
-
-
-	// load data, then map, then slider
-	let loadData = new Promise(function(resolve, reject){
-		// load data from covidtracking api
-		// data will be hierarchical in form: date => state => [positive, negative, death]
-		$.getJSON('https://covidtracking.com/api/states/daily', function(data) {
-			//data is the JSON string
-			// get list of unique dates			
-			dates = new Set();
-			for(let i=0; i < data.length; i++){
-				dates.add(data[i]["date"]);
-				}
-			dates=Array.from(dates);
-			dates=dates.reverse();
-			// create dictionary of values for each date
-			// initializing each date value to an empty dictionary
-			vals = {};
-			for(let i=0; i < dates.length; i++){
-				vals[dates[i]]={};
-				}
-			// get unique list of states
-			var states = new Set();
-			for(let i=0; i < states_base.features.length; i++){
-				states.add(states_base.features[i].properties["ABBREV"]);
-				}
-			states = Array.from(states);
-			// populate vals array with dummy values for each date/state
-			for(let i=0; i < dates.length; i++){
-				var cur_date = dates[i];
-				var cur_record = vals[cur_date];
-				for(let j=0; j < states.length; j++){
-					cur_state = states[j];
-					cur_record[cur_state] = {};
-				}
-			}
-
-			// go through data object and transfer values into vals object
-			for(let i=0; i < data.length; i++){
-				// get date and state
-				var cur_date = data[i]["date"];
-				var cur_state = data[i]["state"];
-				var curValObj = vals[cur_date][cur_state];
-				if(curValObj != undefined){
-					// transfer to vals object
-					vals[cur_date][cur_state]['positive'] = data[i]["positive"];
-					vals[cur_date][cur_state]['negative'] = data[i]["negative"];
-					vals[cur_date][cur_state]['death'] = data[i]["death"];
-				}
-			}
-			// finish and move on
-			resolve();
-			});	
-		});  
-
 
   	var loadSlider=function(){return new Promise(function(resolve, reject){
 		
@@ -833,7 +808,7 @@
 			var r = day;
 			// try to get 10 tick values
 			
-			var tickVals = slider.tickValues();
+			var tickvals = slider.tickValues();
 			// show Month if we're on the first day of the month
 			if (sliderID==0 || day < parseDate(dates[sliderID-1])[1]){
 				r = monthString(month) + ". " + day;
@@ -878,7 +853,7 @@
 
 	})}
 	
-	loadData.then(function(){ 
+	loadData().then(function(){
 		loadSlider().then(function(){
 			// define current date
 			curDate=dates[0];
@@ -893,8 +868,9 @@
 			document.onkeydown=handlekeydown;			
 			document.getElementById("carttoggle").addEventListener("change",function(){toggle_map(1500);});
 			document.getElementById("carttoggle").checked = false;
-			document.getElementById("themeselector").addEventListener("change",function(){handleThemeChange();});
-			$('themeselector').on('keydown', function(e){
+			document.getElementById("themeSelector").addEventListener("change",function(){handleThemeChange();});
+			document.getElementById("dataSourceSelector").addEventListener("change",function(){handleDataSourceChange();});
+			$('themeSelector').on('keydown', function(e){
 				if(e.keyCode === 37 || e.keyCode === 39) { //left or right
 					e.preventDefault();
 					return false;

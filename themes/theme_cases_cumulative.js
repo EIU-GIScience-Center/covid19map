@@ -112,7 +112,8 @@ const themeCasesCumulative = {
 	tooltipTextFcn: function (feat, date) {
 		var pop = getPopulation(feat);
 		var case_count = getValue(feat,date,'positive',perMillion = false);
-		var case_rate = getValue(feat,date,'positive',perMillion = true); // choroplethValue(feat,date);
+		// var case_rate = getValue(feat,date,'positive',perMillion = true); // choroplethValue(feat,date);
+		var case_rate = choroplethValue(feat,date);
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
 		msg += "<p>" + withCommas(case_count) + " cases</p>";
 		msg += "<p>" + rateText(case_rate) + " cases per million</p>";		
