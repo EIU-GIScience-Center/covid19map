@@ -16,7 +16,7 @@ var dataCovidTracking_states={
 							var states_cartogram=data;	
 							// load tabular data
 							$.getJSON(
-								'https://covidtracking.com/api/states/daily', function(data) {
+								'https://cors-anywhere.herokuapp.com/https://covidtracking.com/api/states/daily', function(data) {
 									//data is the JSON string
 									// get list of unique dates												
 									var dates = new Set();

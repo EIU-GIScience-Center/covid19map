@@ -26,7 +26,7 @@ const themeNewCases = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		return periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', true, true)}, [1,1,1]);
+		return periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', true, true)}, [1]);
 	},
 
 	/**
@@ -69,7 +69,7 @@ const themeNewCases = {
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "New Cases Per Million (3-day average)",
+	choroplethLegendTitle: "New Cases Per Million",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -80,7 +80,7 @@ const themeNewCases = {
 	 *         interpreted as the radius of the circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'positive',false, true);}, [1,1,1]);
+		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'positive',false, true);}, [1]);
 				if(todayCases > 0){
 					// for now, set radius as sqrt of cases/fixed constant
 					return Math.sqrt(todayCases)/3;
@@ -117,7 +117,7 @@ const themeNewCases = {
 		var new_case_count = Math.round(new_case_rate*pop/1000000);
 
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + withCommas(new_case_count) + " new cases/day</p>";
+		msg += "<p>" + withCommas(new_case_count) + " new cases</p>";
 		msg += "<p>" + rateText(new_case_rate) + " new cases per million</p>";		
 		return msg;
 	}

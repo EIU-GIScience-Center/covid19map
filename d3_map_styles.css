@@ -1,5 +1,7 @@
 <style>
-* { padding: 0; margin: 0; }
+* { padding: 0; margin: 0; 
+  border: 1px solid #f00;
+}
 html, body, #fullheight {
     min-height: 100% !important;
     height: 100%;
@@ -27,6 +29,7 @@ html, body, #fullheight {
 	margin-right: 0ex;
 	margin-top:0ex; 
 	margin-bottom: 0ex;
+	overflow: none;
 }
 
 #maptop{
