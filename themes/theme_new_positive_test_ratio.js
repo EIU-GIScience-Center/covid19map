@@ -4,16 +4,25 @@
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
 
-const testCaseRatio_logScale = d3.scaleLog()
-				.domain([0.01, 1]);
+var newPositiveTestRatio_Scale = d3.scaleLog()
+				.domain([1, 100]);
 
-const themeNewTestCaseRatio = {
+const themeNewPositiveTestRatio = {
 	/**
 	 * The name under which this variable shows up in the variable selector
 	 *
 	 * type: string
 	 */
-	themeName: "New Tests/New Cases",
+	themeName: "Positive Test Ratio (3-day)",
+
+	/**
+	 * A brief description, to show in the main window
+	 *
+	 * type: string
+	 */
+	
+	briefDescription: "The ratio of positive test results to total tests during the most recent 3-day period. A high value indicates insufficient testing.",
+
 
 	/**
 	 * A function that gives the value for a given feature
@@ -24,58 +33,58 @@ const themeNewTestCaseRatio = {
 	 */
 	choroplethValueFcn: function (feat, date) {
 		var state = feat.properties["ABBREV"];		
-		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', true, true)}, [1,1,1]);
-		var newtests = newcases + periodAverage(feat, date, function(f,d){return getValue(f,d,'negative', true, true)}, [1,1,1]);
-		if(newcases==0){return 0;} else {return newtests/newcases;}
+		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1]);
+		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', true, true)}, [1,1,1]);
+		if(newtests==0){return 0;} else {return 100*newcases/newtests;}
 	},
 
-
 	/**
-	 * A color function to determine the color associated with a given
+	 * A color interpolators to determine the feature fill color associated with a given
 	 * value
 	 *
-	 * @param value A single numeric value of our feature
-	 * @return A color (in the form '#RGB' or '#RRGGBB')
+	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
+	 * Or build your own.
 	 */
-	 
-	choroplethColorScale : d3.scaleSequential((d) => 
-				d3.interpolateBlues(1-(testCaseRatio_logScale(1/(Math.pow(d,1.3))))))
-	,
+	choroplethColorInterpolator: d3.interpolateBlues,
 
 	/**
-	 * [value,color] pairs for assigning colors to to values outside of legend range
-	 */
-	lowValColor : [1,'#fff'],
-	highValColor : [20,'#005'],
-	
-
-	/**
-	 * A function returning the values and labels appropriate for use with
-	 * our feature on the legend
+	 * A function that takes possible values of the 
+	 * choropleth value function and transforms them to a linear
+	 * range (e.g. from 0 to 1) to match with a color range
 	 *
-	 * @param feat The feature being shown
-	 * @param date The date at which the feature is shown
-	 * @return An array containing two arrays.
-	 *         The first is a numerical array containing the values at which
-	 *         ticks should be shown in the legend
-	 *         The second is a string array containing the labels to be used
-	 *         at said ticks.
-	 *         Obviously, the two arrays should be of the same length.
+	 * @param value A single numeric value of our feature
+	 * @return A transformed value
 	 */
-	cellsAndLabelsFcn: function (feat, date) {
-		
-		return [
-			[1, 2, 5, 10, 20, 30, 50],
-			["1", "", "5", "", "20", "", "50"]
-		]
+	choroplethValueScale: function(d){
+		if(d==0){
+			return 0;
+		} else {
+			return Math.pow(Math.log(d),1.2);
+		}
 	},
+
+	/**
+	 * If true, the color scheme will be reversed.
+	 */
+	invertColorScale: true,
+
+	/**
+	 * The values to show colors for on the choropleth legend
+	 */
+	choroplethCells: [1,2,5,7.5,10,15,20,25,30,50],
+
+	/**
+	 * The corresponding labels on the choropleth legend
+	 * obviously this should be the same length as "cells"
+	 */
+	choroplethLabels: ["1","", "5", "", "10", "", "20","","30",""], 
 
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Number of tests performed for each positive test result.",
+	choroplethLegendTitle: "Percent of tests with positive result.",
 
 /**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -116,13 +125,13 @@ const themeNewTestCaseRatio = {
 	tooltipTextFcn: function (feat, date) {
 		var state = feat.properties["ABBREV"];		
 		var state = feat.properties["ABBREV"];		
-		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', false, true)}, [1,1,1]);
-		var newtests = newcases + periodAverage(feat, date, function(f,d){return getValue(f,d,'negative', false, true)}, [1,1,1]);
-		var new_test_case_ratio ;
-		if(newcases==0){new_test_case_ratio="n/a";} else {new_test_case_ratio= (newtests/newcases).toFixed(1) + "x";}
+		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1]);
+		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', false, true)}, [1,1,1]);
+		var ptr;
+		if(newtests==0){new_PTR="n/a";} else {new_PTR= (100*(newcases/newtests)).toFixed(1) + "%";}
 		msg = "<p>New Tests: " + withCommas(newtests.toFixed(0)) + "</p>";
 		msg += "<p>New Cases: " + withCommas(newcases.toFixed(0)) + "</p>";
-		msg += "<p>Test/Case Ratio: " + new_test_case_ratio + "</p>";
+		msg += "<p><b>Positive Test Ratio: " + new_PTR + "</b></p>";
 		return msg;
 	}
 	

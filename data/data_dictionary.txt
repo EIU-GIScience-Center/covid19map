@@ -1,0 +1,22 @@
+Dictionary of Data Variables used in the COViz Project
+
+The purpose of this dictionary is to enable the same 
+visualization themes to be applied to data from different
+sources. Each data theme will look for data variables with 
+a given name. Thus, it should be easy to map data from a new 
+data source if it uses the same variable names as an existing
+data source.
+
+VariableName	:	Description
+---------------------------------------------------------
+cases			:	The cumulative number of cases of COVID-19 recorded in a 
+					district since the beginning of the epidemic.
+tests			:	The cumulative number of COVID-19 tests run in a district
+					since the beginning of the epidemic. Note that 
+					some data sources report the number of tests, 
+					while others report the number of people tested.
+					Either way should allow for the same type of map theme,
+					but the exact definition should be noted if possible.
+					For now, we do not distinguish between these scenarios.
+deaths			:	The cumulative number of people who have died of COVID-19
+					in the district since the beginning of the epidemic.
