@@ -15,8 +15,11 @@
   <script src="utils.js"></script>
   <script src="themes/theme_cases_cumulative.js"></script>
   <script src="themes/theme_new_cases.js"></script>
-  <script src="themes/theme_test_case_ratio.js"></script>
-  <script src="themes/theme_new_test_case_ratio.js"></script>
+  <script src="themes/theme_positive_test_ratio.js"></script>
+  <script src="themes/theme_new_positive_test_ratio.js"></script>
+  <script src="themes/theme_case_mortality.js"></script>
+  <script src="themes/theme_case_mortality_7day_lag.js"></script>
+
 
 </head>
 
@@ -52,6 +55,11 @@
 							</select>
 						</td>
 					</tr>
+					<tr>
+						<td colspan=2 id="brief_description">
+						</td>
+					</tr>
+
 					<tr>
 						<td>
 							Map Type:
@@ -110,7 +118,7 @@
 	</div>
 <script defer>
 	// load default dataset
-	const cr10 = Math.cbrt(10);
+	var cr10 = Math.cbrt(10);
 	var base;
 	var cartogram;
 	var active_feature = null;
@@ -133,19 +141,27 @@
 	var choroplethColorScale; // scale function for legend (doesn't include white for zero)
 	var lowValColor = null;
 	var highValColor = null;
+	var lowVal;
+	var highVal;
 	var choroplethCellsAndLabels; // function returning [C,L] : legend symbol cells and corresponding labels;
 	var choroplethLegTitle; // string text for legend title
 	var circleRadius; // function to determine size of small circles
 	var circleFill='#f47'; // fill color
 	var circlestroke='#a05'; // stroke color
-	
+
+	// array of themes
+	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
 		themeCasesCumulative,
 		themeNewCases,
-		themeTestCaseRatio,
-		themeNewTestCaseRatio
+		themePositiveTestRatio,
+		themeNewPositiveTestRatio,
+		themeCaseMortality, 
+		themeCaseMortality_7dayLag
     ]
 
+	// array of data sources
+	// each data source should be defined in a separate file; see data_covidtracking_states.js for a template
 	var dataSources = [
 		dataCovidTracking_states
 	]
@@ -166,130 +182,96 @@
 		dataSourceSelector.add(option);
     }
 
-	const nthPowScale = function(n){
-		return d3.scalePow()
-			.exponent(n);
-		};
-
-	function area(coords){
-		var a=0;
-		for(let i=0; i<coords.length;i++){
-			var j = i + 1;
-			if(j==coords.length){j=0;}
-			var xi=coords[i][0],yi=coords[i][1],xj=coords[j][0],yj=coords[j][1];
-			a += (coords[j][0]-coords[i][0])*(coords[i][1]+coords[j][1]);
-		}
-		return a/2;
-	}
-
-	function coordCentroid(coords, A=-1){
-		var cX=0, cY=0;
-		if(A==-1){A = area(coords)}
-		for(let i=0; i<coords.length;i++){
-			var j = i + 1;
-			if(j==coords.length){j=0;}
-			var xi=coords[i][0],yi=coords[i][1],xj=coords[j][0],yj=coords[j][1];
-			var cross = (xi*yj-xj*yi);
-			cX += (xi+xj)*cross;
-			cY += (yi+yj)*cross;
-		}
-		return [-cX/(6*A),-cY/(6*A)];
-	}
-
-	function centroid(feat,A=-1){
-		var geo = feat['geometry'];
-		var coordlists = geo['coordinates'];
-		var maxArea=-1;
-		var C;
-		for(let i=0;i<coordlists.length;i++){
-			var coords = coordlists[i][0];
-			var A = area(coords);
-			if(A > maxArea){	
-				maxArea = A;
-				C = coordCentroid(coords,A);
-			}
-		}
-		return C;		
-	}
-
-	function periodAverage(feat, date, valFunc, periodWts){
-		// computes the weighted average for days ending on the input date
-		// function must take only feat and date as input
-		// example: if weights are [1,0.5,0.25] then the return value
-		// will be (1*today+0.5*yesterday+0.25*2daysage)/1.75
-		// if the weights extend before the data start date, 
-		// data will be averaged from the data start date
-		var count=0;
-		var valsum=0;
-		var weightSum=0;
-		var i=0;
-		var d=date;
-		while(d != null && i < periodWts.length){
-			var curval = valFunc(feat,d);
-			valsum += periodWts[i] * valFunc(feat, d);
-			weightSum += periodWts[i];
-			i += 1;
-			d = previousDate(d);
-		}
-		return valsum/weightSum;
-	}
-
-	function extendColorScale(initScale,lowValColor, highValColor){
-		return function(inVal){
-			if (lowValColor != null){
-				if (inVal <= lowValColor[0]){
-					return lowValColor[1];
-				} 
-			}
-			if (highValColor != null){
-				if (inVal >= highValColor[0]){
-					return highValColor[1];
+	function truncateCellsAndLabels(cells,labels, lowVal, highVal){
+		// get indices of highest cell below lowVal, and lowest cell above highVal
+		var lowIndex=0;
+		var highIndex=cells.length-1;
+		var gotHigh = false;
+		for(i=0;i<cells.length;i++){
+			if (cells[i] < lowVal){lowIndex = i;}
+			if(gotHigh == false){
+				if(cells[i] > highVal){
+					highIndex = i; 
+					gotHigh = true;
 				}
 			}
-			return initScale(inVal);
 		}
+		// slice out the corresponding section of the cells and labels
+		cells = cells.slice(lowIndex, highIndex + 1);
+		labels = labels.slice(lowIndex, highIndex + 1);
+		return [cells,labels];
 	}
 
-	function expBase10CellsAndLabelsFunc(minVal=1,maxVal=100000){
-		var outFunc = function(){			
-			var curVal = minVal;
-			var legendCells = [];
-			var legendLabels = [];
-			while (curVal < maxVal + 1){
-				// add to legend values and labels
-				legendCells.push(curVal);
-				if (Math.round(curVal)%10 == 0 || Math.round(curVal)==1){
-					legendLabels.push(withCommas(Math.round(curVal)));
-				} else {
-					legendLabels.push("");
-				}
-				// increment
-				curVal *= cr10; 
-			}
-			return [legendCells, legendLabels];
-		}
-		return outFunc;
-	}
-
-	function handleThemeChange(){
+	function loadTheme(){
 		// determine the new map theme
-		var mapTheme = document.getElementById("themeSelector").value;		
+		var themeName = document.getElementById("themeSelector").value;		
 		// Look for the theme in our theme modules
-		const match = themes.find(v => v.themeName == mapTheme)
+		const match = themes.find(v => v.themeName == themeName)
 		if (match) {
+			briefDescription = match.briefDescription;
 			choroplethValue = match.choroplethValueFcn;
 			tooltipText = match.tooltipTextFcn;
-			choroplethColorScale = match.choroplethColorScale;
-			lowValColor = match.lowValColor;
-			highValColor = match.HighValColor;
-			choroplethCellsAndLabels = match.cellsAndLabelsFcn;
+			var choroplethColorInterpolator = match.choroplethColorInterpolator;
+			choroplethCells = match.choroplethCells;
+			choroplethLabels = match.choroplethLabels;
 			choroplethLegTitle = match.choroplethLegendTitle;
 			circleRadius = match.circleRadiusFcn;
 			circleFill = match.circleFill;
 			circlestroke = match.circleStroke;
+			choroplethValueScale = match.choroplethValueScale;
+			var invertColorScale = match.invertColorScale;
+			// show the description of the theme
+			document.getElementById("brief_description").innerHTML ="<i>" + briefDescription + "</i>";
+			// calculate true legend/color/size scales based on theme parameters
+			if(invertColorScale){
+				lowValColor = choroplethColorInterpolator(1);
+				highValColor = choroplethColorInterpolator(0);
+			} else {
+				lowValColor = choroplethColorInterpolator(0);
+				highValColor = choroplethColorInterpolator(1);
+			}
+			
+			// following should be modified to utilize Jason's function
+			if(themeName == themeCasesCumulative.themeName){
+				lowVal= 300; 
+				highVal= 16000;
+			} else if (themeName == themeNewCases.themeName){
+				lowVal= 10; 
+				highVal= 1600;
+			} else if (themeName == themePositiveTestRatio.themeName){
+				lowVal= 1; 
+				highVal= 50;
+			}  else if (themeName == themeNewPositiveTestRatio.themeName){
+				lowVal= 1; 
+				highVal= 50;
+			} else if (themeName == themeCaseMortality.themeName){
+				lowVal= 0.5; 
+				highVal= 10;
+			} else if (themeName == themeCaseMortality_7dayLag.themeName){
+				lowVal= 0.5; 
+				highVal= 10;
+			}
+			
+			
+			// truncate legend cells and labels to low and high values
+			[choroplethCells, choroplethLabels]=truncateCellsAndLabels(choroplethCells,choroplethLabels,lowVal, highVal);
+
+			var unitIntervalScale = d3.scaleLinear()
+				.domain([choroplethValueScale(lowVal), choroplethValueScale(highVal)]);
+			if(invertColorScale){
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return choroplethColorInterpolator(1-unitIntervalScale(choroplethValueScale(d)));
+				});
+			} else {
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return choroplethColorInterpolator(unitIntervalScale(choroplethValueScale(d)));
+				});
+			
+			}
+
 		}
 		// update the map and legend
-		updateMap();
+		updateMap(curDate);
 		loadLegend();
 	}
 
@@ -303,20 +285,21 @@
 				if(match){
 					data_func = match.dataFunc;
 					Promise.resolve(data_func).then(function(data_obj){
-						console.log("AFTER PROMISE RESOLVED");
 						base = data_obj.baseFeatures;
 						cartogram = data_obj.cartogramFeatures;
 						dates = data_obj.dates;
 						districtIDs = data_obj.districtIDs;
+						variableNames = data_obj.variableNames;
 						dateDistrictData = data_obj.dateDistrictData;
 						getID = data_obj.getID;
 						getPopulation = data_obj.getPopulation;
-						var getRawValue = data_obj.getValue;
+						var getValue_raw = data_obj.getValue;
 						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
-							var val = getRawValue(feat,date,varName);
+							var featID = getID(feat);
+							var val = getValue_raw(dateDistrictData,featID,date,varName);
 							if(perMillion){val = val*1000000/getPopulation(feat);}
 							if(getIncrease){
-								var yesterday = previousDate(date);
+								var yesterday = previousDate(date, dates);
 								if (yesterday != null){
 									var yesterdayVal = getValue(feat,yesterday,varName,perMillion,false);				
 									val = val-yesterdayVal
@@ -331,16 +314,24 @@
 		)
 	};
 
-	function extendedChoroplethColorScale(featVal){
-		var colorScale = choroplethColorScale;
-		colorScale = extendColorScale(colorScale, lowValColor,highValColor);
-		return colorScale(featVal);
+	function extendColorScale(initScale,inVal){
+		if (lowValColor != null){
+			if (inVal <= lowVal){
+				return lowValColor;
+			} 
+		}
+		if (highValColor != null){
+			if (inVal >= highVal){
+				return highValColor;
+			}
+		}
+		return initScale(inVal);
 	}
 
 	function choroplethColor(feat,date){
 		// assign a color based on rate per million
 		var featval =choroplethValue(feat,date);
-		return extendedChoroplethColorScale(featval);
+		return extendColorScale(choroplethColorScale,featval);
 	}			
 	
 	function prjXFunction(scale,trans){
@@ -423,7 +414,7 @@
 	}	
 
 	// switches map features to the given features
-	function switchto(divid, newFeatSet, fromdata,milliseconds,callback){
+	function switchMapCartogram(divid, newFeatSet, fromdata,milliseconds,callback){
 		var ele = document.getElementById(divid); // Do not use #
 		var width = ele.clientWidth;
 		var height = ele.clientHeight;
@@ -467,11 +458,12 @@
 	// toggles between the current base map and cartogram
 	function toggle_map(milliseconds=1500, callback){
 		if (oncartogram){
-			switchto('map', base, cartogram, milliseconds, callback);
+			switchMapCartogram('map', base, cartogram, milliseconds, callback);
+		} else {
+			if(cartogram != null){
+				switchMapCartogram('map', cartogram, base, milliseconds, callback);
 			}
-		else{
-			switchto('map', cartogram, base, milliseconds, callback);
-			}
+		}
 		oncartogram = !oncartogram;
 	}
 
@@ -482,7 +474,7 @@
 		//loadLegend();
 		//loadSlider();
 		// make sure theme is updated
-		handleThemeChange();
+		loadTheme();
 		// update map
 		if (curDate != null){
 			if(oncartogram==true){
@@ -490,7 +482,7 @@
 			} else {
 				m = loadMap(base);
 			}
-			updateMap();
+			updateMap(curDate);
 			loadSlider();
 		}
 	});		
@@ -570,22 +562,26 @@
 			.style('fill',circleFill)
 			.style('stroke',circlestroke)
 			.style('stroke-width',1)
-			.style('opacity',0.5);		
+			.style('opacity',0.5)
+			.on("click",feature_click)
+			.on("mouseover",feature_mouseover)
+			.on("mouseout",feature_mouseout);			
 		statepaths.exit().remove();
 		return statepaths;
 	}
 
-	function updateMap(delay=0,duration=750, callback){
+	// updates the map data to the given date 
+	function updateMap(date, delay=0,duration=750, callback){
 		if(curDate != null){
 			statepaths.selectAll('path')
 				.transition()
-				.attr("fill",function(d){return choroplethColor(d, curDate);})
+				.attr("fill",function(d){return choroplethColor(d, date);})
 				.delay(delay)
 				.duration(duration)
 				.on('end',callback);
 			circles.selectAll('circle')
 				.transition()
-				.attr('r',function(d){return circleRadius(d,curDate);})
+				.attr('r',function(d){return circleRadius(d,date);})
 				.style('fill',circleFill)
 				.style('stroke',circlestroke)
 				.delay(delay)
@@ -595,56 +591,39 @@
 	}
 
 	function loadLegend(){
-		/*
-		var choroplethValue; // function to get value given feature, date
-		var tooltipText; // function to get text for given value, given feature, date
-		var choroplethColorScale; // scale function for legend (doesn't include white for zero)
-		var extendedChoroplethColorScale; // scale function for map (includes white for zero) 
-		var choroplethCellsAndLabels; // function returning [C,L] : legend symbol cells and corresponding labels;
-		var choroplethLegTitle; // string text for legend title
-		*/
-		
 		// get available width
 		var viewportwidth = $(window).width();
 		var legwidth = 0.45*(viewportwidth);
-		if(legwidth < 100){legwidth=100;};
-		
-		
+		if(legwidth < 100){legwidth=100;};	
+		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
+		// create svg for new legend
 		var legendsvg = d3.select("#legend")
 			.attr('align','center')
 			.append('svg')
 			.attr('width',legwidth)
-			.attr('height',60);
-		
+			.attr('height',60);		
 		legendsvg.append("g")
 		  .attr("class", "legendSequential")
 		  .attr("transform", "translate(20,20)");
-
-		var legendCells = [];
-		var legendLabels = [];
-		[legendCells, legendLabels] = choroplethCellsAndLabels();	
-		var numCells = legendCells.length;
-
+		// create legend
+		var numCells = choroplethCells.length;
 		var legendSequential = d3.legendColor()
 			.shapeWidth((legwidth-30)/numCells)
 			.title(choroplethLegTitle)
-			.cells(legendCells)
+			.cells(choroplethCells)
 			.orient("horizontal")
-			.labels(legendLabels)
+			.labels(choroplethLabels)
 			.scale(choroplethColorScale)
 			.shapePadding(-1)
 			.shapeHeight(15)
 			.labelOffset(6); 
-
+		// call function to draw legend in svg
 		legendsvg.select(".legendSequential")
 		  .call(legendSequential);
 	}
 
-
-	// *** FUNCTIONS TO SHOW FEATURE INFO TO BE REPLACED BY TOOLTIP ***
-	// show information when user selects or mouses over a feature
-	
+	// show information when user selects or mouses over a feature	
 	function showFeatureInfo(d){		
 		// determine if tooltip will go above or below cursor
 		d3.select('#tooltip')
@@ -666,7 +645,6 @@
 		}
 	}
 
-
 	// processes user click on a specific district
 	function feature_click(d,i) {
 	  // d is the geometry object
@@ -683,7 +661,6 @@
 	  showFeatureInfo(d);
 	}
 
-
 	function feature_mouseover(d,i){
 		if (active_feature == null){
 			showFeatureInfo(d);
@@ -696,7 +673,6 @@
 		}
 	}
 
-
 	// unselect any selected features
 	function reset() {
 			m.selectAll(".active").classed("active", active = false);
@@ -704,7 +680,6 @@
 			m.transition().duration(750).attr("transform", "");
 			d3.select('#tooltip').style('opacity',0);
 	}
-
 
 	function loadTooltips(){
 		// load tooltips
@@ -716,23 +691,9 @@
 			.style('padding','3px')
 			.style('user-select','none')
 			.style('stroke-alignment','inner');
-		/*
-		d3.select('#map').selectAll('svg').selectAll('path')
-			.on('mouseover',function(d){
-		d3.select('#tooltip')
-					.style('left',(d3.event.pageX+10) + 'px')
-					.style('bottom',(window.innerHeight-d3.event.pageY) + 'px');		
-			})
-			.on('mouseout',feature_mouseout)
-			.on('mousemove',function(){
-				
-			});
-		*/
 	}
 
-
-
-	// handle keypress
+	// keyboard shortcuts
 	function handlekeydown(e){
 		if(e.key=="p" || e.key=="P"){
 			// switch to population map
@@ -780,8 +741,6 @@
 		
 	}
 
-	
-
   	var loadSlider=function(){return new Promise(function(resolve, reject){
 		// remove existing slider
 		if (slider_svg != null){
@@ -826,7 +785,7 @@
 				sliderID=slider.value();
 				curDate = dates[sliderID];
 				d3.select('#value').text(curDate);
-				updateMap(0,slider_update_duration,function(){return false;});
+				updateMap(curDate,0,slider_update_duration,function(){return false;});
 				});
 		
 		slider_svg = d3.select('#slider')
@@ -859,8 +818,8 @@
 			document.onkeydown=handlekeydown;			
 			document.getElementById("carttoggle").addEventListener("change",function(){toggle_map(1500);});
 			document.getElementById("carttoggle").checked = false;
-			document.getElementById("themeSelector").addEventListener("change",function(){handleThemeChange();});
-			document.getElementById("dataSourceSelector").addEventListener("change",function(){handleDataSourceChange();});
+			document.getElementById("themeSelector").addEventListener("change",function(){loadTheme();});
+			document.getElementById("dataSourceSelector").addEventListener("change",function(){loadData();});
 			$('themeSelector').on('keydown', function(e){
 				if(e.keyCode === 37 || e.keyCode === 39) { //left or right
 					e.preventDefault();

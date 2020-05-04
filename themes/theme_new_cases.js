@@ -16,7 +16,16 @@ const themeNewCases = {
 	 *
 	 * type: string
 	 */
-	themeName: "New Cases",
+	themeName: "Cases (3-day)",
+
+	/**
+	 * A brief description, to show in the main window
+	 *
+	 * type: string
+	 */
+	
+	briefDescription: "The average number of new cases/day in the most recent 3-day period.",
+
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -26,43 +35,43 @@ const themeNewCases = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		return periodAverage(feat, date, function(f,d){return getValue(f,d,'positive', true, true)}, [1]);
+		return periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1]);
 	},
 
 	/**
-	 * A color function to determine the feature fill color associated with a given
+	 * A color interpolators to determine the feature fill color associated with a given
 	 * value
 	 *
-	 * @param value A single numeric value of our feature
-	 * @return A color (in the form '#RGB' or '#RRGGBB')
+	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
+	 * Or build your own.
 	 */
-	choroplethColorScale: d3.scaleSequential((d) => 
-				d3.interpolateMagma(nthPowScale(0.6)(newCases_logScale(d))))
-	,
+	choroplethColorInterpolator: d3.interpolateMagma,
 
 	/**
-	 * [value,color] pairs for assigning colors to to values outside of legend range
-	 */
-	lowValColor : [0,'#fff'],
-	highValColor : null,
-
-	/**
-	 * A function returning the values and labels appropriate for use with
-	 * our feature on the legend
+	 * A function that takes possible values of the 
+	 * choropleth value function and transforms them to a linear
+	 * range (e.g. from 0 to 1) to match with a color range
 	 *
-	 * @param feat The feature being shown
-	 * @param date The date at which the feature is shown
-	 * @return An array containing two arrays.
-	 *         The first is a numerical array containing the values at which
-	 *         ticks should be shown in the legend
-	 *         The second is a string array containing the labels to be used
-	 *         at said ticks.
-	 *         Obviously, the two arrays should be of the same length.
+	 * @param value A single numeric value of our feature
+	 * @return A transformed value
 	 */
-	cellsAndLabelsFcn: function (feat, date) {
-		var getValsFunc = expBase10CellsAndLabelsFunc(1,newCases_legendMax);
-		return getValsFunc();
-	},
+	choroplethValueScale: function(d){return Math.pow(Math.log(d),0.7);},
+
+	/**
+	 * If true, the color scheme will be reversed.
+	 */
+	invertColorScale: true,
+
+	/**
+	 * The values to show colors for on the choropleth legend
+	 */
+	choroplethCells: expBase10CellsAndLabels()[0],
+
+	/**
+	 * The corresponding labels on the choropleth legend
+	 * obviously this should be the same length as "cells"
+	 */
+	choroplethLabels: expBase10CellsAndLabels()[1],
 
 	/**
 	 * The title to be used on the legend for this module's feature
@@ -80,7 +89,7 @@ const themeNewCases = {
 	 *         interpreted as the radius of the circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'positive',false, true);}, [1]);
+		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases',false, true);}, [1,1,1]);
 				if(todayCases > 0){
 					// for now, set radius as sqrt of cases/fixed constant
 					return Math.sqrt(todayCases)/3;
@@ -113,12 +122,12 @@ const themeNewCases = {
 	 */
 	tooltipTextFcn: function (feat, date) {
 		var pop = getPopulation(feat);
-		var new_case_rate = choroplethValue(feat,date);
-		var new_case_count = Math.round(new_case_rate*pop/1000000);
+		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1])
+		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1])
 
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + withCommas(new_case_count) + " new cases</p>";
-		msg += "<p>" + rateText(new_case_rate) + " new cases per million</p>";		
+		msg += "<p>" + new_case_count.toFixed(2) + " new cases/day</p>";
+		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		
 		return msg;
 	}
 

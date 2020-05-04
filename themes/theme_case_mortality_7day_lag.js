@@ -3,21 +3,14 @@
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
-const casesCumulative_legendMax = 10000;
-const casesCumulative_logScale = d3.scaleLog()
-	.domain([casesCumulative_legendMax, 100*Math.cbrt(10)]);
-var localScale = d3.scalePow().exponent(0.7)(d3.scaleLog().domain([10000, 100*Math.cbrt(10)]));
 
-
-// The theme object
-const themeCasesCumulative = {
-
+const themeCaseMortality_7dayLag = {
 	/**
-	 * The name under which this theme shows up in the theme selector
+	 * The name under which this variable shows up in the variable selector
 	 *
 	 * type: string
 	 */
-	themeName: "Cases (cumulative)",
+	themeName: "Case Mortality (7-day lag)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -25,18 +18,27 @@ const themeCasesCumulative = {
 	 * type: string
 	 */
 	
-	briefDescription: "The cumulative number of confirmed cases.",
-
+	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier. " + 
+	"A high value may indicate many unreported cases (insufficient testing).",
 
 	/**
-	 * A function that gives the value used to determine a feature's color
+	 * A function that gives the value for a given feature
 	 *
 	 * @param feat The feature whose value is desired
 	 * @param date The date for which the feature's value is desired
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		return getValue(feat,date,'cases',true);
+		var dateID = dates.indexOf(date);
+		if(dateID < 7){
+			return 0;
+		} else {
+			var prevDate = dates[dateID-7];
+			var state = feat.properties["ABBREV"];		
+			var cases = getValue(feat, prevDate, 'cases');
+			var deaths = getValue(feat, date, 'deaths');
+			if(cases==0){return 0;} else {return 100*deaths/cases;}
+		}
 	},
 
 	/**
@@ -46,7 +48,9 @@ const themeCasesCumulative = {
 	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
 	 * Or build your own.
 	 */
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePiYG,
+
+
 
 	/**
 	 * A function that takes possible values of the 
@@ -56,7 +60,13 @@ const themeCasesCumulative = {
 	 * @param value A single numeric value of our feature
 	 * @return A transformed value
 	 */
-	choroplethValueScale: function(d){return Math.log(d);},
+	choroplethValueScale: function(d){
+		if(d==0){
+			return 0;
+		} else {
+			return d;
+		}
+	},
 
 	/**
 	 * If true, the color scheme will be reversed.
@@ -66,22 +76,22 @@ const themeCasesCumulative = {
 	/**
 	 * The values to show colors for on the choropleth legend
 	 */
-	choroplethCells: expBase10CellsAndLabels()[0],
+	choroplethCells: [0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5],
 
 	/**
 	 * The corresponding labels on the choropleth legend
 	 * obviously this should be the same length as "cells"
 	 */
-	choroplethLabels: expBase10CellsAndLabels()[1],
-	
+	choroplethLabels: ["","1%","","","","3%","","","","5%","","","","7%","","","","9%",""], 
+
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Cases Per Million (total cases indicated by circle size)",
+	choroplethLegendTitle: "Deaths as a percent of reported cases.",
 
-	/**
+/**
 	 * The size of the circle symbol (set to zero for no circles).
 	 *
 	 * @param feat The feature whose circle size is desired
@@ -90,27 +100,26 @@ const themeCasesCumulative = {
 	 *         interpreted as the radius of the circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		var todayCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return Math.sqrt(todayCases)/8;
+		return 0;
 	},
 
 	/**
 	 * The fill color of the circle
 	 *
-	 * type: color value or function of (feat, date) => color
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
 	 */
-	circleFill: '#45c',
+	circleFill: '#f47',
 
 	/**
 	 * The border color of the circle
 	 *
-	 * type: color value or function of (feat, date) => color
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
 	 */
-	circleStroke: '#459',
+	circleStroke: '#a04',
 	
-		/**
+	/**
 	 * A function that gives the text to use for a given feature
 	 *
 	 * @param feat The feature whose value is desired
@@ -119,13 +128,21 @@ const themeCasesCumulative = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var pop = getPopulation(feat);
-		var case_count = getValue(feat,date,'cases',perMillion = false);
-		var case_rate = choroplethValue(feat,date);
-		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + withCommas(case_count) + " cases</p>";
-		msg += "<p>" + toAppropriateDecimals(case_rate) + " cases per million</p>";		
-		return msg;
+		var dateID = dates.indexOf(date);
+		if(dateID < 7){
+			return "insufficient data";
+		} else {
+			var prevDate = dates[dateID-7];
+			var state = feat.properties["ABBREV"];		
+			var cases = getValue(feat, prevDate, 'cases');
+			var deaths = getValue(feat, date, 'deaths');
+			var ptr;
+			if(cases==0){ptr=0} else {ptr = 100*deaths/cases};
+			msg = "<p>Cases (7-days prior): " + withCommas(cases) + "</p>";
+			msg += "<p>Deaths: " + withCommas(deaths) + "</p>";
+			msg += "<p>Case Mortality: " + ptr.toFixed(1) + "%</p>";
+			return msg;
+		}
 	}
-
+	
 }
