@@ -3,7 +3,8 @@
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
-
+/* eslint-env es6 */
+/* eslint-disable */
 var newPositiveTestRatio_Scale = d3.scaleLog()
 				.domain([1, 100]);
 
@@ -45,7 +46,7 @@ const themeNewPositiveTestRatio = {
 	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
 	 * Or build your own.
 	 */
-	choroplethColorInterpolator: d3.interpolateBlues,
+	choroplethColorInterpolator: d3.interpolateRdBu,
 
 	/**
 	 * A function that takes possible values of the 
@@ -56,10 +57,10 @@ const themeNewPositiveTestRatio = {
 	 * @return A transformed value
 	 */
 	choroplethValueScale: function(d){
-		if(d==0){
-			return 0;
+		if(d < 0){
+			return Math.pow(Math.log(0 + 1),3);
 		} else {
-			return Math.pow(Math.log(d),1.2);
+			return Math.pow(Math.log(d + 1),3);
 		}
 	},
 
@@ -71,14 +72,26 @@ const themeNewPositiveTestRatio = {
 	/**
 	 * The values to show colors for on the choropleth legend
 	 */
-	choroplethCells: [1,2,5,7.5,10,15,20,25,30,50],
+	choroplethCells: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
 
 	/**
 	 * The corresponding labels on the choropleth legend
 	 * obviously this should be the same length as "cells"
 	 */
-	choroplethLabels: ["1","", "5", "", "10", "", "20","","30",""], 
-
+	choroplethLabels: ["","~ 1%","","","","5%","","","","","10%","","","","","15% ~"], 
+    
+    /**
+    *Fixed Legend Value for each theme
+    */
+    legendmin: 0,
+    legendmax: 15,
+    
+    /**
+    *updateDailyValueRange will choose whether the legend will be automatically updated or not
+    *true - legend will be updated when user change the date
+    *false - legend will not be updated and have fixed value from above(legendmin & legendmax)
+    */
+    updateDailyValueRange: false,
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *

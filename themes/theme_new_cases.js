@@ -3,8 +3,9 @@
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
-
-const newCases_legendMax = 10000;
+/* eslint-env es6 */
+/* eslint-disable */
+const newCases_legendMax = 1000;
 const newCases_logScale = d3.scaleLog()
 	.domain([newCases_legendMax, 1]);
 
@@ -55,8 +56,14 @@ const themeNewCases = {
 	 * @param value A single numeric value of our feature
 	 * @return A transformed value
 	 */
-	choroplethValueScale: function(d){return Math.pow(Math.log(d),0.7);},
-
+	/*choroplethValueScale: function(d){return Math.pow(Math.log(d+10),0.7);},*/
+        choroplethValueScale: function(d){
+            if(d < 0){
+                return Math.pow(Math.log(0 + 1),3);
+            } else {
+                return Math.pow(Math.log(d + 1),3);
+            }
+        },
 	/**
 	 * If true, the color scheme will be reversed.
 	 */
@@ -73,6 +80,7 @@ const themeNewCases = {
 	 */
 	choroplethLabels: expBase10CellsAndLabels()[1],
 
+    updateDailyValueRange: true,
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *

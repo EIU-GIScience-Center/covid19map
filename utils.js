@@ -1,5 +1,6 @@
 // load functions that don't require data, map or slider to be loaded
-
+/* eslint-env es6 */
+/* eslint-disable */
 /**
  * Provides the 3-letter abbrev. for a given month ID # (1-12)
  */

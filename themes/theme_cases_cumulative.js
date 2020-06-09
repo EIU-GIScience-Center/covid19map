@@ -3,6 +3,8 @@
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
+/* eslint-env es6 */
+/* eslint-disable */
 const casesCumulative_legendMax = 10000;
 const casesCumulative_logScale = d3.scaleLog()
 	.domain([casesCumulative_legendMax, 100*Math.cbrt(10)]);
@@ -39,6 +41,23 @@ const themeCasesCumulative = {
 		return getValue(feat,date,'cases',true);
 	},
 
+    
+    	/**
+	 * A function that takes possible values of the 
+	 * choropleth value function and transforms them to a linear
+	 * range (e.g. from 0 to 1) to match with a color range
+	 *
+	 * @param value A single numeric value of our feature
+	 * @return A transformed value
+	 */
+	choroplethValueScale: function(d){
+		if(d == 0){
+			return (0);
+		} else {
+			return (d);
+		}
+	},
+    
 	/**
 	 * A color interpolators to determine the feature fill color associated with a given
 	 * value
@@ -47,16 +66,6 @@ const themeCasesCumulative = {
 	 * Or build your own.
 	 */
 	choroplethColorInterpolator: d3.interpolateMagma,
-
-	/**
-	 * A function that takes possible values of the 
-	 * choropleth value function and transforms them to a linear
-	 * range (e.g. from 0 to 1) to match with a color range
-	 *
-	 * @param value A single numeric value of our feature
-	 * @return A transformed value
-	 */
-	choroplethValueScale: function(d){return Math.log(d);},
 
 	/**
 	 * If true, the color scheme will be reversed.
@@ -74,6 +83,7 @@ const themeCasesCumulative = {
 	 */
 	choroplethLabels: expBase10CellsAndLabels()[1],
 	
+    updateDailyValueRange: true,
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
