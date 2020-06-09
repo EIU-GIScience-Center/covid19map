@@ -67,8 +67,8 @@
 						<td>
 							<span>
 								<u>L</u>and
-								<label class = "switch">
-								<input id="carttoggle" type="checkbox"">
+                                <label class = "switch">
+								<input id="carttoggle" type="checkbox">
 								<span class="slider round"></span>
 								</label>
 								<u>P</u>opulation
@@ -93,7 +93,7 @@
 				This is an open-source project. You are free to download, customize, modify data sources and 
 				incorporate into your own website, with the caveat that no warranty is provided. 
 				<br><br>
-				Keyboard shortcuts (these work inconsistently at the moment):<BR>
+				Keyboard shortcuts (these work inconsistently at the moment):<br>
 				<table style="border: none">
 					<tr>
 						<td>T</td>
@@ -143,12 +143,16 @@
 	var highValColor = null;
 	var lowVal;
 	var highVal;
+    var dailymin;
+    var dailymax;
 	var choroplethCellsAndLabels; // function returning [C,L] : legend symbol cells and corresponding labels;
 	var choroplethLegTitle; // string text for legend title
 	var circleRadius; // function to determine size of small circles
 	var circleFill='#f47'; // fill color
 	var circlestroke='#a05'; // stroke color
-
+    var invertColorScale;
+    var choroplethColorInterpolator;
+    var updateDailyValueRange;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -181,7 +185,7 @@
 		option.text=dataSources[i].dataSourceName;
 		dataSourceSelector.add(option);
     }
-
+    
 	function truncateCellsAndLabels(cells,labels, lowVal, highVal){
 		// get indices of highest cell below lowVal, and lowest cell above highVal
 		var lowIndex=0;
@@ -201,63 +205,51 @@
 		labels = labels.slice(lowIndex, highIndex + 1);
 		return [cells,labels];
 	}
+    
+    
+    // Auto-Update the legend Values
+    function myValueFunction(base, dates){
+        maxmax = choroplethValue(base, dates);
+        return maxmax
+    }
+    function dailymaxChoroplethValue(date, valuefunction){
+        if(base,date == undefined){
+            return "undefined";
+        } else {
+            var dailymax = valuefunction(base.features[0], date);
+            for (i = 0; i < base.features.length; i++){
+                var currentValue = valuefunction(base.features[i], date);
+                if (currentValue > dailymax){
+                    dailymax = currentValue;
+                }
+            }
+            return dailymax;
+        }
+    }
 
-	function loadTheme(){
-		// determine the new map theme
-		var themeName = document.getElementById("themeSelector").value;		
-		// Look for the theme in our theme modules
-		const match = themes.find(v => v.themeName == themeName)
-		if (match) {
-			briefDescription = match.briefDescription;
-			choroplethValue = match.choroplethValueFcn;
-			tooltipText = match.tooltipTextFcn;
-			var choroplethColorInterpolator = match.choroplethColorInterpolator;
-			choroplethCells = match.choroplethCells;
-			choroplethLabels = match.choroplethLabels;
-			choroplethLegTitle = match.choroplethLegendTitle;
-			circleRadius = match.circleRadiusFcn;
-			circleFill = match.circleFill;
-			circlestroke = match.circleStroke;
-			choroplethValueScale = match.choroplethValueScale;
-			var invertColorScale = match.invertColorScale;
-			// show the description of the theme
-			document.getElementById("brief_description").innerHTML ="<i>" + briefDescription + "</i>";
-			// calculate true legend/color/size scales based on theme parameters
-			if(invertColorScale){
-				lowValColor = choroplethColorInterpolator(1);
-				highValColor = choroplethColorInterpolator(0);
-			} else {
-				lowValColor = choroplethColorInterpolator(0);
-				highValColor = choroplethColorInterpolator(1);
-			}
-			
-			// following should be modified to utilize Jason's function
-			if(themeName == themeCasesCumulative.themeName){
-				lowVal= 300; 
-				highVal= 16000;
-			} else if (themeName == themeNewCases.themeName){
-				lowVal= 10; 
-				highVal= 1600;
-			} else if (themeName == themePositiveTestRatio.themeName){
-				lowVal= 1; 
-				highVal= 50;
-			}  else if (themeName == themeNewPositiveTestRatio.themeName){
-				lowVal= 1; 
-				highVal= 50;
-			} else if (themeName == themeCaseMortality.themeName){
-				lowVal= 0.5; 
-				highVal= 10;
-			} else if (themeName == themeCaseMortality_7dayLag.themeName){
-				lowVal= 0.5; 
-				highVal= 10;
-			}
-			
-			
+    function dailyminChoroplethValue(date, valuefunction){
+        if(base,date == undefined){
+            return "undefined";
+        } else {   
+            var dailymin = valuefunction(base.features[0], date);
+            for (i = 0; i < base.features.length; i++){
+                var currentValue = valuefunction(base.features[i], date);
+                if (currentValue < dailymin){
+                    dailymin = currentValue;
+                }
+            }
+            return dailymin;
+        }
+    }
+    
+    function updateValueRange(date){
+            dailymin = dailyminChoroplethValue(date, myValueFunction);
+             
+            dailymax = dailymaxChoroplethValue(date, myValueFunction);
+            
 			// truncate legend cells and labels to low and high values
-			[choroplethCells, choroplethLabels]=truncateCellsAndLabels(choroplethCells,choroplethLabels,lowVal, highVal);
-
 			var unitIntervalScale = d3.scaleLinear()
-				.domain([choroplethValueScale(lowVal), choroplethValueScale(highVal)]);
+            .domain([choroplethValueScale(dailymin), choroplethValueScale(dailymax)]);
 			if(invertColorScale){
 				choroplethColorScale =d3.scaleSequential(function(d){
 					return choroplethColorInterpolator(1-unitIntervalScale(choroplethValueScale(d)));
@@ -268,12 +260,71 @@
 				});
 			
 			}
+    }
+    
+    function fixedValueRange(){
+        var unitIntervalScale = d3.scaleLinear()
+            .domain([choroplethValueScale(legendmin), choroplethValueScale(legendmax)]);
+			if(invertColorScale){
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return choroplethColorInterpolator(1-unitIntervalScale(choroplethValueScale(d)));
+				});
+			} else {
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return choroplethColorInterpolator(unitIntervalScale(choroplethValueScale(d)));
+				});
+			
+			}
+    }
+    
+        function loadTheme() {
+		// determine the new map theme
+		var themeName = document.getElementById("themeSelector").value;		
+		// Look for the theme in our theme modules
+		const match = themes.find(v => v.themeName == themeName)
+		if (match) {
+			briefDescription = match.briefDescription;
+			choroplethValue = match.choroplethValueFcn;
+			tooltipText = match.tooltipTextFcn;
+			choroplethColorInterpolator = match.choroplethColorInterpolator;
+			choroplethCells = match.choroplethCells;
+			choroplethLabels = match.choroplethLabels;
+			choroplethLegTitle = match.choroplethLegendTitle;
+			circleRadius = match.circleRadiusFcn;
+			circleFill = match.circleFill;
+			circlestroke = match.circleStroke;
+			choroplethValueScale = match.choroplethValueScale;
+			invertColorScale = match.invertColorScale;
+            updateDailyValueRange =
+            match.updateDailyValueRange;
+            legendmin =
+            match.legendmin;
+            legendmax =
+            match.legendmax;
+			// show the description of the theme
+			document.getElementById("brief_description").innerHTML ="<i>" + briefDescription + "</i>";
+			// calculate true legend/color/size scales based on theme parameters
+			if(invertColorScale){
+				lowValColor = choroplethColorInterpolator(1);
+				highValColor = choroplethColorInterpolator(0);
+			} else {
+				lowValColor = choroplethColorInterpolator(0);
+				highValColor = choroplethColorInterpolator(1);
+			}	
+            
 
 		}
 		// update the map and legend
-		updateMap(curDate);
+		if (updateDailyValueRange){
+            updateValueRange(curDate);
+        } else {
+            fixedValueRange();
+        }
+        
+        updateMap(curDate);
 		loadLegend();
-	}
+
+    }
 
   	var loadData=function(){
 		return new Promise(
@@ -313,7 +364,7 @@
 			}
 		)
 	};
-
+    
 	function extendColorScale(initScale,inVal){
 		if (lowValColor != null){
 			if (inVal <= lowVal){
@@ -327,7 +378,7 @@
 		}
 		return initScale(inVal);
 	}
-
+    
 	function choroplethColor(feat,date){
 		// assign a color based on rate per million
 		var featval =choroplethValue(feat,date);
@@ -607,13 +658,23 @@
 		  .attr("class", "legendSequential")
 		  .attr("transform", "translate(20,20)");
 		// create legend
-		var numCells = choroplethCells.length;
+		var truncatedCells
+        var truncatedLabels
+        
+        if (updateDailyValueRange){
+             [truncatedCells, truncatedLabels]=truncateCellsAndLabels(choroplethCells, choroplethLabels, dailymin, dailymax);
+        } else {
+            truncatedCells = choroplethCells;
+            truncatedLabels = choroplethLabels;
+        }
+        
+        var numCells = truncatedCells.length;
 		var legendSequential = d3.legendColor()
 			.shapeWidth((legwidth-30)/numCells)
 			.title(choroplethLegTitle)
-			.cells(choroplethCells)
+			.cells(truncatedCells)
 			.orient("horizontal")
-			.labels(choroplethLabels)
+			.labels(truncatedLabels)
 			.scale(choroplethColorScale)
 			.shapePadding(-1)
 			.shapeHeight(15)
@@ -785,7 +846,14 @@
 				sliderID=slider.value();
 				curDate = dates[sliderID];
 				d3.select('#value').text(curDate);
-				updateMap(curDate,0,slider_update_duration,function(){return false;});
+                if (updateDailyValueRange){
+                updateValueRange(curDate);
+                } else {
+            fixedValueRange();
+        }
+                
+                loadLegend()
+				updateMap(curDate,0,slider_update_duration,function()   {return false;});
 				});
 		
 		slider_svg = d3.select('#slider')
@@ -807,8 +875,10 @@
 		loadSlider().then(function(){
 			// define current date
 			curDate=dates[0];
-			// load the map!		
+            // load the map!
 			m = loadMap(base);
+            //load the Theme
+            loadTheme();
 			// load the legend...
 			loadLegend();
 			// load the invisible tooltip div...

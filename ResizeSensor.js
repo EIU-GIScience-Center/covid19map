@@ -5,6 +5,10 @@
  * directory of this distribution and at
  * https://github.com/marcj/css-element-queries/blob/master/LICENSE.
  */
+
+/* eslint-env es6 */
+/* eslint-disable */
+
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
         define(factory);
