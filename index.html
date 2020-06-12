@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="d3_map_styles.css"> 
-  <title>COVID-19 Rate Map - EIU GIScience Center</title>
+  <title>COVID-19 Open Visualization Toolkit</title>
   <script src="jquery-3.4.1.js"></script>
   <script src="https://d3js.org/d3.v5.js" charset="utf-8"></script>
   <!--<script src="USA_pop2010.js"></script> -->
@@ -560,7 +560,7 @@
 			.attr("class","feature")
 			.attr("stroke", "#EEE")
 			.attr("stroke-width", "1px")
-			.attr("fill",function(d){return choroplethColor(d, curDate);})
+			.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
 			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
 			.on("click",feature_click)
 			.on("mouseover",feature_mouseover)
@@ -584,7 +584,7 @@
 			.style('fill',circleFill)
 			.style('stroke',circlestroke)
 			.style('stroke-width',1)
-			.style('opacity',0.5)
+			.style('opacity',1)
 			.on("click",feature_click)
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);			
@@ -598,7 +598,7 @@
 		updateMap(milliseconds, delay=0, callback);
 	}
 
-	// switches map features to the given features
+	// updates map to the user selected type (map or cartogram) and date
 	function updateMap(milliseconds=750,delay=0,callback){
 		var mapTypeDescription;
 		if (oncartogram){
