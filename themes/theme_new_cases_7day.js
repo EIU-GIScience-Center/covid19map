@@ -5,21 +5,16 @@
 // To avoid conflicts with similar variables in other theme modules
 /* eslint-env es6 */
 /* eslint-disable */
-const casesCumulative_legendMax = 10000;
-const casesCumulative_logScale = d3.scaleLog()
-	.domain([casesCumulative_legendMax, 100*Math.cbrt(10)]);
-var localScale = d3.scalePow().exponent(0.7)(d3.scaleLog().domain([10000, 100*Math.cbrt(10)]));
-
 
 // The theme object
-const themeCasesCumulative = {
+const themeNewCases_7day = {
 
 	/**
 	 * The name under which this theme shows up in the theme selector
 	 *
 	 * type: string
 	 */
-	themeName: "Cases (cumulative)",
+	themeName: "New Cases (7-day)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -27,7 +22,7 @@ const themeCasesCumulative = {
 	 * type: string
 	 */
 	
-	briefDescription: "The cumulative number of confirmed cases.",
+	briefDescription: "The average number of new cases/day in the most recent 7-day period.",
 
 
 	/**
@@ -38,26 +33,9 @@ const themeCasesCumulative = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		return getValue(feat,date,'cases',true);
+		return periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
 	},
 
-    
-    	/**
-	 * A function that takes possible values of the 
-	 * choropleth value function and transforms them to a linear
-	 * range (e.g. from 0 to 1) to match with a color range
-	 *
-	 * @param value A single numeric value of our feature
-	 * @return A transformed value
-	 */
-	choroplethValueScale: function(d){
-		if(d == 0){
-			return (0);
-		} else {
-			return (d);
-		}
-	},
-    
 	/**
 	 * A color interpolators to determine the feature fill color associated with a given
 	 * value
@@ -67,6 +45,22 @@ const themeCasesCumulative = {
 	 */
 	choroplethColorInterpolator: d3.interpolateMagma,
 
+	/**
+	 * A function that takes possible values of the 
+	 * choropleth value function and transforms them to a linear
+	 * range (e.g. from 0 to 1) to match with a color range
+	 *
+	 * @param value A single numeric value of our feature
+	 * @return A transformed value
+	 */
+	/*choroplethValueScale: function(d){return Math.pow(Math.log(d+10),0.7);},*/
+        choroplethValueScale: function(d){
+            if(d < 0){
+                return Math.pow(Math.log(0 + 1),3);
+            } else {
+                return Math.pow(Math.log(d + 1),3);
+            }
+        },
 	/**
 	 * If true, the color scheme will be reversed.
 	 */
@@ -82,14 +76,14 @@ const themeCasesCumulative = {
 	 * obviously this should be the same length as "cells"
 	 */
 	choroplethLabels: expBase10CellsAndLabels()[1],
-	
+
     updateDailyValueRange: true,
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Cases Per Million (total cases indicated by circle size)",
+	choroplethLegendTitle: "New Cases Per Million",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -100,10 +94,13 @@ const themeCasesCumulative = {
 	 *         interpreted as the radius of the circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		var todayCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return Math.sqrt(todayCases)/8;
+		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases',false, true);}, [1,1,1]);
+				if(todayCases > 0){
+					// for now, set radius as sqrt of cases/fixed constant
+					return Math.sqrt(todayCases)/3;
+				} else {
+					return 0;
+				}
 	},
 
 	/**
@@ -130,11 +127,12 @@ const themeCasesCumulative = {
 	 */
 	tooltipTextFcn: function (feat, date) {
 		var pop = getPopulation(feat);
-		var case_count = getValue(feat,date,'cases',perMillion = false);
-		var case_rate = choroplethValue(feat,date);
+		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
+		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1])
+
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + withCommas(case_count) + " cases</p>";
-		msg += "<p>" + toAppropriateDecimals(case_rate) + " cases per million</p>";		
+		msg += "<p>" + new_case_count.toFixed(2) + " new cases/day</p>";
+		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		
 		return msg;
 	}
 

@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="d3_map_styles.css"> 
   <title>COVID-19 Rate Map - EIU GIScience Center</title>
   <script src="jquery-3.4.1.js"></script>
@@ -19,7 +16,9 @@
   <script src="themes/theme_cases_cumulative.js"></script>
   <script src="themes/theme_new_cases.js"></script>
   <script src="themes/theme_positive_test_ratio.js"></script>
+  <script src="themes/theme_new_positive_test_ratio.js"></script>
   <script src="themes/theme_case_mortality.js"></script>
+  <script src="themes/theme_case_mortality_7day_lag.js"></script>
   <script src="themes/theme_increase_day_over_week.js"></script>
   <script src="themes/theme_increase_week_over_week.js"></script>
 
@@ -58,7 +57,7 @@
 						</td>
 					</tr>
 					<tr>
-						<td colspan=2 id="theme_brief_description">
+						<td colspan=2 id="brief_description">
 						</td>
 					</tr>
 
@@ -68,18 +67,14 @@
 						</td>
 						<td>
 							<span>
-								Map
+								<u>L</u>and
                                 <label class = "switch">
 								<input id="carttoggle" type="checkbox">
 								<span class="slider round"></span>
 								</label>
-								Cartogram
+								<u>P</u>opulation
 							</span>					
 						</td>
-					</tr>
-					<tr>
-						<td colspan=2 id="map_type_description">
-					</td>
 					</tr>
 				</table>		  
 			</div>
@@ -158,17 +153,14 @@
 	var circlestroke='#a05'; // stroke color
     var invertColorScale;
     var choroplethColorInterpolator;
-	var mapType = "choropleth_map"
     var updateDailyValueRange;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
-		themeNewCases,
-		themeNewCases_3day,
-		themeNewCases_7day,
-		themeCasesCumulative,
-		themeCaseIncreaseWeekOverWeek,
 		themeCaseIncreaseDayOverWeek,
+		themeCaseIncreaseWeekOverWeek,
+		themeCasesCumulative,
+		themeNewCases,
 		themePositiveTestRatio,
 		themeNewPositiveTestRatio,
 		themeCaseMortality, 
@@ -211,13 +203,6 @@
 				}
 			}
 		}
-		// slice even more if there is room
-		var last_lb = choroplethValueScale(cells[highIndex-1]);
-		var last_ub = choroplethValueScale(cells[highIndex]);
-		
-		right_buffer_proportion = (last_ub-choroplethValueScale(highVal))/(last_ub-last_lb)
-		if(right_buffer_proportion > 0.75 && cells.length > 2){highIndex -=1;};
-		
 		// slice out the corresponding section of the cells and labels
 		cells = cells.slice(lowIndex, highIndex + 1);
 		labels = labels.slice(lowIndex, highIndex + 1);
@@ -264,9 +249,7 @@
             dailymin = dailyminChoroplethValue(date, myValueFunction);
              
             dailymax = dailymaxChoroplethValue(date, myValueFunction);
-            console.log("Updating value range:");
-			console.log("min: " + dailymin);
-			console.log("max: " + dailymax);
+            
 			// truncate legend cells and labels to low and high values
 			var unitIntervalScale = d3.scaleLinear()
             .domain([choroplethValueScale(dailymin), choroplethValueScale(dailymax)]);
@@ -322,7 +305,7 @@
             legendmax =
             match.legendmax;
 			// show the description of the theme
-			document.getElementById("theme_brief_description").innerHTML ="<i>" + briefDescription + "</i>";
+			document.getElementById("brief_description").innerHTML ="<i>" + briefDescription + "</i>";
 			// calculate true legend/color/size scales based on theme parameters
 			if(invertColorScale){
 				lowValColor = choroplethColorInterpolator(1);
@@ -333,15 +316,22 @@
 			}	
             console.log("LOAD THEME");
 			console.log(briefDescription);
+			console.log("Legend Min: " + legendmin);
+			console.log("Legend Max: " + legendmax);
+			console.log("Low Color: " + lowValColor);
+			console.log("High Color: " + highValColor);
+
 		}
 		// update the map and legend
 		if (updateDailyValueRange){
             updateValueRange(curDate);
         } else {
             fixedValueRange();
-        }        
-        updateMap();
+        }
+        
+        updateMap(curDate);
 		loadLegend();
+
     }
 
   	var loadData=function(){
@@ -365,12 +355,7 @@
 						var getValue_raw = data_obj.getValue;
 						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
 							var featID = getID(feat);
-							var val;
-							if(dateDistrictData == undefined || featID == undefined){
-								val=0;
-							} else {
-								val = getValue_raw(dateDistrictData,featID,date,varName);
-							}
+							var val = getValue_raw(dateDistrictData,featID,date,varName);
 							if(perMillion){val = val*1000000/getPopulation(feat);}
 							if(getIncrease){
 								var yesterday = previousDate(date, dates);
@@ -487,7 +472,59 @@
 		return [projection.scale(scale).translate([transX, transY]),scale,transX,transY];
 	}	
 
+	// switches map features to the given features
+	function switchMapCartogram(divid, newFeatSet, fromdata,milliseconds,callback){
+		var ele = document.getElementById(divid); // Do not use #
+		var width = ele.clientWidth;
+		var height = ele.clientHeight;
+		divid = '#' + divid;
+		var prj,scale,transX,transY;
+		[prj,prjscale,transX,transY]=fitProjection(newFeatSet, [[0, 0],  [width, height]], true)
+		var path = d3.geoPath().projection(prj);
+		
+		var bounds = path.bounds(newFeatSet), 
+			dx = bounds[1][0] - bounds[0][0],
+			dy = bounds[1][1] - bounds[0][1],
+			x = (bounds[0][0] + bounds[1][0]) / 2,
+			y = (bounds[0][1] + bounds[1][1]) / 2,
+			boundsscale = .9 / Math.max(dx / width, dy / height),
+			translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
 
+		
+		m.selectAll('path')
+			.transition()
+			.attr("d",function(d,i){return path(newFeatSet.features[i]);})
+			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+			.duration(milliseconds)
+			.on("end",callback);	
+		
+		mapsvg.selectAll('circle')
+			.transition()
+			.attr("cx", function(d,i){
+				var thisFeat = newFeatSet.features[i];				
+				var prjX = prjXFunction(prjscale,transX); 
+				return prjX(centroid(thisFeat)[0]);
+			})
+			.attr("cy", function(d,i){
+				var thisFeat = newFeatSet.features[i];			
+				var prjY = prjYFunction(prjscale,transY); 
+				return prjY(centroid(thisFeat)[1]);
+			})
+			.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+			.duration(milliseconds);
+	}
+
+	// toggles between the current base map and cartogram
+	function toggle_map(milliseconds=1500, callback){
+		if (oncartogram){
+			switchMapCartogram('map', base, cartogram, milliseconds, callback);
+		} else {
+			if(cartogram != null){
+				switchMapCartogram('map', cartogram, base, milliseconds, callback);
+			}
+		}
+		oncartogram = !oncartogram;
+	}
 
 
 	// handle resizing
@@ -504,7 +541,7 @@
 			} else {
 				m = loadMap(base);
 			}
-			updateMap();
+			updateMap(curDate);
 			loadSlider();
 		}
 	});		
@@ -592,99 +629,8 @@
 		return statepaths;
 	}
 
-	// toggles between the current base map and cartogram
-	function toggle_map(milliseconds=1500, callback){
-		oncartogram = !oncartogram;
-		updateMap(milliseconds, delay=0, callback);
-	}
-
-	// switches map features to the given features
-	function updateMap(milliseconds=750,delay=0,callback){
-		var mapTypeDescription;
-		if (oncartogram){
-			mapTypeDescription = "The size of each state represents its <span style='color: #B37; font-weight: 700'>population</span>.";
-		} else {
-			mapTypeDescription = "The size of each state represents its <span style='color: #B37; font-weight: 700'>land area</span>.";
-		}
-		document.getElementById("map_type_description").innerHTML ="<i>" + mapTypeDescription + "</i>";
-
-		if(curDate != null){	
-			var todata;
-			var localChoroplethColor;
-			var localCircleRadius;
-			var localCircleFill = function(d){return choroplethColor(d, curDate);};
-			var localFeatureStroke;
-			if (oncartogram==false){
-				todata=base;
-				localChoroplethColor=function(d){return choroplethColor(d, curDate);};
-				localFeatureStroke = '#DDD';
-				localCircleRadius=0;
-			} else {
-				todata=cartogram;
-				if(circleRadius==0){
-					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
-					localFeatureStroke = '#DDD';
-					localCircleRadius=0;
-				} else {
-					localFeatureStroke = '#CCC';
-					localChoroplethColor='#F5F5F8';
-					localCircleRadius=function(d){return circleRadius(d,curDate);};
-				}
-			}
-			
-		
-			var ele = document.getElementById('map'); // Do not use #
-			var width = ele.clientWidth;
-			var height = ele.clientHeight;
-			var prj,scale,transX,transY;
-			[prj,prjscale,transX,transY]=fitProjection(todata, [[0, 0],  [width, height]], true)
-			var path = d3.geoPath().projection(prj);
-			
-			var bounds = path.bounds(todata), 
-				dx = bounds[1][0] - bounds[0][0],
-				dy = bounds[1][1] - bounds[0][1],
-				x = (bounds[0][0] + bounds[1][0]) / 2,
-				y = (bounds[0][1] + bounds[1][1]) / 2,
-				boundsscale = .9 / Math.max(dx / width, dy / height),
-				translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
-
-			
-			m.selectAll('path')
-				.transition()
-				.delay(delay)
-				.attr("d",function(d,i){return path(todata.features[i]);})
-				.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
-				.attr("fill",localChoroplethColor)
-				.attr("stroke",localFeatureStroke)
-				.duration(milliseconds)
-				.on("end",callback);	
-			
-			
-			
-			mapsvg.selectAll('circle')
-				.transition()
-				.delay(delay)
-				.attr("cx", function(d,i){
-					var thisFeat = todata.features[i];				
-					var prjX = prjXFunction(prjscale,transX); 
-					return prjX(centroid(thisFeat)[0]);
-				})
-				.attr("cy", function(d,i){
-					var thisFeat = todata.features[i];			
-					var prjY = prjYFunction(prjscale,transY); 
-					return prjY(centroid(thisFeat)[1]);
-				})
-				.attr('r',localCircleRadius)
-				.style('fill',localCircleFill)
-				.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
-				.duration(milliseconds);
-		}
-	}
-
 	// updates the map data to the given date 
-	function updateMap_old(date, delay=0,duration=750, callback){
-		switchMapCartogram(duration, callback);
-		/*
+	function updateMap(date, delay=0,duration=750, callback){
 		if(curDate != null){
 			statepaths.selectAll('path')
 				.transition()
@@ -692,18 +638,15 @@
 				.delay(delay)
 				.duration(duration)
 				.on('end',callback);
-			if(circles != undefined){
-				circles.selectAll('circle')
-					.transition()
-					.attr('r',function(d){return circleRadius(d,date);})
-					.style('fill',circleFill)
-					.style('stroke',circlestroke)
-					.delay(delay)
-					.duration(duration);
-			}
+			circles.selectAll('circle')
+				.transition()
+				.attr('r',function(d){return circleRadius(d,date);})
+				.style('fill',circleFill)
+				.style('stroke',circlestroke)
+				.delay(delay)
+				.duration(duration);
 			if(active_feature != null){showFeatureInfo(active_feature);}
 		}
-		*/
 	}
 
 	function loadLegend(){
@@ -733,9 +676,6 @@
             truncatedLabels = choroplethLabels;
         }
         
-		console.log("Building Legend");
-		console.log(truncatedCells);
-		
         var numCells = truncatedCells.length;
 		var legendSequential = d3.legendColor()
 			.shapeWidth((legwidth-30)/numCells)
@@ -921,7 +861,7 @@
         }
                 
                 loadLegend()
-				updateMap(slider_update_duration,0,function()   {return false;});
+				updateMap(curDate,0,slider_update_duration,function()   {return false;});
 				});
 		
 		slider_svg = d3.select('#slider')

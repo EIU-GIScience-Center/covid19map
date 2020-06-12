@@ -3,23 +3,17 @@
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
-/* eslint-env es6 */
-/* eslint-disable */
-const casesCumulative_legendMax = 10000;
-const casesCumulative_logScale = d3.scaleLog()
-	.domain([casesCumulative_legendMax, 100*Math.cbrt(10)]);
-var localScale = d3.scalePow().exponent(0.7)(d3.scaleLog().domain([10000, 100*Math.cbrt(10)]));
 
 
 // The theme object
-const themeCasesCumulative = {
+const themeCaseIncreaseWeekOverWeek = {
 
 	/**
 	 * The name under which this theme shows up in the theme selector
 	 *
 	 * type: string
 	 */
-	themeName: "Cases (cumulative)",
+	themeName: "This week vs. last week",
 
 	/**
 	 * A brief description, to show in the main window
@@ -27,7 +21,7 @@ const themeCasesCumulative = {
 	 * type: string
 	 */
 	
-	briefDescription: "The cumulative number of confirmed cases.",
+	briefDescription: "The difference between new cases this week vs. the previous week.",
 
 
 	/**
@@ -38,26 +32,19 @@ const themeCasesCumulative = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		return getValue(feat,date,'cases',true);
-	},
-
-    
-    	/**
-	 * A function that takes possible values of the 
-	 * choropleth value function and transforms them to a linear
-	 * range (e.g. from 0 to 1) to match with a color range
-	 *
-	 * @param value A single numeric value of our feature
-	 * @return A transformed value
-	 */
-	choroplethValueScale: function(d){
-		if(d == 0){
-			return (0);
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
+		if(prior_week==0){
+			if(this_week==0){
+				return 1;
+			} else {
+				return 2;
+			}
 		} else {
-			return (d);
+			return this_week/prior_week;
 		}
 	},
-    
+
 	/**
 	 * A color interpolators to determine the feature fill color associated with a given
 	 * value
@@ -65,7 +52,17 @@ const themeCasesCumulative = {
 	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
 	 * Or build your own.
 	 */
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolateRdBu,
+
+	/**
+	 * A function that takes possible values of the 
+	 * choropleth value function and transforms them to a linear
+	 * range (e.g. from 0 to 1) to match with a color range
+	 *
+	 * @param value A single numeric value of our feature
+	 * @return A transformed value
+	 */
+	choroplethValueScale: function(d){return d;},
 
 	/**
 	 * If true, the color scheme will be reversed.
@@ -75,21 +72,34 @@ const themeCasesCumulative = {
 	/**
 	 * The values to show colors for on the choropleth legend
 	 */
-	choroplethCells: expBase10CellsAndLabels()[0],
+	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
 
 	/**
 	 * The corresponding labels on the choropleth legend
 	 * obviously this should be the same length as "cells"
 	 */
-	choroplethLabels: expBase10CellsAndLabels()[1],
-	
-    updateDailyValueRange: true,
+	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
+
+    /**
+    *Fixed Legend Value for each theme
+    */
+    legendmin: 0.2,
+    legendmax: 1.8,
+    
+    /**
+    *updateDailyValueRange will choose whether the legend will be automatically updated or not
+    *true - legend will be updated when user change the date
+    *false - legend will not be updated and have fixed value from above(legendmin & legendmax)
+    */
+    updateDailyValueRange: false,
+    
+
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Cases Per Million (total cases indicated by circle size)",
+	choroplethLegendTitle: "Increase vs. previous week",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -99,12 +109,7 @@ const themeCasesCumulative = {
 	 * @return a numerical value or function(feat, date) that computes a numerical value, 
 	 *         interpreted as the radius of the circle, in pixels
 	 */
-	circleRadiusFcn: function (feat, curDate) {
-		var todayCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return Math.sqrt(todayCases)/8;
-	},
+	circleRadiusFcn: 0,
 
 	/**
 	 * The fill color of the circle
@@ -129,12 +134,26 @@ const themeCasesCumulative = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var pop = getPopulation(feat);
-		var case_count = getValue(feat,date,'cases',perMillion = false);
-		var case_rate = choroplethValue(feat,date);
-		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + withCommas(case_count) + " cases</p>";
-		msg += "<p>" + toAppropriateDecimals(case_rate) + " cases per million</p>";		
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])		
+		var increase;
+		if(prior_week==0){
+			var increase="Increase: n/a";
+		} else {
+			var increase = this_week/prior_week ;
+			if (increase <= 1){
+				increase = 100*(1-increase);
+				increase = "Decrease: " + increase.toFixed(1) + "%"
+			} else {
+				increase = 100*(increase-1);
+				increase = "Increase: " + increase.toFixed(1) + "%"
+			}
+			
+		}
+
+		msg = "<p>Previous week: " + prior_week.toFixed(0) + " new cases/day</p>";
+		msg += "<p>This week: " + this_week.toFixed(0) + " new cases/day</p>";
+		msg += "<p>" + increase + "</p>";		
 		return msg;
 	}
 

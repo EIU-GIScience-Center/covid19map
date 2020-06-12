@@ -34,7 +34,8 @@ To create a new data source:
 
 	
 */
-
+/* eslint-env es6 */
+/* eslint-disable */
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
 const dataCovidTracking_states={
 	dataSourceName: "US States",
