@@ -678,6 +678,7 @@
 				.style('fill',localCircleFill)
 				.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
 				.duration(milliseconds);
+			if(active_feature != null){showFeatureInfo(active_feature);}
 		}
 	}
 
@@ -917,8 +918,8 @@
                 if (updateDailyValueRange){
                 updateValueRange(curDate);
                 } else {
-            fixedValueRange();
-        }
+					fixedValueRange();
+				}
                 
                 loadLegend()
 				updateMap(slider_update_duration,0,function()   {return false;});
