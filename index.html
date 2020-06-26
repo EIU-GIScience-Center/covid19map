@@ -31,8 +31,15 @@
 						
 		<div id="map"></div>
 		<div id="mapbottom">
-			<div id="slider" style="align: center; float: left;"></div>							
-			<div id="legend" style="align: center; float: right;"></div>								
+            <div id = "speedButton">
+            <button id="slower-button">x0.5</button>
+            <button id="faster-button">x2.0</button>
+            </div>
+			<div id="slider" style="align: center; float: left;"></div><div id="legend" style="align: center; float: right;"></div>
+            <div>
+            <button id="play-button">Play</button>
+            <button id="reset-button">Reset</button>
+            </div>
 		</div>
 		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
 			<div style="display: table-cell; vertical-align: middle;">
@@ -153,6 +160,7 @@
     var invertColorScale;
     var choroplethColorInterpolator;
     var updateDailyValueRange;
+    var timer;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -276,6 +284,7 @@
 			
 			}
     }
+
     
         function loadTheme() {
 		// determine the new map theme
@@ -320,10 +329,23 @@
         } else {
             fixedValueRange();
         }
-        
+            
+        clearInterval(timer);
+        setTimeout(function()
+				{
+		//			document.getElementById("carttoggle").checked = true;
+		//			toggle_map(1500, function(){
+						orig_duration = slider_update_duration;
+						slider_update_duration = 1500;
+						slider.value(dates.length-1);
+						slider_update_duration = orig_duration;
+			//		});
+				},1000
+			);
+        playButton.text("Play");
+        currentIndex = 35;
         updateMap(curDate);
-		loadLegend();
-
+		loadLegend(); 
     }
 
   	var loadData=function(){
@@ -622,7 +644,7 @@
 	}
 
 	// updates the map data to the given date 
-	function updateMap(date, delay=0,duration=750, callback){
+	function updateMap(date, delay=0,duration=500, callback){
 		if(curDate != null){
 			statepaths.selectAll('path')
 				.transition()
@@ -683,7 +705,7 @@
 		legendsvg.select(".legendSequential")
 		  .call(legendSequential);
 	}
-
+    
 	// show information when user selects or mouses over a feature	
 	function showFeatureInfo(d){		
 		// determine if tooltip will go above or below cursor
@@ -870,7 +892,6 @@
 		resolve();
 	})}
 
-	
 	loadData().then(function(){
 		loadSlider().then(function(){
 			// define current date
@@ -914,6 +935,84 @@
 		});
 	});
 
+    
+
+    var currentIndex = 35;
+    var playButton = d3.select("#play-button");
+    var moving = false;
+    var speed = 500;
+    
+      playButton
+        .on("click", function() {
+        var button = d3.select(this);
+        if (button.text() == "Pause") {
+          moving = false;
+          clearInterval(timer);
+          // timer = 0;
+          button.text("Play");
+        } else {
+          moving = true;
+          speed = 500;
+          timer = setInterval(step, speed);
+          button.text("Pause");
+        }
+        console.log("Slider moving: " + moving);
+      })
+
+    
+function step(){
+    var targetIndex = dates.length-1;
+            curDate = dates[currentIndex];
+            slider.value(currentIndex);
+            updateMap(curDate);
+            updateValueRange(curDate);
+            loadLegend();
+            currentIndex = currentIndex + 1;
+            if (currentIndex > targetIndex) {
+                moving = false;
+                currentIndex = 35;
+                clearInterval(timer);
+                // timer = 0;
+                playButton.text("Play");
+                console.log("Slider moving: " + moving);
+            }   
+          }
+    
+    var resetButton = d3.select("#reset-button");
+        resetButton
+            .on("click", function() {
+            var button = d3.select(this);
+              moving = false;
+              clearInterval(timer);
+              slider.value(dates.length-1);
+              playButton.text("Play");
+              currentIndex = 35;
+              console.log("Slider moving: " + moving);
+          })
+
+    var slowerButton = d3.select("#slower-button");
+        slowerButton
+            .on("click", function() {
+            var button = d3.select(this);
+            clearInterval(timer);
+            speed = speed + 250
+            timer = setInterval(step, speed);
+            playButton.text("Pause");
+          })
+    
+    var fasterButton = d3.select("#faster-button");
+        fasterButton
+            .on("click", function() {
+            var button = d3.select(this);
+            clearInterval(timer);
+            speed = speed - 250
+            timer = setInterval(step, speed);
+            playButton.text("Pause");
+              })
+    
+    
+    
+    
   </script>
 </body>
 </html>

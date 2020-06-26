@@ -17,8 +17,7 @@ html, body, #fullheight {
 
 ::-webkit-scrollbar-button {
   display: none;
-}
-
+} 
 
 #opening_screen{
 	display: grid;
@@ -189,8 +188,91 @@ input:checked + .slider:before {
   border-radius: 50%;
 } 
 
+ #play-button {
+      position: absolute;
+      background: #2471A3;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin: 0;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
 
+#play-button:hover {
+      background-color: #696969;
+    }   
 
+ #reset-button {
+      position: absolute;
+      background: #CB4335;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin-top: 40px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 0px;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#reset-button:hover {
+      background-color: #696969;
+    }   
+
+#speedButton {
+    position: relative;
+    width: 50%;
+}
+
+#slower-button {
+      position: relative;
+      background: #34495E;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin-top: 0px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 0px;
+      padding: 0 12px;
+      width: 45px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#slower-button:hover {
+      background-color: #696969;
+    }
+
+#faster-button {
+      position: relative;
+      background: #34495E;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin-top: 0px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 0px;
+      padding: 0 12px;
+      width: 45px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#faster-button:hover {
+      background-color: #696969;
+    }   
 
 .select-css {
     display: block;
