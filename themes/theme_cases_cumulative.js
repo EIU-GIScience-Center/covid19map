@@ -29,6 +29,13 @@ const themeCasesCumulative = {
 	
 	briefDescription: "The cumulative number of confirmed cases.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color

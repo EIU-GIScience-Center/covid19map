@@ -19,8 +19,15 @@ const themeCaseMortality = {
 	 * type: string
 	 */
 	
-	briefDescription: "The ratio of deaths to total confirmed cases. " + 
-	"A high value may indicate many unreported cases (insufficient testing).",
+	briefDescription: "The ratio of deaths to total confirmed cases. ",
+
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases", "deaths"],
 
 	/**
 	 * A function that gives the value for a given feature
@@ -160,9 +167,16 @@ const themeCaseMortality_7dayLag = {
 	 * type: string
 	 */
 	
-	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier. " + 
-	"A high value may indicate many unreported cases (insufficient testing).",
+	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier. ",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases","deaths"],
+	
 	/**
 	 * A function that gives the value for a given feature
 	 *

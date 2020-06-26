@@ -24,6 +24,13 @@ const themeNewCases = {
 	
 	briefDescription: "The number of new cases reported in the most recent 24-hour period.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -128,10 +135,12 @@ const themeNewCases = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var pop = getPopulation(feat);
+		console.log("tooltip text function");
+		console.log(feat);
+		console.log(date);
+		var pop = dataSource.getPopulation(feat);
 		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1])
 		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1])
-
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
 		msg += "<p>" + new_case_count.toFixed(0) + " new cases</p>";
 		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		
@@ -157,7 +166,14 @@ const themeNewCases_3day = {
 	
 	briefDescription: "The average number of new cases/day in the most recent 3-day period.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
 
+	requiredVariables: ["cases"],
+	
 	/**
 	 * A function that gives the value used to determine a feature's color
 	 *
@@ -261,7 +277,7 @@ const themeNewCases_3day = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var pop = getPopulation(feat);
+		var pop = dataSource.getPopulation(feat);
 		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1])
 		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1])
 
@@ -290,6 +306,13 @@ const themeNewCases_7day = {
 	
 	briefDescription: "The average number of new cases/day in the most recent 7-day period.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -394,7 +417,7 @@ const themeNewCases_7day = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var pop = getPopulation(feat);
+		var pop = dataSource.getPopulation(feat);
 		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
 		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1])
 

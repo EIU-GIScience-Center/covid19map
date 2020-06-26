@@ -22,6 +22,14 @@ const themePositiveTestRatio = {
 	briefDescription: "The ratio of positive test results to total tests. A high value indicates insufficient testing.",
 
 	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases", "tests"],
+	
+	/**
 	 * A function that gives the value for a given feature
 	 *
 	 * @param feat The feature whose value is desired
@@ -151,7 +159,7 @@ const themeNewPositiveTestRatio = {
 	 *
 	 * type: string
 	 */
-	themeName: "Positive Test Ratio (3-day)",
+	themeName: "Positive Test Ratio (7-day)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -161,6 +169,13 @@ const themeNewPositiveTestRatio = {
 	
 	briefDescription: "The ratio of positive test results to total tests during the most recent 3-day period. A high value indicates insufficient testing.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases", "tests"],
 
 	/**
 	 * A function that gives the value for a given feature
@@ -171,8 +186,8 @@ const themeNewPositiveTestRatio = {
 	 */
 	choroplethValueFcn: function (feat, date) {
 		var state = feat.properties["ABBREV"];		
-		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1]);
-		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', true, true)}, [1,1,1]);
+		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
+		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', true, true)}, [1,1,1,1,1,1,1]);
 		if(newtests==0){return 0;} else {return 100*newcases/newtests;}
 	},
 
@@ -273,8 +288,8 @@ const themeNewPositiveTestRatio = {
 	tooltipTextFcn: function (feat, date) {
 		var state = feat.properties["ABBREV"];		
 		var state = feat.properties["ABBREV"];		
-		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1]);
-		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', false, true)}, [1,1,1]);
+		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
+		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', false, true)}, [1,1,1,1,1,1,1]);
 		var ptr;
 		if(newtests==0){new_PTR="n/a";} else {new_PTR= (100*(newcases/newtests)).toFixed(1) + "%";}
 		msg = "<p>New Tests: " + withCommas(newtests.toFixed(0)) + "</p>";

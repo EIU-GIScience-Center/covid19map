@@ -23,6 +23,13 @@ const themeCaseIncreaseDayOverWeek = {
 	
 	briefDescription: "The difference between today's cases and the average for the past week.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
