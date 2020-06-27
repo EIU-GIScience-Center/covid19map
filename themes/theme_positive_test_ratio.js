@@ -144,10 +144,17 @@ const themePositiveTestRatio = {
 		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'cases',false);
 		var tests = getValue(feat, date, 'tests',false);
-		var ptr = 100*cases/tests;
+		if (isNaN(cases)) {
+			cases = 0;
+		}
+		if (isNaN(tests)) {
+			tests = 0;
+		}
+		var ptr;
+		if(tests==0){ptr="n/a";} else {ptr= (100*(cases/tests)).toFixed(1) + "%";}
 		msg = "<p>Tests: " + withCommas(tests) + "</p>";
 		msg += "<p>Positive: " + withCommas(cases) + "</p>";
-		msg += "<p>Positive Ratio: " + ptr.toFixed(1) + "%</p>";
+		msg += "<p>Positive Ratio: " + ptr + "</p>";
 		return msg;
 	}
 	
@@ -290,6 +297,12 @@ const themeNewPositiveTestRatio = {
 		var state = feat.properties["ABBREV"];		
 		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
 		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', false, true)}, [1,1,1,1,1,1,1]);
+		if (isNaN(newcases)) {
+			newcases = 0;
+		}
+		if (isNaN(newtests)) {
+			newtests = 0;
+		}
 		var ptr;
 		if(newtests==0){new_PTR="n/a";} else {new_PTR= (100*(newcases/newtests)).toFixed(1) + "%";}
 		msg = "<p>New Tests: " + withCommas(newtests.toFixed(0)) + "</p>";
