@@ -143,6 +143,12 @@ const themeCaseMortality = {
 		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'cases',false);
 		var deaths = getValue(feat, date, 'deaths',false);
+		if ((cases == undefined)||isNaN(cases)) {
+			cases = 0;
+		}
+		if ((deaths == undefined)||isNaN(deaths)) {
+			deaths = 0;
+		}
 		var ptr;
 		if(cases==0){ptr=0} else {ptr = 100*deaths/cases};
 		msg = "<p>Cases: " + withCommas(cases) + "</p>";
