@@ -154,7 +154,7 @@ const themePositiveTestRatio = {
 		if(tests==0){ptr="n/a";} else {ptr= (100*(cases/tests)).toFixed(1) + "%";}
 		msg = "<p>Tests: " + withCommas(tests) + "</p>";
 		msg += "<p>Positive: " + withCommas(cases) + "</p>";
-		msg += "<p>Positive Ratio: " + ptr </p>";
+		msg += "<p>Positive Ratio: " + ptr + "</p>";
 		return msg;
 	}
 	
