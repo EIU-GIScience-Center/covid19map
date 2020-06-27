@@ -143,10 +143,10 @@ const themeCaseMortality = {
 		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'cases',false);
 		var deaths = getValue(feat, date, 'deaths',false);
-		if ((cases == undefined)||isNaN(cases)) {
+		if (isNaN(cases)) {
 			cases = 0;
 		}
-		if ((deaths == undefined)||isNaN(deaths)) {
+		if (isNaN(deaths)) {
 			deaths = 0;
 		}
 		var ptr;

@@ -139,10 +139,10 @@ const themeCasesCumulative = {
 		var pop = dataSource.getPopulation(feat);
 		var case_count = getValue(feat,date,'cases', false);
 		var case_rate = getValue(feat,date,'cases', true);
-		if ((case_count == undefined)||(isNaN(case_count))) {
+		if (isNaN(case_count)) {
 			case_count = 0;
 		}
-		if ((case_rate == undefined)||isNaN(case_rate)) {
+		if (isNaN(case_rate)) {
 			case_rate = 0;
 		}
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
