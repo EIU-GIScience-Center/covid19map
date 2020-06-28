@@ -20,14 +20,32 @@ function monthString(monthID){
 	return ""; // if monthID is invalid, don't break the code - just show nothing
 }
 
+function daysInMonth(monthID){
+	if (monthID==1){return 31;}
+	if (monthID==2){return 28;}
+	if (monthID==3){return 31;}
+	if (monthID==4){return 30;}
+	if (monthID==5){return 31;}
+	if (monthID==6){return 30;}
+	if (monthID==7){return 31;}
+	if (monthID==8){return 31;}
+	if (monthID==9){return 30;}
+	if (monthID==10){return 31;}
+	if (monthID==11){return 30;}
+	if (monthID==12){return 31;}
+	return -1; // if monthID is invalid, don't break the code - just show nothing
+}
+
+
 /**
  * Takes a date in YYYYMMDD format and returns the year, monthID and day as integers
  */
-function parseDate(date){
-	var year = Math.floor(date/10000);
-	var date = date-year*10000;
-	var month = Math.floor(date/100);
-	var day = date - month*100;
+function parseDate(dateString){
+	var dateInteger = parseInt(dateString);
+	var year = Math.floor(dateInteger/10000);	
+	var dateInteger = dateInteger-year*10000;
+	var month = Math.floor(dateInteger/100);
+	var day = dateInteger - month*100;
 	return [year, month, day];
 }
 
@@ -96,7 +114,7 @@ function periodAverage(feat, date, valFunc, periodWts){
 		valsum += periodWts[i] * valFunc(feat, d);
 		weightSum += periodWts[i];
 		i += 1;
-		d = previousDate(d,dates);
+		d = previousDate(d,dataSource.dates);
 	}
 	if(weightSum==0){
 		return 0;
@@ -149,4 +167,16 @@ function centroid(feat,A=-1){
 		}
 	}
 	return C;		
+}
+
+function daysBetween(date1,date2){
+	parse
+}
+
+function nearestDate(date,dates){
+	if (dates.includes(date)){
+		return date;
+	} else {
+		
+	}
 }

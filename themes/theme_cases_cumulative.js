@@ -29,6 +29,13 @@ const themeCasesCumulative = {
 	
 	briefDescription: "The cumulative number of confirmed cases.",
 
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -129,9 +136,15 @@ const themeCasesCumulative = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var pop = getPopulation(feat);
-		var case_count = getValue(feat,date,'cases',perMillion = false);
-		var case_rate = choroplethValue(feat,date);
+		var pop = dataSource.getPopulation(feat);
+		var case_count = getValue(feat,date,'cases', false);
+		var case_rate = getValue(feat,date,'cases', true);
+		if (isNaN(case_count)) {
+			case_count = 0;
+		}
+		if (isNaN(case_rate)) {
+			case_rate = 0;
+		}
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
 		msg += "<p>" + withCommas(case_count) + " cases</p>";
 		msg += "<p>" + toAppropriateDecimals(case_rate) + " cases per million</p>";		
