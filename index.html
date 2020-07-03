@@ -34,8 +34,13 @@
 						
 		<div id="map"></div>
 		<div id="mapbottom">
-			<div id="legend" style="align: center; float: left;"></div>								
-			<div id="slider" style="align: center; float: right;"></div>							
+            <div id = "buttons">
+            <button id="reset-button">Reset</button>
+            <button id="faster-button">x2.0</button>    
+            <button id="slower-button">x0.5</button>
+            <button id="play-button">Play</button>
+            </div>
+			<div id="slider" style="align: center; float: left;"></div><div id="legend" style="align: center; float: right;"></div>
 		</div>
 		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
 			<div style="display: table-cell; vertical-align: middle;">
@@ -178,6 +183,7 @@
 
 
 <script>
+	console.log("starting main script...");
 	// load default dataset
 	var active_feature = null;
 	var active;
@@ -199,7 +205,7 @@
 	var highVal;
 	var dailymin;
 	var dailymax;
-	// var mapType = "choropleth_map"
+    var timer;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -225,7 +231,7 @@
 		// clear existing themes
 		themeSelector.options.length = 0;
 		// add all themes that are valid with current data source
-		for (i=0; i<themes.length; ++i) {
+		for (i=0; i<themes.length; i++) {
 			var cur_theme = themes[i];
 			var req_var = cur_theme.requiredVariables;
 			var themeValid = true;
@@ -286,7 +292,7 @@
 		return maxmax
 	}
 	function dailymaxChoroplethValue(date, valuefunction){
-		if(dataSource.baseFeatures,date == undefined){
+		if(dataSource.baseFeatures, date == undefined){
 			return "undefined";
 		} else {
 			var dailymax = valuefunction(dataSource.baseFeatures.features[0], date);
@@ -301,7 +307,7 @@
 	}
 
 	function dailyminChoroplethValue(date, valuefunction){
-		if(dataSource.baseFeatures,date == undefined){
+		if(dataSource.baseFeatures, date == undefined){
 			return "undefined";
 		} else {   
 			var dailymin = valuefunction(dataSource.baseFeatures.features[0], date);
@@ -316,21 +322,21 @@
 	}
 
 	function updateValueRange(date){
-			dailymin = dailyminChoroplethValue(date, myValueFunction);             
-			dailymax = dailymaxChoroplethValue(date, myValueFunction);
-			// truncate legend cells and labels to low and high values
-			var unitIntervalScale = d3.scaleLinear()
-			.domain([theme.choroplethValueScale(dailymin), theme.choroplethValueScale(dailymax)]);
-			if(theme.invertColorScale){
-				choroplethColorScale =d3.scaleSequential(function(d){
-					return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
-				});
-			} else {
-				choroplethColorScale =d3.scaleSequential(function(d){
-					return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
-				});
-			
-			}
+		dailymin = dailyminChoroplethValue(date, myValueFunction);             
+		dailymax = dailymaxChoroplethValue(date, myValueFunction);
+		// truncate legend cells and labels to low and high values
+		var unitIntervalScale = d3.scaleLinear()
+		.domain([theme.choroplethValueScale(dailymin), theme.choroplethValueScale(dailymax)]);
+		if(theme.invertColorScale){
+			choroplethColorScale =d3.scaleSequential(function(d){
+				return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
+			});
+		} else {
+			choroplethColorScale =d3.scaleSequential(function(d){
+				return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
+			});
+		
+		}
 	}
 
 	function fixedValueRange(){
@@ -345,9 +351,9 @@
 					return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
 				});			
 			}
-	}
-
-	function loadTheme() {
+    }
+    
+    function loadTheme() {
 		// determine the new map theme
 		var themeName = document.getElementById("themeSelector").value;		
 		// Look for the theme in our theme modules
@@ -365,6 +371,18 @@
 					lowValColor = theme.choroplethColorInterpolator(0);
 					highValColor = theme.choroplethColorInterpolator(1);
 				}	
+				// update the timer
+				 clearInterval(timer);
+				setTimeout(function()
+					{
+						orig_duration = slider_update_duration;
+						slider_update_duration = 500;
+						slider.value(dates.length-1);
+						slider_update_duration = orig_duration;
+					},500
+				);
+				playButton.text("Play");
+				currentIndex = 35;
 				// update the map and legend
 				if (theme.updateDailyValueRange){
 					updateValueRange(curDate);
@@ -412,7 +430,7 @@
 			};		
 		});
 	}
-    
+           
 	function extendColorScale(initScale,inVal){
 		if (lowValColor != null){
 			if (inVal <= lowVal){
@@ -680,6 +698,7 @@
 				mapsvg.selectAll('path')
 					.transition()
 					.delay(delay)
+					.ease(d3.easeLinear)
 					.attr("d",function(d,i){return path(todata.features[i]);})
 					.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
 					.attr("fill",localChoroplethColor)
@@ -757,7 +776,7 @@
 		legendsvg.select(".legendSequential")
 		  .call(legendSequential);
 	}
-
+    
 	// show information when user selects or mouses over a feature	
 	function showFeatureInfo(d){		
 		// determine if tooltip will go above or below cursor
@@ -829,8 +848,7 @@
 	}
 
 	// keyboard shortcuts
-	function handlekeydown(e){
-		
+	function handlekeydown(e){	
 		if(e.key=="p" || e.key=="P"){
 			// switch to population map
 			if(oncartogram==false){
@@ -845,7 +863,6 @@
 				document.getElementById("carttoggle").checked=false;
 			};
 		}
-
 		if(e.key=="t" || e.key=="T"){
 			// set or remove focus for theme selector
 			var selbox = document.getElementById("themeSelector");
@@ -855,8 +872,6 @@
 				selbox.focus();
 			}
 		}
-
-
 		if(e.keyCode==37){
 			if(document.activeElement === document.getElementById("themeSelector")){
 				// console.log("selecting themes...");
@@ -872,9 +887,7 @@
 				curval = slider.value();
 				if (curval < dataSource.dates.length-1){slider.value(curval+1);}
 			}
-			
 		}
-		
 	}
 
   	var loadSlider=function(){return new Promise(function(resolve, reject){
@@ -882,7 +895,6 @@
 		if (slider_svg != null){
 			slider_svg.remove();
 		}
-
 		// get available width
 		var viewportwidth = $(window).width();
 		var slider_width = 0.45*(viewportwidth);
@@ -909,8 +921,6 @@
 			.data(textData)
 			.enter()
 			.append("text");
-		
-		
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
 		slider = d3
@@ -941,11 +951,9 @@
                 } else {
 					fixedValueRange();
 				}
-                
                 loadLegend()
 				updateMap(slider_update_duration,0,function()   {return false;});
 			});
-		
 		slider_svg
 			.attr('width', slider_width)
 			.attr('height', 75)
@@ -956,9 +964,6 @@
 		// report that function worked
 		resolve();
 	})}
-
-
-
 
 	function handleDataLoaded(){return new Promise(function(resolve,reject){
 		// update the slider
@@ -974,15 +979,101 @@
 			setTimeout(function()
 				{
 					orig_duration = slider_update_duration;
-					slider_update_duration = 1500;
+					slider_update_duration = 500;
 					slider.value(dataSource.dates.length-1);
 					slider_update_duration = orig_duration;
-				},1000
+				},500
 			);
 			// resolve promise
 			resolve();
 		});	
 	})};
+    
+    
+
+    var sliderID
+    var currentIndex = sliderID;
+    var playButton = d3.select("#play-button");
+    var moving = false;
+    var speed = 500;
+    
+    playButton
+        .on("click", function() {
+			var button = d3.select(this);
+			if (button.text() == "Pause") {
+			  moving = false;
+			  clearInterval(timer);
+			  // timer = 0;
+			  button.text("Play");
+			} else { 
+              if (sliderID == dates.length-1) {
+                  currentIndex = 35;
+              } else {
+              currentIndex = sliderID;
+              }
+			  moving = true;
+			  speed = 500;
+			  timer = setInterval(step, speed);
+			  button.text("Pause");
+			}
+			console.log("Slider moving: " + moving);
+		});
+    
+	function step(){
+		var targetIndex = dates.length-1;
+		curDate = dates[currentIndex];
+		slider.value(currentIndex);
+		updateMap();
+		if (theme.updateDailyValueRange){
+					updateValueRange(curDate);
+                } else {
+					fixedValueRange();
+				}
+		loadLegend();
+		currentIndex = currentIndex + 1;
+		if (currentIndex > targetIndex) {
+			moving = false;
+			currentIndex = 35;
+			clearInterval(timer);
+			// timer = 0;
+			playButton.text("Play");
+			console.log("Slider moving: " + moving);
+		}   
+	}
+    
+    var resetButton = d3.select("#reset-button");
+        resetButton
+            .on("click", function() {
+				var button = d3.select(this);
+				moving = false;
+				clearInterval(timer);
+				slider.value(dates.length-1);
+				playButton.text("Play");
+				currentIndex = 35;
+				console.log("Slider moving: " + moving);
+			})
+
+    var slowerButton = d3.select("#slower-button");
+        slowerButton
+            .on("click", function() {
+            var button = d3.select(this);
+            clearInterval(timer);
+            speed = speed + 250
+            timer = setInterval(step, speed);
+            playButton.text("Pause");
+          });
+    
+    var fasterButton = d3.select("#faster-button");
+		fasterButton
+			.on("click", function() {
+				var button = d3.select(this);
+				clearInterval(timer);
+				speed = speed - 250
+				timer = setInterval(step, speed);
+				playButton.text("Pause");
+			});
+
+	console.log("STARTING...");
 
 	loadData().then(function(){
 		handleDataLoaded().then(function(){
@@ -990,8 +1081,6 @@
 				
 		});
 	});
-
-	console.log("STARTING...");
 
 	// load the invisible tooltip div...
 	loadTooltips();
