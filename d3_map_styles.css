@@ -188,14 +188,26 @@ input:checked + .slider:before {
   border-radius: 50%;
 } 
 
+
+#buttons {
+    position: relative;
+    width: 45%;
+}
+
  #play-button {
-      position: absolute;
-      background: #2471A3;
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
+      position: relative;
+      background: #ECF0F1;
       padding-right: 26px;
       border-radius: 3px;
-      border: none;
-      color: white;
-      margin: 0;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 0px;
       padding: 0 12px;
       width: 60px;
       cursor: pointer;
@@ -203,20 +215,25 @@ input:checked + .slider:before {
     }
 
 #play-button:hover {
-      background-color: #696969;
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
     }   
 
  #reset-button {
-      position: absolute;
-      background: #CB4335;
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
+      position: relative;
+      background: #ECF0F1;
       padding-right: 26px;
       border-radius: 3px;
-      border: none;
-      color: white;
-      margin-top: 40px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
       margin-bottom: 0px;
       margin-right: 0px;
-      margin-left: 0px;
+      margin-left: 5px;
       padding: 0 12px;
       width: 60px;
       cursor: pointer;
@@ -224,25 +241,25 @@ input:checked + .slider:before {
     }
 
 #reset-button:hover {
-      background-color: #696969;
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
     }   
 
-#speedButton {
-    position: relative;
-    width: 50%;
-}
-
 #slower-button {
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
       position: relative;
-      background: #34495E;
+      background: #ECF0F1;
       padding-right: 26px;
       border-radius: 3px;
-      border: none;
-      color: white;
-      margin-top: 0px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
       margin-bottom: 0px;
       margin-right: 0px;
-      margin-left: 0px;
+      margin-left: 5px;
       padding: 0 12px;
       width: 45px;
       cursor: pointer;
@@ -250,20 +267,25 @@ input:checked + .slider:before {
     }
 
 #slower-button:hover {
-      background-color: #696969;
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
     }
 
 #faster-button {
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
       position: relative;
-      background: #34495E;
+      background: #ECF0F1;
       padding-right: 26px;
       border-radius: 3px;
-      border: none;
-      color: white;
-      margin-top: 0px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
       margin-bottom: 0px;
       margin-right: 0px;
-      margin-left: 0px;
+      margin-left: 5px;
       padding: 0 12px;
       width: 45px;
       cursor: pointer;
@@ -271,7 +293,9 @@ input:checked + .slider:before {
     }
 
 #faster-button:hover {
-      background-color: #696969;
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
     }   
 
 .select-css {

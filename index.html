@@ -34,15 +34,13 @@
 						
 		<div id="map"></div>
 		<div id="mapbottom">
-            <div id = "speedButton">
+            <div id = "buttons">
+            <button id="reset-button">Reset</button>
+            <button id="faster-button">x2.0</button>    
             <button id="slower-button">x0.5</button>
-            <button id="faster-button">x2.0</button>
+            <button id="play-button">Play</button>
             </div>
 			<div id="slider" style="align: center; float: left;"></div><div id="legend" style="align: center; float: right;"></div>
-            <div>
-            <button id="play-button">Play</button>
-            <button id="reset-button">Reset</button>
-            </div>
 		</div>
 		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
 			<div style="display: table-cell; vertical-align: middle;">
@@ -294,7 +292,7 @@
 		return maxmax
 	}
 	function dailymaxChoroplethValue(date, valuefunction){
-		if(dataSource.baseFeatures,date == undefined){
+		if(dataSource.baseFeatures, date == undefined){
 			return "undefined";
 		} else {
 			var dailymax = valuefunction(dataSource.baseFeatures.features[0], date);
@@ -309,7 +307,7 @@
 	}
 
 	function dailyminChoroplethValue(date, valuefunction){
-		if(dataSource.baseFeatures,date == undefined){
+		if(dataSource.baseFeatures, date == undefined){
 			return "undefined";
 		} else {   
 			var dailymin = valuefunction(dataSource.baseFeatures.features[0], date);
@@ -990,10 +988,11 @@
 			resolve();
 		});	
 	})};
-
+    
     
 
-    var currentIndex = 35;
+    var sliderID
+    var currentIndex = sliderID;
     var playButton = d3.select("#play-button");
     var moving = false;
     var speed = 500;
@@ -1006,7 +1005,12 @@
 			  clearInterval(timer);
 			  // timer = 0;
 			  button.text("Play");
-			} else {
+			} else { 
+              if (sliderID == dates.length-1) {
+                  currentIndex = 35;
+              } else {
+              currentIndex = sliderID;
+              }
 			  moving = true;
 			  speed = 500;
 			  timer = setInterval(step, speed);
@@ -1019,8 +1023,12 @@
 		var targetIndex = dates.length-1;
 		curDate = dates[currentIndex];
 		slider.value(currentIndex);
-		updateMap(curDate);
-		updateValueRange(curDate);
+		updateMap();
+		if (theme.updateDailyValueRange){
+					updateValueRange(curDate);
+                } else {
+					fixedValueRange();
+				}
 		loadLegend();
 		currentIndex = currentIndex + 1;
 		if (currentIndex > targetIndex) {
@@ -1041,7 +1049,7 @@
 				clearInterval(timer);
 				slider.value(dates.length-1);
 				playButton.text("Play");
-				currentIndex = 35;
+				currentIndex = 43;
 				console.log("Slider moving: " + moving);
 			})
 
