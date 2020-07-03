@@ -710,6 +710,7 @@
 				mapsvg.selectAll('circle')
 					.transition()
 					.delay(delay)
+					.ease(d3.easeLinear)
 					.attr("cx", function(d,i){
 						var thisFeat = todata.features[i];				
 						var prjX = prjXFunction(prjscale,transX); 
@@ -1012,7 +1013,7 @@
               currentIndex = sliderID;
               }
 			  moving = true;
-			  speed = 500;
+			  // speed = 500;
 			  timer = setInterval(step, speed);
 			  button.text("Pause");
 			}
