@@ -1047,10 +1047,11 @@
               currentIndex = sliderID;
               }
 			  moving = true;
-			  // speed = 500;
+			  //speed = 500;
 			  timer = setInterval(step, speed);
 			  button.text("Pause");
 			}
+        console.log(speed);
 			console.log("Slider moving: " + moving);
 		});
     
@@ -1085,6 +1086,7 @@
 				slider.value(dataSource.dates.length-1);
 				playButton.text("Play");
 				currentIndex = 35;
+                speed = 500;
 				console.log("Slider moving: " + moving);
 			})
 
