@@ -6,6 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="d3_map_styles.css"> 
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap" rel="stylesheet">
   <title>COVID-19 Open Visualization Toolkit</title>
   <script src="jquery-3.4.1.js"></script>
   <script src="jquery.csv-0.71.min.js"></script>
@@ -29,7 +30,19 @@
 <body>
 	<div id="opening_screen">
 		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
-			<h3  style="margin-top:0ex; margin-bottom: 0ex;">Covid-19 Open Visualization (COViz) Toolkit </h3>
+			<div id="logo" style="float:left; margin-left: 0.5ex; height: 90%;">
+				<img src="images/EIUSquareWhite.png" style="height: 100%;"></img>
+			</div>
+			<div id="pagetitle" style="float:left">
+					<h3  style="margin-top:0ex; margin-bottom: 0ex; margin-left: 1.5ex; color: #FFFFFF;">Covid-19 Open Visualization (COViz) Toolkit </h3>
+			</div>
+			<div id="about-link" class="menu">
+			<a href="#contributors" style="color: #FFFFFF; font-style: italic;">contributors</a>
+			</div>
+			<div id="other-link" class="menu">
+			<a href="#about" style="color: #FFFFFF; font-style: italic;">about</a>
+			</div>
+			
 		</div>
 						
 		<div id="map"></div>
@@ -47,7 +60,7 @@
 				<table style="border:none; width: 90%; border-spacing: 15px;">
 					<tr>
 						<td>
-							Data Source:
+							<b>Region:</b>
 						</td>
 						<td>
 							<select class="select-css" id="dataSourceSelector">
@@ -56,7 +69,7 @@
 					</tr>
 					<tr>
 						<td>
-							Map Theme:
+							<b>Map Theme:</b>
 						</td>
 						<td>
 							<select class="select-css" id="themeSelector">
@@ -70,7 +83,7 @@
 
 					<tr>
 						<td>
-							Map Type:
+							<b>Map Type:</b>
 						</td>
 						<td>
 							<span>
@@ -92,93 +105,111 @@
 		</div>
 	</div>
 	<div id="below_screen">
-	<H3> About </H3>
-				<p>
-				The Covid-19 Open Visualization (COViz) Toolkit is a modular open-source web toolkit for 
-				hybrid map/graph visualization of COVID-19 risk burden, resource and testing sufficiency 
-				and trajectories over time. In contrast to many dashboards that are data-driven and/or 
-				built on proprietary software, COViz is an efficient, lightweight open platform that 
-				focuses on use of sound cartographic principles to construct targeted visualizations 
-				that intuitively communicate information relevant to specific epidemiological questions.
-				These include:
-				</p>
-				<ul>
-				<li>What is the current risk of transmission?</li>
-				<li>What is the recent trajectory of disease burden and resource availability?</li>
-				<li>How great is the cumulative burden of disease?</li>
-				<li>Are resources and testing sufficient?</li>
-				</ul>
-				<p>
-				To visually communicate answers to these questions, COViz aims to combine adherence to 
-				traditional cartographic principles with innovative map forms and easy-to-use 
-				animation/interaction components.
-				</p>
-				<H4>
-				Traditional Cartographic Principles
-				</H4>
-				<ul>
-				<li>All maps communicate rates per population. Raw case counts, hospitalizations and 
-					deaths are meaningless without the context of the population within which they 
-					are occurring.</li>
-				<li>Rates are expressed using sequential color schemes, following the principles of 
-					choropleth mapping.</li>
-				<li>Raw counts, when shown, are expressed using proportional symbols, as symbol sizes 
-					are intuitively associated with amounts.</li>
-				<li>District polygons are highly generalized so that the focus is on the thematic 
-					information, not the intricacies of the coastline.</li>
-				</ul>
-				<H4>
-				Innovative Map Forms
-				</H4>
-				COViz features the use of cartograms. Also known as “population maps” and “density 
-				equalizing map projections”, cartograms have been used in epidemiology since 
-				<a href="https://ajph.aphapublications.org/doi/10.2105/AJPH.17.4.316"> at least the 
-				1920s </a> to display districts at a size proportional to their underlying population. 
-				This gives a better sense of the relative distribution of disease within the population. 
-				While they take a little getting used to, cartograms enable certain advantages for visual 
-				inference:
-				<ul>
-				<li>When symbols (e.g. circles) are used to show raw case counts, the case rate 
-					(cases per population) can be inferred visually by the proportion of each 
-					district occupied by the circle.</li>
-				<li>When sequential colors (e.g. light to dark) are used to show case rates, the 
-					total number of cases is proportional to the darkness value multiplied by the 
-					size of the state.</li>
-				<li>Symbols on a cartogram will have less overlap than on a regular map.</li>
-				</ul>
-				
-				<H4>
-				Animation and Interaction
-				</H4>
-				Some cartographic techniques that work well on static maps break down in animated sequences. We are currently experimenting with ways to enhance visual clarity on the animated timelines.
-				
-				
-				<br>
-				This is an open-source project. You are free to download, customize, modify data sources and 
-				incorporate into your own website, with the caveat that no warranty is provided. 
-				<br><br>
-				Keyboard shortcuts (these work inconsistently at the moment):<br>
-				<table style="border: none">
-					<tr>
-						<td>T</td>
-						<td>Place focus on the theme selector</td>
-					</tr>
-					<tr>
-						<td>&larr; &rarr;</td>
-						<td>Move along timeline (when focus off var. sel.)</td>
-					</tr>
-					<tr>
-						<td>L,P</td>
-						<td>Toggle between land and population map types</td>
-					</tr>
-				</table>
-				<p><i>(click on any state for data values)</i></p>
-				<br>
-				This website is being developed by the <a href="https://www.eiu.edu/gisci/">EIU GIScience Center</a>. 
-				Data comes from <a href="https://covidtracking.com/">covidtracking.com</a>.  
-				Latest project updates can be found on our <a href = "https://github.com/EIU-GIScience-Center/covid19map">github repository</a>.
-				This is a work in progress. Feel free to send <a href="mailto: bjkronenfeld@eiu.edu">comments or feedback</a>.
-				<br><br>
+		<div class="doc_section_title" id="about">
+			<div style="float: left"><H3> About </H3></div>
+			<div style="float: right"><a href="#">top</a></div>
+		</div>
+			<p>
+			The Covid-19 Open Visualization (COViz) Toolkit is a modular open-source web toolkit for 
+			hybrid map/graph visualization of COVID-19 risk burden, resource and testing sufficiency 
+			and trajectories over time. In contrast to many dashboards that are data-driven and/or 
+			built on proprietary software, COViz is an efficient, lightweight open platform that 
+			focuses on use of sound cartographic principles to construct targeted visualizations 
+			that intuitively communicate information relevant to specific epidemiological questions.
+			These include:
+			</p>
+			<ul>
+			<li>What is the current risk of transmission?</li>
+			<li>What is the recent trajectory of disease burden and resource availability?</li>
+			<li>How great is the cumulative burden of disease?</li>
+			<li>Are resources and testing sufficient?</li>
+			</ul>
+			<p>
+			To visually communicate answers to these questions, COViz aims to combine adherence to 
+			traditional cartographic principles with innovative map forms and easy-to-use 
+			animation/interaction components.
+			</p>
+			<H4>
+			Traditional Cartographic Principles
+			</H4>
+			<ul>
+			<li>All maps communicate rates per population. Raw case counts, hospitalizations and 
+				deaths are meaningless without the context of the population within which they 
+				are occurring.</li>
+			<li>Rates are expressed using sequential color schemes, following the principles of 
+				choropleth mapping.</li>
+			<li>Raw counts, when shown, are expressed using proportional symbols, as symbol sizes 
+				are intuitively associated with amounts.</li>
+			<li>District polygons are highly generalized so that the focus is on the thematic 
+				information, not the intricacies of the coastline.</li>
+			</ul>
+			<H4>
+			Innovative Map Forms
+			</H4>
+			COViz features the use of cartograms. Also known as “population maps” and “density 
+			equalizing map projections”, cartograms have been used in epidemiology since 
+			<a href="https://ajph.aphapublications.org/doi/10.2105/AJPH.17.4.316"> at least the 
+			1920s </a> to display districts at a size proportional to their underlying population. 
+			This gives a better sense of the relative distribution of disease within the population. 
+			While they take a little getting used to, cartograms enable certain advantages for visual 
+			inference:
+			<ul>
+			<li>When symbols (e.g. circles) are used to show raw case counts, the case rate 
+				(cases per population) can be inferred visually by the proportion of each 
+				district occupied by the circle.</li>
+			<li>When sequential colors (e.g. light to dark) are used to show case rates, the 
+				total number of cases is proportional to the darkness value multiplied by the 
+				size of the state.</li>
+			<li>Symbols on a cartogram will have less overlap than on a regular map.</li>
+			</ul>
+			
+			<H4>
+			Animation and Interaction
+			</H4>
+			Some cartographic techniques that work well on static maps break down in animated sequences. We are currently experimenting with ways to enhance visual clarity on the animated timelines.
+			
+			
+			<br>
+			This is an open-source project. You are free to download, customize, modify data sources and 
+			incorporate into your own website, with the caveat that no warranty is provided. 
+			<br><br>
+			Keyboard shortcuts (these work inconsistently at the moment):<br>
+			<table style="border: none">
+				<tr>
+					<td>T</td>
+					<td>Place focus on the theme selector</td>
+				</tr>
+				<tr>
+					<td>&larr; &rarr;</td>
+					<td>Move along timeline (when focus off var. sel.)</td>
+				</tr>
+				<tr>
+					<td>L,P</td>
+					<td>Toggle between land and population map types</td>
+				</tr>
+			</table>
+			<p><i>(click on any state for data values)</i></p>
+			<br>
+		<div class="doc_section_title" id="contributors">
+			<div style="float: left"><H3> Contributors </H3></div>
+			<div style="float: right"><a href="#">top</a></div>
+		</div>			
+			<p>This website is being developed by the <a href="https://www.eiu.edu/gisci/">EIU GIScience Center</a>. Data comes from <a href="https://covidtracking.com/">covidtracking.com</a> and the <a href="https://systems.jhu.edu/"> Center for Systems Science and Engineering</a> at John Hopkins University. Coding performed by:</p>
+			<table style="border: none">
+				<tr>
+					<td><img src="images/Kwang il Yoo_photo.jpg" width="60" height="75"></td>
+					<td style="padding-right: 10px"><b>Kwang-il Yoo</b></td>
+					<td>Graduate student, PSM in GIScience, Eastern Illinois University</td>
+				</tr>
+				<tr>
+					<td><img src="images/kronenfeld 2018.jpg" width="60" height="75"></td>
+					<td style="padding-right: 10px"><b>Barry Kronenfeld</b></td>
+					<td>Director, GIScience Center, Eastern Illinois University</td>
+				</tr>
+			</table>
+			<br>
+			<p>Latest project updates can be found on our <a href = "https://github.com/EIU-GIScience-Center/covid19map">github repository</a>. This is a work in progress. Feel free to send <a href="mailto: bjkronenfeld@eiu.edu">comments or feedback</a>.</p>
+			<br><br>
 	</div>
 
 
@@ -377,7 +408,7 @@
 					{
 						orig_duration = slider_update_duration;
 						slider_update_duration = 500;
-						slider.value(dates.length-1);
+						slider.value(dataSource.dates.length-1);
 						slider_update_duration = orig_duration;
 					},500
 				);
@@ -710,6 +741,7 @@
 				mapsvg.selectAll('circle')
 					.transition()
 					.delay(delay)
+					.ease(d3.easeLinear)
 					.attr("cx", function(d,i){
 						var thisFeat = todata.features[i];				
 						var prjX = prjXFunction(prjscale,transX); 
@@ -1000,19 +1032,22 @@
     playButton
         .on("click", function() {
 			var button = d3.select(this);
+			console.log("CLICKED PLAY:");
+			console.log(sliderID);
+			console.log(dataSource.dates.length);
 			if (button.text() == "Pause") {
 			  moving = false;
 			  clearInterval(timer);
 			  // timer = 0;
 			  button.text("Play");
 			} else { 
-              if (sliderID == dates.length-1) {
+              if (sliderID == dataSource.dates.length-1) {
                   currentIndex = 35;
               } else {
               currentIndex = sliderID;
               }
 			  moving = true;
-			  speed = 500;
+			  // speed = 500;
 			  timer = setInterval(step, speed);
 			  button.text("Pause");
 			}
@@ -1020,8 +1055,8 @@
 		});
     
 	function step(){
-		var targetIndex = dates.length-1;
-		curDate = dates[currentIndex];
+		var targetIndex = dataSource.dates.length-1;
+		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		updateMap();
 		if (theme.updateDailyValueRange){
@@ -1047,7 +1082,7 @@
 				var button = d3.select(this);
 				moving = false;
 				clearInterval(timer);
-				slider.value(dates.length-1);
+				slider.value(dataSource.dates.length-1);
 				playButton.text("Play");
 				currentIndex = 35;
 				console.log("Slider moving: " + moving);

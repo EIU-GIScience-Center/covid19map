@@ -8,6 +8,8 @@ p {margin:0;padding:0}
 html, body, #fullheight {
     min-height: 100% !important;
     height: 100%;
+	font-family: 'Montserrat', sans-serif;
+	scroll-behavior: smooth;
 	-ms-overflow-style:none;
 }
 
@@ -42,7 +44,7 @@ html, body, #fullheight {
 	margin-right: 0ex;
 	margin-top:0ex; 
 	margin-bottom: 0ex;
-	background-color: powderblue;
+	background-color: #004C97;
 	line-height: 7vh;
 }
 
@@ -96,6 +98,20 @@ html, body, #fullheight {
 	border-radius: 5px;
 	margin-top:3px; 
 	margin-bottom: 3px;
+}
+
+.menu{
+	color: white;
+	float: right;
+	margin-left: 0.5ex;
+	margin-right: 0.5ex;
+}
+
+.doc_section_title{
+	padding-bottom: 2em;
+	margin-bottom: 2em;
+	padding-top: 2em;
+	margin-top: 2em;
 }
 
 rect {
