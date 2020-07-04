@@ -28,7 +28,7 @@
 </head>
 
 <body>
-	<div id="opening_screen">
+	<div id="opening_screen" style="height: 100%;">
 		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
 			<div id="logo" style="float:left; margin-left: 0.5ex; height: 90%;">
 				<img src="images/EIUSquareWhite.png" style="height: 100%;"></img>
@@ -53,7 +53,7 @@
             <button id="slower-button">x0.5</button>
             <button id="play-button">Play</button>
             </div>
-			<div id="slider" style="align: center; float: left;"></div><div id="legend" style="align: center; float: right;"></div>
+			<div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
 		</div>
 		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
 			<div style="display: table-cell; vertical-align: middle;">
@@ -574,7 +574,10 @@
 			}
 			updateMap();
 			loadLegend();
-			slider_svg.call(slider);
+			var slider_val = parseInt(slider.value());
+			loadSlider();
+			slider.value(slider_val);
+//			slider_svg.call(slider);
 		}
 	});		
 
@@ -600,8 +603,8 @@
 		if(dataSource !== undefined){		
 			divid='map';
 			var ele = document.getElementById(divid); // Do not use #
-			var width = ele.clientWidth;
-			var height = ele.clientHeight;
+			var width = ele.offsetWidth;
+			var height = ele.offsetHeight;
 			
 			divid = '#' + divid;
 			d3.select(divid).selectAll('svg').remove();			
@@ -716,7 +719,6 @@
 				var prj,scale,transX,transY;
 				[prj,prjscale,transX,transY]=fitProjection(todata, [[0, 0],  [width, height]], true)
 				var path = d3.geoPath().projection(prj);
-				
 				var bounds = path.bounds(todata), 
 					dx = bounds[1][0] - bounds[0][0],
 					dy = bounds[1][1] - bounds[0][1],
@@ -767,9 +769,10 @@
 
 
 	function loadLegend(){
+		console.log("Loading Legend...");
 		// get available width
-		var viewportwidth = $(window).width();
-		var legwidth = 0.45*(viewportwidth);
+		// var viewportwidth = $(window).width();
+		var legwidth = 0.45*(document.getElementById("mapbottom").offsetWidth);
 		if(legwidth < 100){legwidth=100;};	
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
