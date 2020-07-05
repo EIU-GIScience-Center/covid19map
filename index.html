@@ -28,7 +28,7 @@
 </head>
 
 <body>
-	<div id="opening_screen" style="height: 100%;">
+	<div id="opening_screen">
 		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
 			<div id="logo" style="float:left; margin-left: 0.5ex; height: 90%;">
 				<img src="images/EIUSquareWhite.png" style="height: 100%;"></img>
@@ -68,6 +68,10 @@
 						</td>
 					</tr>
 					<tr>
+						<td colspan=2 id="data_source_brief_description">
+						</td>
+					</tr>
+					<tr>
 						<td>
 							<b>Map Theme:</b>
 						</td>
@@ -92,7 +96,7 @@
 								<input id="carttoggle" type="checkbox">
 								<span class="slider round"></span>
 								</label>
-								Cartogram
+								<a id="cartOptLbl"> Cartogram</a>
 							</span>					
 						</td>
 					</tr>
@@ -415,7 +419,7 @@
 				playButton.text("Play");
 				currentIndex = 35;
 				// update the map and legend
-				if (theme.updateDailyValueRange){
+				if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
 				} else {
 					fixedValueRange();
@@ -436,6 +440,8 @@
 				// get promised data object
 				match.dataFunc.then(function(the_data_obj){
 					dataSource = the_data_obj; // the data object is what we'll call the dataSource
+					// show the description of the data source
+					document.getElementById("data_source_brief_description").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 					addThemesToSelector(dataSource); // determine which themes are valid for this data source
 					// create a getValue function that can be used in themes
 					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
@@ -455,6 +461,20 @@
 							}
 						}		
 						return val;
+					}
+					// check to see if there are cartogram features
+					console.log("in dataLoad");
+					if (dataSource.cartogramFeatures == null){
+						// if not, disable map type selector and set cartogram to false
+						document.getElementById("carttoggle").disabled=true;
+						document.getElementById("carttoggle").checked=false;
+						oncartogram = false;
+						document.getElementById("cartOptLbl").style.color="#CCCCCC";
+					} else {
+						// otherwise need to make sure it is visible
+						console.log("making things visible again...");
+						document.getElementById("carttoggle").disabled=false;
+						document.getElementById("cartOptLbl").style.color=null;
 					}
 					resolve();
 				});
@@ -981,7 +1001,7 @@
 					.attr("font-family", "sans-serif")
 					.attr("font-size", "15px")
 					.attr("fill", "red");
-                if (theme.updateDailyValueRange){
+                if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
 					fixedValueRange();
@@ -1062,7 +1082,7 @@
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		updateMap();
-		if (theme.updateDailyValueRange){
+		if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
 					fixedValueRange();

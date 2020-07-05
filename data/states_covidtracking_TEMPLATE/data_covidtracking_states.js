@@ -185,6 +185,7 @@ const dataCovidTracking_states={
 				
 				// THE DATA OBJECT
 				the_data_object = {
+					briefDescription: "Data from <a href='https://covidtracking.com/'>covidtracking.com</a>.",
 					baseFeatures: src.map_polys, 
 					cartogramFeatures: src.carto_polys, 
 					dates: dates, 
