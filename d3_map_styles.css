@@ -52,7 +52,7 @@ html, body, #fullheight {
 	grid-column: 1;
 	grid-row: 2;
 	height: 75vh;
-	min-height: 300px;
+	min-height: 100px;
 	min-width: 300px;
 	width: 65vw;
 	margin-left: 0ex;

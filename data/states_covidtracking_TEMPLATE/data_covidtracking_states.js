@@ -149,6 +149,10 @@ const dataCovidTracking_states={
 					for(let j=0; j < districtIDs.length; j++){
 						cur_districtID = districtIDs[j];
 						cur_record[cur_districtID] = {};
+						// set values to zero initially
+						dateDistrictData[cur_date][cur_districtID]['cases']=0;
+						dateDistrictData[cur_date][cur_districtID]['tests']=0;
+						dateDistrictData[cur_date][cur_districtID]['deaths']=0;
 					}
 				}
 				// *********************************************
@@ -181,6 +185,7 @@ const dataCovidTracking_states={
 				
 				// THE DATA OBJECT
 				the_data_object = {
+					briefDescription: "Data from <a href='https://covidtracking.com/'>covidtracking.com</a>.",
 					baseFeatures: src.map_polys, 
 					cartogramFeatures: src.carto_polys, 
 					dates: dates, 

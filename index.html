@@ -53,7 +53,7 @@
             <button id="slower-button">x0.5</button>
             <button id="play-button">Play</button>
             </div>
-			<div id="slider" style="align: center; float: left;"></div><div id="legend" style="align: center; float: right;"></div>
+			<div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
 		</div>
 		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
 			<div style="display: table-cell; vertical-align: middle;">
@@ -65,6 +65,10 @@
 						<td>
 							<select class="select-css" id="dataSourceSelector">
 							</select>			
+						</td>
+					</tr>
+					<tr>
+						<td colspan=2 id="data_source_brief_description">
 						</td>
 					</tr>
 					<tr>
@@ -92,7 +96,7 @@
 								<input id="carttoggle" type="checkbox">
 								<span class="slider round"></span>
 								</label>
-								Cartogram
+								<a id="cartOptLbl"> Cartogram</a>
 							</span>					
 						</td>
 					</tr>
@@ -415,7 +419,7 @@
 				playButton.text("Play");
 				currentIndex = 35;
 				// update the map and legend
-				if (theme.updateDailyValueRange){
+				if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
 				} else {
 					fixedValueRange();
@@ -436,6 +440,8 @@
 				// get promised data object
 				match.dataFunc.then(function(the_data_obj){
 					dataSource = the_data_obj; // the data object is what we'll call the dataSource
+					// show the description of the data source
+					document.getElementById("data_source_brief_description").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 					addThemesToSelector(dataSource); // determine which themes are valid for this data source
 					// create a getValue function that can be used in themes
 					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
@@ -455,6 +461,20 @@
 							}
 						}		
 						return val;
+					}
+					// check to see if there are cartogram features
+					console.log("in dataLoad");
+					if (dataSource.cartogramFeatures == null){
+						// if not, disable map type selector and set cartogram to false
+						document.getElementById("carttoggle").disabled=true;
+						document.getElementById("carttoggle").checked=false;
+						oncartogram = false;
+						document.getElementById("cartOptLbl").style.color="#CCCCCC";
+					} else {
+						// otherwise need to make sure it is visible
+						console.log("making things visible again...");
+						document.getElementById("carttoggle").disabled=false;
+						document.getElementById("cartOptLbl").style.color=null;
 					}
 					resolve();
 				});
@@ -574,7 +594,10 @@
 			}
 			updateMap();
 			loadLegend();
-			slider_svg.call(slider);
+			var slider_val = parseInt(slider.value());
+			loadSlider();
+			slider.value(slider_val);
+//			slider_svg.call(slider);
 		}
 	});		
 
@@ -600,8 +623,8 @@
 		if(dataSource !== undefined){		
 			divid='map';
 			var ele = document.getElementById(divid); // Do not use #
-			var width = ele.clientWidth;
-			var height = ele.clientHeight;
+			var width = ele.offsetWidth;
+			var height = ele.offsetHeight;
 			
 			divid = '#' + divid;
 			d3.select(divid).selectAll('svg').remove();			
@@ -716,7 +739,6 @@
 				var prj,scale,transX,transY;
 				[prj,prjscale,transX,transY]=fitProjection(todata, [[0, 0],  [width, height]], true)
 				var path = d3.geoPath().projection(prj);
-				
 				var bounds = path.bounds(todata), 
 					dx = bounds[1][0] - bounds[0][0],
 					dy = bounds[1][1] - bounds[0][1],
@@ -767,9 +789,10 @@
 
 
 	function loadLegend(){
+		console.log("Loading Legend...");
 		// get available width
-		var viewportwidth = $(window).width();
-		var legwidth = 0.45*(viewportwidth);
+		// var viewportwidth = $(window).width();
+		var legwidth = 0.45*(document.getElementById("mapbottom").offsetWidth);
 		if(legwidth < 100){legwidth=100;};	
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
@@ -978,7 +1001,7 @@
 					.attr("font-family", "sans-serif")
 					.attr("font-size", "15px")
 					.attr("fill", "red");
-                if (theme.updateDailyValueRange){
+                if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
 					fixedValueRange();
@@ -1059,7 +1082,7 @@
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		updateMap();
-		if (theme.updateDailyValueRange){
+		if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
 					fixedValueRange();
