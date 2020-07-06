@@ -13,7 +13,8 @@
   <script src="d3.v5.js" charset="utf-8"></script>
   <script src="utils.js"></script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
-  <script src="data/counties_jhu/data_JHU_Illinois.js"></script>
+	<script src="data/counties_jhu/data_JHU_Illinois.js"></script>
+	<script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
   <script src="d3-simple-slider.min.js"></script>
   <script src="ResizeSensor.js"></script>
   <script src="legend_susielu.js"></script>
@@ -216,6 +217,7 @@
 	// each data source should be defined in a separate file; see data_covidtracking_states.js for a template
 	var dataSources = [
 		dataCovidTracking_states,
+		dataODWG_Canada_Provinces,
 		dataJHU_Illinois
 	]
 
@@ -385,8 +387,8 @@
 			var match = dataSources.find(v => v.dataSourceName == dataSourceName);
 			if(match){
 				// get promised data object
-				match.dataFunc.then(function(the_data_obj){
-					dataSource = the_data_obj; // the data object is what we'll call the dataSource
+				match.dataFunc.then(function(the_data_object){
+					dataSource = the_data_object; // the data object is what we'll call the dataSource
 					addThemesToSelector(dataSource); // determine which themes are valid for this data source
 					// create a getValue function that can be used in themes
 					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){

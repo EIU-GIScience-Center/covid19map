@@ -31,18 +31,18 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataCovidTracking_states={
+const dataODWG_Canada_Provinces={
 	dataSourceName: "Canadian Provinces", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var target_length = 5;
+		var target_length = 4;
 
 		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
-		$.getJSON("data/states_covidtracking_TEMPLATE/states.geojson", function(src_data) {
+		$.getJSON("data/canada_provinces_odwg/Canada_provinces_simplified.geojson", function(src_data) {
 			console.log("got map polygons...")
 			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
@@ -51,7 +51,7 @@ const dataCovidTracking_states={
 		// GET SOURCE DATASET (cartogram polygons)
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
-		$.getJSON("data/states_covidtracking_TEMPLATE/states_cartogram.geojson", function(src_data) {
+		$.getJSON(null, function(src_data) {
 			console.log("got cartogram polys...")
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
@@ -65,7 +65,7 @@ const dataCovidTracking_states={
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/cases_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got tabular data... (cases)");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -79,7 +79,7 @@ const dataCovidTracking_states={
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/mortality_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got tabular data... (death)");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -93,7 +93,7 @@ const dataCovidTracking_states={
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/testing_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got tabular data... (testing)");
 				src.testing_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -124,7 +124,7 @@ const dataCovidTracking_states={
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			if (Object.keys(src).length == target_length){
-				console.log("processing all datasets...");
+				console.log("processing all datasets... (CANADIAN)");
 				// get tabular data from Canada Working Group object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
@@ -192,12 +192,14 @@ const dataCovidTracking_states={
 				}
 				dates=Array.from(dates).reverse();
 
+
 				// DEFINE AN ARRAY OF DISTRICT IDs
 				var districtIDs = new Set();
 				for(let i=0; i < src.map_polys.features.length; i++){
-					districtIDs.add(src.map_polys.features[i].properties["ABBREV"]);
+					districtIDs.add(src.map_polys.features[i].properties["abbrev"]);
 				}
 				districtIDs = Array.from(districtIDs);
+
 
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
 				var variableNames = ["cases","tests","deaths"]
@@ -280,13 +282,13 @@ const dataCovidTracking_states={
 					districtIDs: districtIDs,
 					variableNames: variableNames,
 					dateDistrictData: dateDistrictData,
-					getID: function(feat){return feat.properties.ABBREV;},
-					getLabel: function(feat){return feat.properties.STATE_NAME;},
-					getPopulation: function(feat){return feat.properties.POP_2010;},
+					getID: function(feat){return feat.properties.abbrev;},
+					getLabel: function(feat){return feat.properties.name;},
+					getPopulation: function(feat){return feat.properties.Pop2020q1;},
 				}
 				resolve(the_data_object);
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
 	}) // end of "new Promise(function(resolve, reject){"
-}; // end of "const dataCovidTracking_states={
+}; // end of "const dataODWG_Canada_Provinces={
