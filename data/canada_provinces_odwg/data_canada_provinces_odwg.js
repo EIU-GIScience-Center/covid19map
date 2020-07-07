@@ -138,37 +138,37 @@ const dataODWG_Canada_Provinces={
 				var death_errors = src.death_data.errors;
 				var testing_errors = src.testing_data.errors;
 				if(case_errors != undefined && case_errors != null){
-					for(i=0;i<case_errors.length;i++){
+					for(let i=0;i<case_errors.length;i++){
 						if(case_errors[i].row != undefined && case_errors[i].row != null){
 							case_error_rows.push(case_errors[i].row);
 						}
 					}
 				}
 				if(death_errors != undefined && death_errors != null){
-					for(i=0;i<death_errors.length;i++){
+					for(let i=0;i<death_errors.length;i++){
 						if(death_errors[i].row != undefined && death_errors[i].row != null){
 							death_error_rows.push(death_errors[i].row);
 						}
 					}
 				}
 				if(testing_errors != undefined && testing_errors != null){
-					for(i=0;i<testing_errors.length;i++){
+					for(let i=0;i<testing_errors.length;i++){
 						if(testing_errors[i].row != undefined && testing_errors[i].row != null){
 							testing_error_rows.push(testing_errors[i].row);
 						}
 					}
 				}
 				// should be just one row; just in case, remove them all
-				for(i=case_error_rows.length-1;i>=0;i--){
+				for(let i=case_error_rows.length-1;i>=0;i--){
 					case_data.splice(case_error_rows[i],1);
 				}
 				// should be just one row; just in case, remove them all
-				for(i=death_error_rows.length-1;i>=0;i--){
+				for(let i=death_error_rows.length-1;i>=0;i--){
 					death_data.splice(death_error_rows[i],1);
 				}
 				// should be just one row; just in case, remove them all
-				for(i=testing_error_rows.length-1;i>=0;i--){
-					testing_errors.splice(testing_error_rows[i],1);
+				for(let i=testing_error_rows.length-1;i>=0;i--){
+					testing_data.splice(testing_error_rows[i],1);
 				}
 
 				// DEFINE AN ARRAY OF DATES IN TEMPORAL SEQUENCE
@@ -185,13 +185,12 @@ const dataODWG_Canada_Provinces={
 					return this_date;
 				}
 
-				for(let i=0; i < src.case_data.length; i++){
-					var thisDateString = src.case_data[i]["date_report"];
-					thisDate = parseDateString(thisDateString);
+				for(let i=0; i < case_data.length; i++){
+					var thisDateString = case_data[i]["date_report"];
+					thisDate = dateFromString(thisDateString);
 					dates.add(thisDate);
 				}
-				dates=Array.from(dates).reverse();
-
+				dates=Array.from(dates)
 
 				// DEFINE AN ARRAY OF DISTRICT IDs
 				var districtIDs = new Set();
@@ -235,41 +234,41 @@ const dataODWG_Canada_Provinces={
 				}
 				// *********************************************
 
-				// go through src.case_data object and transfer values into dateDistrictData object
-				for(let i=0; i < src.case_data.length; i++){
+				// go through case_data object and transfer values into dateDistrictData object
+				for(let i=0; i < case_data.length; i++){
 					// get date and state
-					var cur_date = parseDateString(src.case_data[i]["date_report"]);
-					var cur_districtID = src.case_data[i]["province"];
+					var cur_date = dateFromString(case_data[i]["date_report"]);
+					var cur_districtID = case_data[i]["province"];
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['cases'] = src.case_data[i]["cases"]; // cases, not cumulative?
+							dateDistrictData[cur_date][cur_districtID]['cases'] = case_data[i]["cumulative_cases"];
 						}
 					}
 				}
 
-				// go through src.death_data object and transfer values into dateDistrictData object
-				for(let i=0; i < src.death_data.length; i++){
+				// go through death_data object and transfer values into dateDistrictData object
+				for(let i=0; i < death_data.length; i++){
 					// get date and state
-					var cur_date = parseDateString(src.death_data[i]["date_date_report"]);
-					var cur_districtID = src.death_data[i]["province"];
+					var cur_date = dateFromString(death_data[i]["date_death_report"]);
+					var cur_districtID = death_data[i]["province"];
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['deaths'] = src.death_data[i]["deaths"]; // deaths, not cumulative?
+							dateDistrictData[cur_date][cur_districtID]['deaths'] = death_data[i]["cumulative_deaths"];
 						}
 					}
 				}
 
-				// go through src.testing_data object and transfer values into dateDistrictData object
-				for(let i=0; i < src.testing_data.length; i++){
+				// go through testing_data object and transfer values into dateDistrictData object
+				for(let i=0; i < testing_data.length; i++){
 					// get date and state
-					var cur_date = parseDateString(src.testing_data[i]["date_testing"]);
-					var cur_districtID = src.testing_data[i]["province"];
+					var cur_date = dateFromString(testing_data[i]["date_testing"]);
+					var cur_districtID = testing_data[i]["province"];
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['tests'] = src.testing_data[i]["testing"]; // testing, not cumulative?
+							dateDistrictData[cur_date][cur_districtID]['tests'] = testing_data[i]["cumulative_testing"];
 						}
 					}
 				}
@@ -284,7 +283,7 @@ const dataODWG_Canada_Provinces={
 					dateDistrictData: dateDistrictData,
 					getID: function(feat){return feat.properties.abbrev;},
 					getLabel: function(feat){return feat.properties.name;},
-					getPopulation: function(feat){return feat.properties.Pop2020q1;},
+					getPopulation: function(feat){return feat.properties.pop;},
 				}
 				resolve(the_data_object);
 
