@@ -89,6 +89,18 @@ const themeCasesCumulative = {
 	 * obviously this should be the same length as "cells"
 	 */
 	choroplethLabels: expBase10CellsAndLabels()[1],
+
+    /**
+    *Fixed Legend Value for each theme
+    */
+    legendmin: 0,
+    legendmax: 10000,
+	
+    /**
+    *updateDailyValueRange will choose whether the legend will be automatically updated or not
+    *true - legend will be updated when user change the date
+    *false - legend will not be updated and have fixed value from above(legendmin & legendmax)
+    */
 	
     updateDailyValueRange: true,
 	/**

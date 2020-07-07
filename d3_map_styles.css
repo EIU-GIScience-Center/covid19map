@@ -8,6 +8,8 @@ p {margin:0;padding:0}
 html, body, #fullheight {
     min-height: 100% !important;
     height: 100%;
+	font-family: 'Montserrat', sans-serif;
+	scroll-behavior: smooth;
 	-ms-overflow-style:none;
 }
 
@@ -17,8 +19,7 @@ html, body, #fullheight {
 
 ::-webkit-scrollbar-button {
   display: none;
-}
-
+} 
 
 #opening_screen{
 	display: grid;
@@ -43,7 +44,7 @@ html, body, #fullheight {
 	margin-right: 0ex;
 	margin-top:0ex; 
 	margin-bottom: 0ex;
-	background-color: powderblue;
+	background-color: #004C97;
 	line-height: 7vh;
 }
 
@@ -51,7 +52,7 @@ html, body, #fullheight {
 	grid-column: 1;
 	grid-row: 2;
 	height: 75vh;
-	min-height: 300px;
+	min-height: 100px;
 	min-width: 300px;
 	width: 65vw;
 	margin-left: 0ex;
@@ -97,6 +98,20 @@ html, body, #fullheight {
 	border-radius: 5px;
 	margin-top:3px; 
 	margin-bottom: 3px;
+}
+
+.menu{
+	color: white;
+	float: right;
+	margin-left: 0.5ex;
+	margin-right: 0.5ex;
+}
+
+.doc_section_title{
+	padding-bottom: 2em;
+	margin-bottom: 2em;
+	padding-top: 2em;
+	margin-top: 2em;
 }
 
 rect {
@@ -190,7 +205,114 @@ input:checked + .slider:before {
 } 
 
 
+#buttons {
+    position: relative;
+    width: 45%;
+}
 
+ #play-button {
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
+      position: relative;
+      background: #ECF0F1;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 0px;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#play-button:hover {
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
+    }   
+
+ #reset-button {
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
+      position: relative;
+      background: #ECF0F1;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 5px;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#reset-button:hover {
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
+    }   
+
+#slower-button {
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
+      position: relative;
+      background: #ECF0F1;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 5px;
+      padding: 0 12px;
+      width: 45px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#slower-button:hover {
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
+    }
+
+#faster-button {
+      font-family: sans-serif;
+      font-weight: 700;
+      float: right;
+      position: relative;
+      background: #ECF0F1;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: 1px solid #aaa;
+      color: black;
+      margin-top: 5px;
+      margin-bottom: 0px;
+      margin-right: 0px;
+      margin-left: 5px;
+      padding: 0 12px;
+      width: 45px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+#faster-button:hover {
+      background-color: #F4F6F7;
+      border-color: #888;
+      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
+    }   
 
 .select-css {
     display: block;
