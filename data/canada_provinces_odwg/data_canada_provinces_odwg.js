@@ -25,66 +25,81 @@ To create a new data source:
 	(B) add the new data constant to the dataSources array 
 	  (near the beginning of the script below the last div in index.html)
 
-// The following lines avoid case_errors in some browsers	
+// The following lines avoid errors in some browsers	
 */
 /* eslint-env es6 */
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataJHU_Illinois = {
-	dataSourceName: "Illinois Counties", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+const dataODWG_Canada_Provinces={
+	dataSourceName: "Canadian Provinces", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
 		var target_length = 4;
-		
+
 		// GET SOURCE DATASET (map polygons)
-		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/IL_counties_pop2010.geojson", function(src_data) {
+		// Typically this will be a geojson file placed in the same folder, 
+		// and you can use JQuery's getJSON function:
+		$.getJSON("data/canada_provinces_odwg/Canada_provinces_simplified.geojson", function(src_data) {
 			console.log("got map polygons...")
 			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
-		
-		
+
 		// GET SOURCE DATASET (cartogram polygons)
-		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/IL_counties_pop2010_cartogram.geojson", function(src_data) {
+		// Typically this will be a geojson file placed in the same folder, 
+		// and you can use JQuery's getJSON function:
+		$.getJSON(null, function(src_data) {
 			console.log("got cartogram polys...")
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
-		});//.fail(function() { console.log("error"); });			
-		
+		});
 
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
-		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
+		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse
 		$.ajax({
 			type: "GET",
-			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv',
+			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/cases_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got tabular data... (cases)");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
 		});
-	
 
 		// GET SOURCE DATASET (death data)
 		// Typically this will be a data service that provides data in the form of a geojson
-		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
+		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse
 		$.ajax({
 			type: "GET",
-			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv',
+			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/mortality_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got tabular data... (death)");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
 		});
+
+		// GET SOURCE DATASET (testing data)
+		// Typically this will be a data service that provides data in the form of a geojson
+		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse
+		$.ajax({
+			type: "GET",
+			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/testing_timeseries_prov.csv',
+			dataType: "text",
+			success: function(src_data) {
+				console.log("got tabular data... (testing)");
+				src.testing_data = Papa.parse(src_data, {header: true}); // add to src object
+				process_data(); // attempt to process all datasets
+			}
+		});
+
+
 
 		// PROCESS DATA AND RESOLVE PROMISE WITH A DATA OBJECT IN SET FORMAT
 		// You will need to change the code in this function to process your 
@@ -108,88 +123,107 @@ const dataJHU_Illinois = {
 		function process_data(){
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
-			console.log("Processing data...");
 			if (Object.keys(src).length == target_length){
-				console.log("processing all datasets...");
-				// get tabular data from JHU object
+				console.log("processing all datasets... (CANADIAN)");
+				// get tabular data from Canada Working Group object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
+				var testing_data = src.testing_data.data;
+
 				// find any rows with case_errors from tabular data
 				var case_error_rows = [];
 				var death_error_rows = [];
+				var testing_error_rows = [];
 				var case_errors = src.case_data.errors;
 				var death_errors = src.death_data.errors;
+				var testing_errors = src.testing_data.errors;
 				if(case_errors != undefined && case_errors != null){
-					for(i=0;i<case_errors.length;i++){
+					for(let i=0;i<case_errors.length;i++){
 						if(case_errors[i].row != undefined && case_errors[i].row != null){
 							case_error_rows.push(case_errors[i].row);
 						}
 					}
 				}
 				if(death_errors != undefined && death_errors != null){
-					for(i=0;i<death_errors.length;i++){
+					for(let i=0;i<death_errors.length;i++){
 						if(death_errors[i].row != undefined && death_errors[i].row != null){
 							death_error_rows.push(death_errors[i].row);
 						}
 					}
 				}
+				if(testing_errors != undefined && testing_errors != null){
+					for(let i=0;i<testing_errors.length;i++){
+						if(testing_errors[i].row != undefined && testing_errors[i].row != null){
+							testing_error_rows.push(testing_errors[i].row);
+						}
+					}
+				}
 				// should be just one row; just in case, remove them all
-				for(i=case_error_rows.length-1;i>=0;i--){
+				for(let i=case_error_rows.length-1;i>=0;i--){
 					case_data.splice(case_error_rows[i],1);
 				}
 				// should be just one row; just in case, remove them all
-				for(i=death_error_rows.length-1;i>=0;i--){
+				for(let i=death_error_rows.length-1;i>=0;i--){
 					death_data.splice(death_error_rows[i],1);
 				}
-				
-				// DEFINE AN ARRAY OF DATES IN TEMPORAL SEQUENCE																
-				var dateStrings = Object.keys(case_data[0]); // pull out keys from first row of data
-				dateStrings.splice(0,11); // dates are the keys starting from item 11
+				// should be just one row; just in case, remove them all
+				for(let i=testing_error_rows.length-1;i>=0;i--){
+					testing_data.splice(testing_error_rows[i],1);
+				}
+
+				// DEFINE AN ARRAY OF DATES IN TEMPORAL SEQUENCE
+				var dates = new Set();
+
 				function dateFromString(dateString){
 					var pieces = dateString
-									.split("/")
-									.map(function(piece){return parseInt(piece);});
-					var month = pieces[0];
-					var day = pieces[1];
-					var year = 2000 + pieces[2];
-					var this_date = new Date(year, month-1, day,0,0,0,0).toDateString();
+						.split("-")
+						.map(function(piece){return parseInt(piece);});
+					var day = pieces[0];
+					var month = pieces[1];
+					var year = pieces[2];
+					var this_date = new Date(year, month-1, day,0,0,0,0).toDateString(); //why month-1???
 					return this_date;
-				}				
-				// here's the real date array				
-				dates = dateStrings.map(dateFromString);
-				
-				// DEFINE AN ARRAY OF DISTRICT IDs
-				var districtIDs = [];
-				for(let i=0; i < case_data.length; i++){
-					var cur_row = case_data[i];
-					if(cur_row.Province_State == "Illinois"){
-							districtIDs.push(cur_row.Admin2);
-					}
 				}
-				
+
+				for(let i=0; i < case_data.length; i++){
+					var thisDateString = case_data[i]["date_report"];
+					thisDate = dateFromString(thisDateString);
+					dates.add(thisDate);
+				}
+				dates=Array.from(dates)
+
+				// DEFINE AN ARRAY OF DISTRICT IDs
+				var districtIDs = new Set();
+				for(let i=0; i < src.map_polys.features.length; i++){
+					districtIDs.add(src.map_polys.features[i].properties["abbrev"]);
+				}
+				districtIDs = Array.from(districtIDs);
+
+
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
-				var variableNames = ["cases","deaths"]
+				var variableNames = ["cases","tests","deaths"]
 				// You should always use variable names in "data/data_dictionary.txt" if 
 				// possible, as this will allow your data to be displayed with existing map themes.
 				// If you want to create a new variable:
 				// 1. Add your new variable name to "data/data_dictionary.txt"
 				// 2. You will need to create a new map theme to display your variable
 
-		
+
 				// ARRANGE DATA INTO A VARIABLE "dateDistrictData" WITH THE FORM:
 				// dateDistrictData[date][districtID][variableName] = <some value>
+
 
 				// *********************************************
 				// If you used the variables "dates" and "districtIDs" above, 
 				// You shouldn't need to change the code from here to the next line of asterisks
 				//
-				// create dictionary of values for each date
+				// Create dictionary of values for each date
 				// initializing each date value to an empty dictionary
 				var dateDistrictData = {};
 				for(let i=0; i < dates.length; i++){
 					dateDistrictData[dates[i]]={};
-					}
-				// populate dateDistrictData with dummy values for each date/district
+				}
+				// populate dateDistrictData with dummy values for each date/state
 				for(let i=0; i < dates.length; i++){
 					var cur_date = dates[i];
 					var cur_record = dateDistrictData[cur_date];
@@ -200,62 +234,61 @@ const dataJHU_Illinois = {
 				}
 				// *********************************************
 
-			
-				// go through src.case_data object and transfer values into dateDistrictData object
-				for(let i=0; i < case_data.length; i++){ // loop through table rows
-					var cur_row = case_data[i]; // get data record
-					if(cur_row.Province_State == "Illinois"){ // check that it is in Illinois
-						var cur_districtID = cur_row.Admin2; // get district id 
-						for(let j=0; j < dates.length; j++){ // loop through dates
-							var cur_date = dates[j];
-							var cur_dateString = dateStrings[j];
-							if(dateDistrictData[cur_date] != undefined){
-								if(dateDistrictData[cur_date][cur_districtID] != undefined){											
-									// transfer values to dateDistrictData object
-									dateDistrictData[cur_date][cur_districtID]['cases'] = parseInt(case_data[i][cur_dateString]);
-								}
-							}
+				// go through case_data object and transfer values into dateDistrictData object
+				for(let i=0; i < case_data.length; i++){
+					// get date and state
+					var cur_date = dateFromString(case_data[i]["date_report"]);
+					var cur_districtID = case_data[i]["province"];
+					if(dateDistrictData[cur_date] != undefined){
+						if(dateDistrictData[cur_date][cur_districtID] != undefined){
+							// transfer to vals object
+							dateDistrictData[cur_date][cur_districtID]['cases'] = case_data[i]["cumulative_cases"];
 						}
 					}
 				}
 
-				// go through src.death_data object and transfer values into dateDistrictCata object
-				for(let i=0; i < death_data.length; i++){ // loop through table rows
-					var cur_row = death_data[i]; // get data record
-					if(cur_row.Province_State == "Illinois"){ // check that it is in Illinois
-						var cur_districtID = cur_row.Admin2; // get district id 
-						for(let j=0; j < dates.length; j++){ // loop through dates
-							var cur_date = dates[j];
-							var cur_dateString = dateStrings[j];
-							if(dateDistrictData[cur_date] != undefined){
-								if(dateDistrictData[cur_date][cur_districtID] != undefined){											
-									// transfer values to dateDistrictData object
-									dateDistrictData[cur_date][cur_districtID]['deaths'] = parseInt(death_data[i][cur_dateString]);
-								}
-							}
+				// go through death_data object and transfer values into dateDistrictData object
+				for(let i=0; i < death_data.length; i++){
+					// get date and state
+					var cur_date = dateFromString(death_data[i]["date_death_report"]);
+					var cur_districtID = death_data[i]["province"];
+					if(dateDistrictData[cur_date] != undefined){
+						if(dateDistrictData[cur_date][cur_districtID] != undefined){
+							// transfer to vals object
+							dateDistrictData[cur_date][cur_districtID]['deaths'] = death_data[i]["cumulative_deaths"];
 						}
 					}
-				}			
+				}
 
-				console.log(dateDistrictData);
-				
+				// go through testing_data object and transfer values into dateDistrictData object
+				for(let i=0; i < testing_data.length; i++){
+					// get date and state
+					var cur_date = dateFromString(testing_data[i]["date_testing"]);
+					var cur_districtID = testing_data[i]["province"];
+					if(dateDistrictData[cur_date] != undefined){
+						if(dateDistrictData[cur_date][cur_districtID] != undefined){
+							// transfer to vals object
+							dateDistrictData[cur_date][cur_districtID]['tests'] = testing_data[i]["cumulative_testing"];
+						}
+					}
+				}
+
 				// THE DATA OBJECT
 				the_data_object = {
-					briefDescription: "Data from <a href='https://systems.jhu.edu/'>John Hopkins University CSSE</a>.",
-					baseFeatures: src.map_polys, 
-					cartogramFeatures: null, 
-					dates: dates, 
-					districtIDs: districtIDs, 
-					variableNames: variableNames, 
-					dateDistrictData: dateDistrictData, 
-					getID: function(feat){return feat.properties.NAME;}, 
-					getLabel: function(feat){return feat.properties.NAME + " County";}, 
-					getPopulation: function(feat){return feat.properties.Pop2010;}, 
+					briefDescription: "Data from the <a href='https://github.com/ishaberry/Covid19Canada'>COVID-19 Canadian Open Data Working Group</a>.",
+					baseFeatures: src.map_polys,
+					cartogramFeatures: src.carto_polys,
+					dates: dates,
+					districtIDs: districtIDs,
+					variableNames: variableNames,
+					dateDistrictData: dateDistrictData,
+					getID: function(feat){return feat.properties.abbrev;},
+					getLabel: function(feat){return feat.properties.name;},
+					getPopulation: function(feat){return feat.properties.pop;},
 				}
-
 				resolve(the_data_object);
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
 	}) // end of "new Promise(function(resolve, reject){"
-}; // end of "const dataCovidTracking_states={
+}; // end of "const dataODWG_Canada_Provinces={

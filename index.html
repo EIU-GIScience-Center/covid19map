@@ -14,7 +14,8 @@
   <script src="d3.v5.js" charset="utf-8"></script>
   <script src="utils.js"></script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
-  <script src="data/counties_jhu/data_JHU_Illinois.js"></script>
+	<script src="data/counties_jhu/data_JHU_Illinois.js"></script>
+	<script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
   <script src="d3-simple-slider.min.js"></script>
   <script src="ResizeSensor.js"></script>
   <script src="legend_susielu.js"></script>
@@ -198,7 +199,7 @@
 			<div style="float: left"><H3> Contributors </H3></div>
 			<div style="float: right"><a href="#">top</a></div>
 		</div>			
-			<p>This website is being developed by the <a href="https://www.eiu.edu/gisci/">EIU GIScience Center</a>. Data comes from <a href="https://covidtracking.com/">covidtracking.com</a> and the <a href="https://systems.jhu.edu/"> Center for Systems Science and Engineering</a> at John Hopkins University. Coding performed by:</p>
+			<p>This website is being developed by the <a href="https://www.eiu.edu/gisci/">EIU GIScience Center</a>. Data comes from <a href="https://covidtracking.com/">covidtracking.com</a>, the <a href='https://github.com/ishaberry/Covid19Canada'>COVID-19 Canadian Open Data Working Group</a>, and the <a href="https://systems.jhu.edu/"> Center for Systems Science and Engineering</a> at John Hopkins University. Coding performed by:</p>
 			<table style="border: none">
 				<tr>
 					<td><img src="images/Kwang il Yoo_photo.jpg" width="60" height="75"></td>
@@ -257,6 +258,7 @@
 	// each data source should be defined in a separate file; see data_covidtracking_states.js for a template
 	var dataSources = [
 		dataCovidTracking_states,
+		dataODWG_Canada_Provinces,
 		dataJHU_Illinois
 	]
 
@@ -375,6 +377,9 @@
 	}
 
 	function fixedValueRange(){
+		console.log("fixedValueRange:");
+		console.log(theme.legendmin);
+		console.log(theme.legendmax);
 		var unitIntervalScale = d3.scaleLinear()
 			.domain([theme.choroplethValueScale(theme.legendmin), theme.choroplethValueScale(theme.legendmax)]);
 			if(theme.invertColorScale){
@@ -606,7 +611,7 @@
 			if(feature != null){
 				var realDate = new Date(curDate)
 				var monthID = realDate.getMonth()+1;
-				var day = realDate.getDay();
+				var day = realDate.getDate();
 				showHTML = "<B>" + dataSource.getLabel(feature) + " (" + monthString(monthID) + " " + day + ")</B><BR>";
 				showHTML += theme.tooltipTextFcn(feature,curDate);
 				return showHTML;
@@ -808,12 +813,15 @@
 		// create legend
 		var truncatedCells
         var truncatedLabels
-        
-        if (theme.updateDailyValueRange){
+        console.log("creating legend...");
+		console.log(theme.updateDailyValueRange);
+		console.log(moving);
+        if (theme.updateDailyValueRange && moving==false){
              [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
         } else {
-            truncatedCells = theme.choroplethCells;
-            truncatedLabels = theme.choroplethLabels;
+            //truncatedCells = theme.choroplethCells;
+            //truncatedLabels = theme.choroplethLabels;
+			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
         }        
 		
         var numCells = truncatedCells.length;
@@ -931,16 +939,26 @@
 			if(document.activeElement === document.getElementById("themeSelector")){
 				// console.log("selecting themes...");
 			} else {
+				// move back one time step
 				curval = slider.value();
-				if (curval > 0){slider.value(curval-1);}
+				if (curval > 0){
+					moving = true;
+					slider.value(curval-1);
+					moving = false;
+				}
 			}
 		}
 		if(e.keyCode==39){
 			if(document.activeElement === document.getElementById("themeSelector")){
 				// console.log("selecting themes...");
 			} else {
+				// move forward one time step
 				curval = slider.value();
-				if (curval < dataSource.dates.length-1){slider.value(curval+1);}
+				if (curval < dataSource.dates.length-1){
+					moving = true;
+					slider.value(curval+1);
+					moving = false;
+				}
 			}
 		}
 	}
