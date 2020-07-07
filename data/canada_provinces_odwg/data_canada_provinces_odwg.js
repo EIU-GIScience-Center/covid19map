@@ -275,6 +275,7 @@ const dataODWG_Canada_Provinces={
 
 				// THE DATA OBJECT
 				the_data_object = {
+					briefDescription: "Data from the <a href='https://github.com/ishaberry/Covid19Canada'>COVID-19 Canadian Open Data Working Group</a>.",
 					baseFeatures: src.map_polys,
 					cartogramFeatures: src.carto_polys,
 					dates: dates,
