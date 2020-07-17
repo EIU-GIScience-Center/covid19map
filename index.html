@@ -1102,47 +1102,46 @@
 			  //speed = 500;
 			  timer = setInterval(step, speed);
 			  button.text("∥");
-        if (speed <= 0) {
-            for (i = 0; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#004C97";
-            }
-        } else if (speed <= 250) {
-            for (i = 0; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#bbb";
-            }
-        }        
-        if (speed == 250 ) {
+            if (speed <= 0) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 0; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }        
+            if (speed == 250 ) {
+            for (j = 0; j < dots.length; j++){
                 for (i = 1; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#004C97";
-            }
-        } else if (speed == 500) {
-            for (i = 0; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#bbb";
-            }
-        }         
-        if (speed == 500 ) {
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }         
+            if (speed == 500 ) {
+            for (j = 0; j < dots.length; j++){
                 for (i = 2; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#004C97";
-            }
-        } else if (speed == 750) {
-            for (i = 0; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#bbb";
-            }
-        }   
-        if (speed == 750 ) {
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }   
+            if (speed == 750 ) {
+            for (j = 0; j < dots.length; j++){
                 for (i = 3; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#004C97";
-            }
-        } else if (speed >= 1000) {
-            for (i = 0; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#bbb";
-            }
-        }     
-        if (speed >= 1000 ) {
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }     
+            if (speed >= 1000 ) {
+            for (j = 0; j < dots.length; j++){
                 for (i = 4; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#004C97";
-            }
-        } 
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            } 
 			}
 			console.log("Slider moving: " + moving);
 		});
