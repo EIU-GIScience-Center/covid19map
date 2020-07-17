@@ -1104,27 +1104,43 @@
 			  button.text("∥");
         if (speed <= 0) {
             for (i = 0; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }            
+        } else if (speed <= 250) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }        
         if (speed == 250 ) {
                 for (i = 1; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }       
+        } else if (speed == 500) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }         
         if (speed == 500 ) {
                 for (i = 2; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }  
+        } else if (speed == 750) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }   
         if (speed == 750 ) {
                 for (i = 3; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }    
+        } else if (speed >= 1000) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }     
         if (speed >= 1000 ) {
                 for (i = 4; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
         } 
 			}
@@ -1163,6 +1179,9 @@
 				playButton.text("▶");
 				currentIndex = 35;
                 speed = 500;
+                for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+                }
 				console.log("Slider moving: " + moving);
 			})
     
@@ -1177,27 +1196,43 @@
             playButton.text("∥");
         if (speed <= 0) {
             for (i = 0; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }           
+        } else if (speed <= 250) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }        
         if (speed == 250 ) {
                 for (i = 1; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }   
+        } else if (speed == 500) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }         
         if (speed == 500 ) {
                 for (i = 2; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        } 
+        } else if (speed == 750) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }   
         if (speed == 750 ) {
                 for (i = 3; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        } 
+        } else if (speed >= 1000) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }     
         if (speed >= 1000 ) {
                 for (i = 4; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
         }  
           });
@@ -1213,27 +1248,43 @@
 				playButton.text("∥");
         if (speed <= 0) {
             for (i = 0; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }           
-        if (speed == 250 ) {
-                for (i = 1; i < dots.length; i++){
-                dots[i].className += " active";
-            }
-        }     
-        if (speed == 500 ) {
-                for (i = 2; i < dots.length; i++){
-                dots[i].className += " active";
-            }
-        }    
-        if (speed == 750 ) {
-                for (i = 3; i < dots.length; i++){
-                dots[i].className += " active";
+        } else if (speed <= 250) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
             }
         }        
+        if (speed == 250 ) {
+                for (i = 1; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";
+            }
+        } else if (speed == 500) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }         
+        if (speed == 500 ) {
+                for (i = 2; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";
+            }
+        } else if (speed == 750) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }   
+        if (speed == 750 ) {
+                for (i = 3; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";
+            }
+        } else if (speed >= 1000) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }     
         if (speed >= 1000 ) {
                 for (i = 4; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
         } 
 			});
@@ -1246,27 +1297,43 @@
         playButton.text("∥");
         if (speed <= 0) {
             for (i = 0; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
-        }           
-        if (speed == 250 ) {
-                for (i = 1; i < dots.length; i++){
-                dots[i].className += " active";
-            }
-        }     
-        if (speed == 500 ) {
-                for (i = 2; i < dots.length; i++){
-                dots[i].className += " active";
-            }
-        }    
-        if (speed == 750 ) {
-                for (i = 3; i < dots.length; i++){
-                dots[i].className += " active";
+        } else if (speed <= 250) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
             }
         }        
+        if (speed == 250 ) {
+                for (i = 1; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";
+            }
+        } else if (speed == 500) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }         
+        if (speed == 500 ) {
+                for (i = 2; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";
+            }
+        } else if (speed == 750) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }   
+        if (speed == 750 ) {
+                for (i = 3; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";
+            }
+        } else if (speed >= 1000) {
+            for (i = 0; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#bbb";
+            }
+        }     
         if (speed >= 1000 ) {
                 for (i = 4; i < dots.length; i++){
-                dots[i].className += " active";
+                dots[i].style.backgroundColor = "#004C97";
             }
         } 
     };
