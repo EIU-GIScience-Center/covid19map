@@ -1,19 +1,25 @@
-// A map theme that shows the cumulative rate and number of cases in each district.
+// A map theme that shows the cumulative rate and number of deaths in each district.
 
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
+/* eslint-env es6 */
+/* eslint-disable */
+const deathsCumulative_legendMax = 10000;
+const deathsCumulative_logScale = d3.scaleLog()
+	.domain([deathsCumulative_legendMax, 100*Math.cbrt(10)]);
+var localScale = d3.scalePow().exponent(0.7)(d3.scaleLog().domain([10000, 100*Math.cbrt(10)]));
 
 
 // The theme object
-const themeCaseIncreaseDayOverWeek = {
+const themeDeathsCumulative = {
 
 	/**
 	 * The name under which this theme shows up in the theme selector
 	 *
 	 * type: string
 	 */
-	themeName: "Today vs. prior week",
+	themeName: "Deaths, Cumulative",
 
 	/**
 	 * A brief description, to show in the main window
@@ -21,7 +27,7 @@ const themeCaseIncreaseDayOverWeek = {
 	 * type: string
 	 */
 	
-	briefDescription: "The difference between today's cases and the average for the past week.",
+	briefDescription: "The cumulative number of deaths.",
     
 	/**
 	 * A list of variables required to show this map theme
@@ -29,7 +35,7 @@ const themeCaseIncreaseDayOverWeek = {
 	 * type: array of strings
 	 */
 
-	requiredVariables: ["cases"],
+	requiredVariables: ["deaths"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -39,29 +45,11 @@ const themeCaseIncreaseDayOverWeek = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,1,1,1,1,1,1,1])
-		var today = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1])
-		if(prior_week==0){
-			if(today==0){
-				return 1;
-			} else {
-				return 2;
-			}
-		} else {
-			return today/prior_week;
-		}
+		return getValue(feat,date,'deaths',true);
 	},
 
-	/**
-	 * A color interpolators to determine the feature fill color associated with a given
-	 * value
-	 *
-	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
-	 * Or build your own.
-	 */
-	choroplethColorInterpolator: d3.interpolateRdBu,
-
-	/**
+    
+    	/**
 	 * A function that takes possible values of the 
 	 * choropleth value function and transforms them to a linear
 	 * range (e.g. from 0 to 1) to match with a color range
@@ -69,7 +57,22 @@ const themeCaseIncreaseDayOverWeek = {
 	 * @param value A single numeric value of our feature
 	 * @return A transformed value
 	 */
-	choroplethValueScale: function(d){return d;},
+	choroplethValueScale: function(d){
+		if(d == 0){
+			return (0);
+		} else {
+			return (d);
+		}
+	},
+    
+	/**
+	 * A color interpolators to determine the feature fill color associated with a given
+	 * value
+	 *
+	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
+	 * Or build your own.
+	 */
+	choroplethColorInterpolator: d3.interpolateMagma,
 
 	/**
 	 * If true, the color scheme will be reversed.
@@ -79,34 +82,33 @@ const themeCaseIncreaseDayOverWeek = {
 	/**
 	 * The values to show colors for on the choropleth legend
 	 */
-	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
+	choroplethCells: expBase10CellsAndLabels()[0],
 
 	/**
 	 * The corresponding labels on the choropleth legend
 	 * obviously this should be the same length as "cells"
 	 */
-	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
+	choroplethLabels: expBase10CellsAndLabels()[1],
 
     /**
     *Fixed Legend Value for each theme
     */
-    legendmin: 0.2,
-    legendmax: 1.8,
-    
+    legendmin: 0,
+    legendmax: 10000,
+	
     /**
     *updateDailyValueRange will choose whether the legend will be automatically updated or not
     *true - legend will be updated when user change the date
     *false - legend will not be updated and have fixed value from above(legendmin & legendmax)
     */
-    updateDailyValueRange: false,
-    
-
+	
+    updateDailyValueRange: true,
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Increase vs. previous week",
+	choroplethLegendTitle: "deaths Per Million (total deaths indicated by circle size)",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -116,7 +118,12 @@ const themeCaseIncreaseDayOverWeek = {
 	 * @return a numerical value or function(feat, date) that computes a numerical value, 
 	 *         interpreted as the radius of the circle, in pixels
 	 */
-	circleRadiusFcn: 0,
+	circleRadiusFcn: function (feat, curDate) {
+		var todaydeaths = getValue(feat,curDate,'deaths',false);
+		// for now, set radius as 1/10th of sqrt of deaths
+		// or return zero for illustrations with no circles
+		return Math.sqrt(todaydeaths)/8;
+	},
 
 	/**
 	 * The fill color of the circle
@@ -141,26 +148,20 @@ const themeCaseIncreaseDayOverWeek = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,1,1,1,1,1,1,1]).toFixed(2)
-		var today = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1]).toFixed(0)
-		var increase;
-		if(prior_week==0){
-			var increase="Increase: n/a";
-		} else {
-			var increase = today/prior_week ;
-			if (increase <= 1){
-				increase = 100*(1-increase);
-				increase = "Decrease: " + increase.toFixed(1) + "%"
-			} else {
-				increase = 100*(increase-1);
-				increase = "Increase: " + increase.toFixed(1) + "%"
-			}
-			
+		var pop = dataSource.getPopulation(feat);
+		var death_count = getValue(feat,date,'deaths', false);
+		var death_rate = getValue(feat,date,'deaths', true);
+        var tdr = 100*death_count/pop;
+		if (isNaN(death_count)) {
+			death_count = 0;
 		}
-
-		msg = "<p>Prior week: " + prior_week + " new cases/day</p>";
-		msg += "<p>Today: " + today + " new cases</p>";
-		msg += "<p>" + increase + "</p>";		
+		if (isNaN(death_rate)) {
+			death_rate = 0;
+		}
+		msg = "<p>Population: " + withCommas(pop) + "</p>";
+		msg += "<p>" + withCommas(death_count) + " deaths</p>";
+		msg += "<p>" + toAppropriateDecimals(death_rate) + " deaths per million</p>";	
+        msg += "<p>Total Mortality: " + tdr.toFixed(2) + "%</p>";
 		return msg;
 	}
 

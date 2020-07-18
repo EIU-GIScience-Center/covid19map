@@ -11,7 +11,7 @@ const themeCaseMortality = {
 	 *
 	 * type: string
 	 */
-	themeName: "Case Mortality",
+	themeName: "Mortality Ratio (cumulative)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -19,7 +19,7 @@ const themeCaseMortality = {
 	 * type: string
 	 */
 	
-	briefDescription: "The ratio of deaths to total confirmed cases. ",
+	briefDescription: "The ratio of deaths to total confirmed cases.",
 
 	/**
 	 * A list of variables required to show this map theme
@@ -159,13 +159,13 @@ const themeCaseMortality = {
 	
 }
 
-const themeCaseMortality_7dayLag = {
+const themeCaseMortality_7day = {
 	/**
 	 * The name under which this variable shows up in the variable selector
 	 *
 	 * type: string
 	 */
-	themeName: "Case Mortality (7-day lag)",
+	themeName: "Case Mortality (7-day)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -173,8 +173,8 @@ const themeCaseMortality_7dayLag = {
 	 * type: string
 	 */
 	
-	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier. ",
-
+	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier.",
+    
 	/**
 	 * A list of variables required to show this map theme
 	 *

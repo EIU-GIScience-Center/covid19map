@@ -14,7 +14,7 @@ const themeNewCases = {
 	 *
 	 * type: string
 	 */
-	themeName: "New Cases (1-day)",
+	themeName: "Cases, New (1-day)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -23,7 +23,7 @@ const themeNewCases = {
 	 */
 	
 	briefDescription: "The number of new cases reported in the most recent 24-hour period.",
-
+    
 	/**
 	 * A list of variables required to show this map theme
 	 *
@@ -167,7 +167,7 @@ const themeNewCases_7day = {
 	 *
 	 * type: string
 	 */
-	themeName: "New Cases (7-day)",
+	themeName: "Cases, New (7-day)",
 
 	/**
 	 * A brief description, to show in the main window

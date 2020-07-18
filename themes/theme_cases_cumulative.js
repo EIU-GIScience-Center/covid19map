@@ -19,7 +19,7 @@ const themeCasesCumulative = {
 	 *
 	 * type: string
 	 */
-	themeName: "Cases (cumulative)",
+	themeName: "Cases, Cumulative",
 
 	/**
 	 * A brief description, to show in the main window
