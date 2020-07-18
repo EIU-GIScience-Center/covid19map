@@ -128,6 +128,7 @@ function periodAverage(feat, date, valFunc, periodWts){
 	}
 }
 
+
 function area(coords){
 	var a=0;
 	for(let i=0; i<coords.length;i++){
@@ -137,6 +138,17 @@ function area(coords){
 		a += (coords[j][0]-coords[i][0])*(coords[i][1]+coords[j][1]);
 	}
 	return a/2;
+}
+
+function featureArea(feat){
+	var geo = feat['geometry'];
+	var coordlists = geo['coordinates'];
+	var featArea=0;
+	for(let i=0;i<coordlists.length;i++){
+		var coords = coordlists[i][0];
+		featArea += area(coords);
+	}
+	return featArea;
 }
 
 function coordCentroid(coords, A=-1){
