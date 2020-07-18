@@ -241,7 +241,7 @@ const dataJHU_Illinois = {
 				
 				// THE DATA OBJECT
 				the_data_object = {
-					briefDescription: "Data from <a href='https://systems.jhu.edu/'>John Hopkins University CSSE</a>.",
+					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
 					baseFeatures: src.map_polys, 
 					cartogramFeatures: src.carto_polys, 
 					dates: dates, 
