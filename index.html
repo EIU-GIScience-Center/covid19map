@@ -1172,12 +1172,13 @@
         slowerButton
             .on("click", function() {
             var button = d3.select(this);
-            if (moving == true) {
-            moving = true;
             clearInterval(timer);
             speed = speed + 250
-            timer = setInterval(step, speed);
-            playButton.text("∥");
+            if (moving == true) {
+				timer = setInterval(step, speed);
+				playButton.text("∥");
+                moving = true;
+            }
             if (speed <= 0) {
             for (j = 0; j < dots.length; j++){
                 for (i = 0; i < dots.length; i++){
@@ -1218,19 +1219,19 @@
                     }
                 }
             } 
-            }
           });
     
     var fasterButton = d3.select("#faster-button");
 		fasterButton
 			.on("click", function() {
 				var button = d3.select(this);
-                if (moving == true) {
-                moving = true;
 				clearInterval(timer);
 				speed = speed - 250
+            if (moving == true) {
 				timer = setInterval(step, speed);
 				playButton.text("∥");
+                moving = true;
+            }
                 if (speed <= 0) {
                 for (j = 0; j < dots.length; j++){
                     for (i = 0; i < dots.length; i++){
@@ -1271,15 +1272,16 @@
                         }
                     }
                 } 
-                }
 			});
     
     function speedDots(n) {
-        moving = true;
         clearInterval(timer);
         speed = n;
-        timer = setInterval(step, speed);
-        playButton.text("∥");
+        if (moving == true) {
+            timer = setInterval(step, speed);
+            playButton.text("∥");
+            moving = true;
+        }
                 if (speed <= 0) {
                 for (j = 0; j < dots.length; j++){
                     for (i = 0; i < dots.length; i++){
