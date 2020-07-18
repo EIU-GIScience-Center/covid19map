@@ -23,8 +23,10 @@
   <script src="themes/theme_new_cases.js"></script>
   <script src="themes/theme_positive_test_ratio.js"></script>
   <script src="themes/theme_case_mortality.js"></script>
+  <script src="themes/theme_death_cumulative.js"></script>
   <script src="themes/theme_increase_day_over_week.js"></script>
   <script src="themes/theme_increase_week_over_week_TEMPLATE.js"></script>
+  <script src="themes/theme_death_increase_week_over_week.js"></script>
 
 </head>
 
@@ -32,7 +34,7 @@
 	<div id="opening_screen">
 		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
 			<div id="logo" style="float:left; margin-left: 0.5ex; height: 90%;">
-				<img src="images/EIUSquareWhite.png" style="height: 100%;"></img>
+				<img src="images/EIUSquareWhite.png" style="height: 100%;">
 			</div>
 			<div id="pagetitle" style="float:left">
 					<h3  style="margin-top:0ex; margin-bottom: 0ex; margin-left: 1.5ex; color: #FFFFFF;">Covid-19 Open Visualization (COViz) Toolkit </h3>
@@ -48,16 +50,20 @@
 						
 		<div id="map"></div>
 		<div id="mapbottom">
-            <div id = "buttons">
-            <button id="reset-button">Reset</button>
-            <button id="faster-button">x2.0</button>    
-            <button id="slower-button">x0.5</button>
-            <button id="play-button">Play</button>
+            <div id = "buttons" class="container">
+            <span class="dot" title="Fastest" onclick="speedDots(0)"></span> 
+            <span class="dot" title="Faster" onclick="speedDots(250)"></span> 
+            <span class="dot" title="Normal" onclick="speedDots(500)"></span>
+            <span class="dot" title="Slower" onclick="speedDots(750)"></span> 
+            <span class="dot" title="Slowest" onclick="speedDots(1000)"></span> 
+            <button id="faster-button" title="Faster">▶▶</button>  
+            <button id="play-button" title="Play">▶</button>
+            <button id="slower-button" title="Slower">◀◀</button>
             </div>
-			<div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
+            <div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
 		</div>
 		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
-			<div style="display: table-cell; vertical-align: middle;">
+			<div id="test" style="display: table-cell; vertical-align: middle;">
 				<table style="border:none; width: 90%; border-spacing: 15px;">
 					<tr>
 						<td>
@@ -84,8 +90,7 @@
 					<tr>
 						<td colspan=2 id="theme_brief_description">
 						</td>
-					</tr>
-
+                    </tr>
 					<tr>
 						<td>
 							<b>Map Type:</b>
@@ -247,11 +252,13 @@
 	var themes = [
 		themeNewCases_7day,
 		themeNewCases,
-		themeCaseIncreaseWeekOverWeek,
-		themePositiveTestRatio,
-		themeCasesCumulative,
+        themeCasesCumulative,
+        themeCaseIncreaseWeekOverWeek,
+        themePositiveTestRatio,
 		themeNewPositiveTestRatio,
-		themeCaseMortality
+        themeCaseMortality,
+        themeDeathsCumulative,
+        themeDeathIncreaseWeekOverWeek
 	]
 
 	// array of data sources
@@ -421,7 +428,7 @@
 						slider_update_duration = orig_duration;
 					},500
 				);
-				playButton.text("Play");
+				playButton.text("►");
 				currentIndex = 35;
 				// update the map and legend
 				if (theme.updateDailyValueRange && moving==false){
@@ -1068,7 +1075,11 @@
     var currentIndex = sliderID;
     var playButton = d3.select("#play-button");
     var moving = false;
+    var currentSpeed
     var speed = 500;
+    var dots = document.getElementsByClassName("dot");
+    var i;
+    var j;
     
     playButton
         .on("click", function() {
@@ -1076,11 +1087,11 @@
 			console.log("CLICKED PLAY:");
 			console.log(sliderID);
 			console.log(dataSource.dates.length);
-			if (button.text() == "Pause") {
+			if (button.text() == "∥") {
 			  moving = false;
 			  clearInterval(timer);
 			  // timer = 0;
-			  button.text("Play");
+			  button.text("▶");
 			} else { 
               if (sliderID == dataSource.dates.length-1) {
                   currentIndex = 35;
@@ -1088,9 +1099,49 @@
               currentIndex = sliderID;
               }
 			  moving = true;
-			  // speed = 500;
+			  //speed = 500;
 			  timer = setInterval(step, speed);
-			  button.text("Pause");
+			  button.text("∥");
+            if (speed <= 0) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 0; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }        
+            if (speed == 250 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 1; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }         
+            if (speed == 500 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 2; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }   
+            if (speed == 750 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 3; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }     
+            if (speed >= 1000 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 4; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            } 
 			}
 			console.log("Slider moving: " + moving);
 		});
@@ -1112,31 +1163,62 @@
 			currentIndex = 35;
 			clearInterval(timer);
 			// timer = 0;
-			playButton.text("Play");
+			playButton.text("▶");
 			console.log("Slider moving: " + moving);
 		}   
 	}
     
-    var resetButton = d3.select("#reset-button");
-        resetButton
-            .on("click", function() {
-				var button = d3.select(this);
-				moving = false;
-				clearInterval(timer);
-				slider.value(dataSource.dates.length-1);
-				playButton.text("Play");
-				currentIndex = 35;
-				console.log("Slider moving: " + moving);
-			})
-
     var slowerButton = d3.select("#slower-button");
         slowerButton
             .on("click", function() {
             var button = d3.select(this);
             clearInterval(timer);
             speed = speed + 250
-            timer = setInterval(step, speed);
-            playButton.text("Pause");
+            if (moving == true) {
+				timer = setInterval(step, speed);
+				playButton.text("∥");
+                moving = true;
+            }
+            if (speed <= 0) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 0; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }        
+            if (speed == 250 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 1; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }         
+            if (speed == 500 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 2; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }   
+            if (speed == 750 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 3; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            }     
+            if (speed >= 1000 ) {
+            for (j = 0; j < dots.length; j++){
+                for (i = 4; i < dots.length; i++){
+                    dots[j].style.backgroundColor = "#bbb";
+                    dots[i].style.backgroundColor = "#004C97";
+                    }
+                }
+            } 
           });
     
     var fasterButton = d3.select("#faster-button");
@@ -1145,10 +1227,105 @@
 				var button = d3.select(this);
 				clearInterval(timer);
 				speed = speed - 250
+            if (moving == true) {
 				timer = setInterval(step, speed);
-				playButton.text("Pause");
+				playButton.text("∥");
+                moving = true;
+            }
+                if (speed <= 0) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 0; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }        
+                if (speed == 250 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 1; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }         
+                if (speed == 500 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 2; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }   
+                if (speed == 750 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 3; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }     
+                if (speed >= 1000 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 4; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                } 
 			});
+    
+    function speedDots(n) {
+        clearInterval(timer);
+        speed = n;
+        if (moving == true) {
+            timer = setInterval(step, speed);
+            playButton.text("∥");
+            moving = true;
+        }
+                if (speed <= 0) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 0; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }        
+                if (speed == 250 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 1; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }         
+                if (speed == 500 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 2; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }   
+                if (speed == 750 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 3; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                }     
+                if (speed >= 1000 ) {
+                for (j = 0; j < dots.length; j++){
+                    for (i = 4; i < dots.length; i++){
+                        dots[j].style.backgroundColor = "#bbb";
+                        dots[i].style.backgroundColor = "#004C97";
+                        }
+                    }
+                } 
 
+    };
+
+        
 	console.log("STARTING...");
 
 	loadData().then(function(){
@@ -1158,6 +1335,9 @@
 		});
 	});
 
+    //set 3dots
+    for (i = 2; i < dots.length; i++){
+                dots[i].style.backgroundColor = "#004C97";}
 	// load the invisible tooltip div...
 	loadTooltips();
 
