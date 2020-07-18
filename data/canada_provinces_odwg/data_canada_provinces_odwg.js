@@ -37,7 +37,7 @@ const dataODWG_Canada_Provinces={
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var target_length = 4;
+		var target_length = 5;
 
 		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder, 
@@ -51,8 +51,9 @@ const dataODWG_Canada_Provinces={
 		// GET SOURCE DATASET (cartogram polygons)
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
-		$.getJSON(null, function(src_data) {
-			console.log("got cartogram polys...")
+		$.getJSON("data/canada_provinces_odwg/Canada_provinces_simplified_cartogram.geojson", function(src_data) {
+			console.log("got Canada cartogram polys...")
+			console.log(src_data);
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -195,10 +196,11 @@ const dataODWG_Canada_Provinces={
 				// DEFINE AN ARRAY OF DISTRICT IDs
 				var districtIDs = new Set();
 				for(let i=0; i < src.map_polys.features.length; i++){
-					districtIDs.add(src.map_polys.features[i].properties["abbrev"]);
+					districtIDs.add(src.map_polys.features[i].properties["Cov19ID"]);
 				}
 				districtIDs = Array.from(districtIDs);
-
+				console.log("districtIDs:");
+				console.log(districtIDs);
 
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
 				var variableNames = ["cases","tests","deaths"]
@@ -230,6 +232,10 @@ const dataODWG_Canada_Provinces={
 					for(let j=0; j < districtIDs.length; j++){
 						cur_districtID = districtIDs[j];
 						cur_record[cur_districtID] = {};
+						// set values to zero initially
+						dateDistrictData[cur_date][cur_districtID]['cases']=0;
+						dateDistrictData[cur_date][cur_districtID]['tests']=0;
+						dateDistrictData[cur_date][cur_districtID]['deaths']=0;
 					}
 				}
 				// *********************************************
@@ -261,10 +267,14 @@ const dataODWG_Canada_Provinces={
 				}
 
 				// go through testing_data object and transfer values into dateDistrictData object
+				// get list of all province names for debugging
+				provinceSet = new Set();
+				
 				for(let i=0; i < testing_data.length; i++){
 					// get date and state
 					var cur_date = dateFromString(testing_data[i]["date_testing"]);
 					var cur_districtID = testing_data[i]["province"];
+					provinceSet.add(cur_districtID);
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
@@ -272,6 +282,12 @@ const dataODWG_Canada_Provinces={
 						}
 					}
 				}
+				
+				console.log("provinces in IshaBerry:");
+				console.log(provinceSet);
+				
+				console.log("dateDistrictData:");
+				console.log(dateDistrictData);
 
 				// THE DATA OBJECT
 				the_data_object = {
@@ -282,9 +298,9 @@ const dataODWG_Canada_Provinces={
 					districtIDs: districtIDs,
 					variableNames: variableNames,
 					dateDistrictData: dateDistrictData,
-					getID: function(feat){return feat.properties.abbrev;},
+					getID: function(feat){return feat.properties.Cov19ID;},
 					getLabel: function(feat){return feat.properties.name;},
-					getPopulation: function(feat){return feat.properties.pop;},
+					getPopulation: function(feat){return feat.properties.Pop2020q1;},
 				}
 				resolve(the_data_object);
 

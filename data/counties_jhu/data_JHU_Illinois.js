@@ -243,7 +243,7 @@ const dataJHU_Illinois = {
 				the_data_object = {
 					briefDescription: "Data from <a href='https://systems.jhu.edu/'>John Hopkins University CSSE</a>.",
 					baseFeatures: src.map_polys, 
-					cartogramFeatures: null, 
+					cartogramFeatures: src.carto_polys, 
 					dates: dates, 
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
