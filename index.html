@@ -1244,6 +1244,8 @@
               currentIndex = sliderID;
               }
 			  moving = true;
+			  fixedValueRange();
+			  loadLegend();
 			  //speed = 500;
 			  timer = setInterval(step, speed);
 			  button.text("∥");
