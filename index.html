@@ -14,8 +14,9 @@
   <script src="d3.v5.js" charset="utf-8"></script>
   <script src="utils.js"></script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
-	<script src="data/counties_jhu/data_JHU_Illinois.js"></script>
-	<script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
+  <script src="data/counties_jhu/data_JHU_Illinois.js"></script>
+  <script src="data/florida_counties_jhu/data_JHU_Florida.js"></script>
+  <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
   <script src="d3-simple-slider.min.js"></script>
   <script src="ResizeSensor.js"></script>
   <script src="legend_susielu.js"></script>
@@ -280,7 +281,8 @@
 	var dataSources = [
 		dataCovidTracking_states,
 		dataODWG_Canada_Provinces,
-		dataJHU_Illinois
+		dataJHU_Illinois, 
+		dataJHU_Florida
 	]
 
 	function addThemesToSelector(datasource){
