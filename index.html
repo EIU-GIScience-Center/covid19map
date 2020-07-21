@@ -7,15 +7,16 @@
   <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="d3_map_styles.css"> 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap" rel="stylesheet">
-  <title>COVID-19 Open Visualization Toolkit</title>
+  <title>COViz</title>
   <script src="jquery-3.4.1.js"></script>
   <script src="jquery.csv-0.71.min.js"></script>
   <script src="papaparse.min.js"></script>
   <script src="d3.v5.js" charset="utf-8"></script>
   <script src="utils.js"></script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
-	<script src="data/counties_jhu/data_JHU_Illinois.js"></script>
-	<script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
+  <script src="data/counties_jhu/data_JHU_Illinois.js"></script>
+  <script src="data/florida_counties_jhu/data_JHU_Florida.js"></script>
+  <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
   <script src="d3-simple-slider.min.js"></script>
   <script src="ResizeSensor.js"></script>
   <script src="legend_susielu.js"></script>
@@ -37,7 +38,8 @@
 				<img src="images/EIUSquareWhite.png" style="height: 100%;">
 			</div>
 			<div id="pagetitle" style="float:left">
-					<h3  style="margin-top:0ex; margin-bottom: 0ex; margin-left: 1.5ex; color: #FFFFFF;">Covid-19 Open Visualization (COViz) Toolkit </h3>
+					<h3  style="margin-top:0ex; margin-bottom: 0ex; margin-left: 1.5ex; color: #FFFFFF;">
+					COViz: The Covid-19 Open Visualization Project </h3>
 			</div>
 			<div id="about-link" class="menu">
 			<a href="#contributors" style="color: #FFFFFF; font-style: italic;">contributors</a>
@@ -120,7 +122,7 @@
 			<div style="float: right"><a href="#">top</a></div>
 		</div>
 			<p>
-			The Covid-19 Open Visualization (COViz) Toolkit is a modular open-source web toolkit for 
+			The Covid-19 Open Visualization (COViz) project is a modular open-source web toolkit for 
 			hybrid map/graph visualization of COVID-19 risk burden, resource and testing sufficiency 
 			and trajectories over time. In contrast to many dashboards that are data-driven and/or 
 			built on proprietary software, COViz is an efficient, lightweight open platform that 
@@ -206,15 +208,27 @@
 		</div>			
 			<p>This website is being developed by the <a href="https://www.eiu.edu/gisci/">EIU GIScience Center</a>. Data comes from <a href="https://covidtracking.com/">covidtracking.com</a>, the <a href='https://github.com/ishaberry/Covid19Canada'>COVID-19 Canadian Open Data Working Group</a>, and the <a href="https://systems.jhu.edu/"> Center for Systems Science and Engineering</a> at John Hopkins University. Coding performed by:</p>
 			<table style="border: none">
-				<tr>
-					<td><img src="images/Kwang il Yoo_photo.jpg" width="60" height="75"></td>
-					<td style="padding-right: 10px"><b>Kwang-il Yoo</b></td>
-					<td>Graduate student, PSM in GIScience, Eastern Illinois University</td>
-				</tr>
+
 				<tr>
 					<td><img src="images/kronenfeld 2018.jpg" width="60" height="75"></td>
-					<td style="padding-right: 10px"><b>Barry Kronenfeld</b></td>
-					<td>Director, GIScience Center, Eastern Illinois University</td>
+					<td style="padding-right: 10px; vertical-align:middle">
+						<b>Barry Kronenfeld</b><br>
+						Director, GIScience Center, Eastern Illinois University
+					</td>
+				</tr>
+				<tr>
+					<td><img src="images/Kwang il Yoo_photo.jpg" width="60" height="75"></td>
+					<td style="padding-right: 10px; vertical-align:middle">
+						<b>Kwang-il Yoo</b><br>
+						PSM in GIScience, Eastern Illinois University
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td style="padding-right: 10px; vertical-align:top">
+						<b>Sarah Kronenfeld</b><br>
+						University of Toronto
+					</td>
 				</tr>
 			</table>
 			<br>
@@ -246,6 +260,7 @@
 	var highVal;
 	var dailymin;
 	var dailymax;
+	var radScaleFac = 0;
     var timer;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
@@ -266,7 +281,8 @@
 	var dataSources = [
 		dataCovidTracking_states,
 		dataODWG_Canada_Provinces,
-		dataJHU_Illinois
+		dataJHU_Illinois, 
+		dataJHU_Florida
 	]
 
 	function addThemesToSelector(datasource){
@@ -335,12 +351,16 @@
 		maxmax = theme.choroplethValueFcn(base, dates);
 		return maxmax
 	}
+
+
+
+
 	function dailymaxChoroplethValue(date, valuefunction){
 		if(dataSource.baseFeatures, date == undefined){
 			return "undefined";
 		} else {
 			var dailymax = valuefunction(dataSource.baseFeatures.features[0], date);
-			for (i = 0; i < dataSource.baseFeatures.features.length; i++){
+			for (let i = 0; i < dataSource.baseFeatures.features.length; i++){
 				var currentValue = valuefunction(dataSource.baseFeatures.features[i], date);
 				if (currentValue > dailymax){
 					dailymax = currentValue;
@@ -350,18 +370,51 @@
 		}
 	}
 
+	// The minimum value across all features on a given date
 	function dailyminChoroplethValue(date, valuefunction){
 		if(dataSource.baseFeatures, date == undefined){
 			return "undefined";
 		} else {   
 			var dailymin = valuefunction(dataSource.baseFeatures.features[0], date);
-			for (i = 0; i < dataSource.baseFeatures.features.length; i++){
+			for (let i = 0; i < dataSource.baseFeatures.features.length; i++){
 				var currentValue = valuefunction(dataSource.baseFeatures.features[i], date);
 				if (currentValue < dailymin){
 					dailymin = currentValue;
 				}
 			}
 			return dailymin;
+		}
+	}
+
+	// The minimum value across all features on all dates
+	function minChoroplethValue(valuefunction){
+		if(dataSource.baseFeatures == undefined){
+			return "undefined";
+		} else {
+			var globalmin =dailyminChoroplethValue(dataSource.dates[0],valuefunction);
+			for(let i=1; i < dataSource.dates.length; i++){
+				var currentValue = dailyminChoroplethValue(dataSource.dates[i],valuefunction);
+				if (currentValue < globalmin){
+					globalmin = currentValue;
+				}	
+			}
+			return globalmin;
+		}
+	}
+
+	// The maximum value across all features on all dates
+	function maxChoroplethValue(valuefunction){
+		if(dataSource.baseFeatures == undefined){
+			return "undefined";
+		} else {
+			var globalmax =dailymaxChoroplethValue(dataSource.dates[0],valuefunction);
+			for(let i=0; i < dataSource.dates.length; i++){
+				var currentValue = dailymaxChoroplethValue(dataSource.dates[i],valuefunction);
+				if (currentValue > globalmax){
+					globalmax = currentValue;
+				}
+			}
+			return globalmax;
 		}
 	}
 
@@ -384,9 +437,6 @@
 	}
 
 	function fixedValueRange(){
-		console.log("fixedValueRange:");
-		console.log(theme.legendmin);
-		console.log(theme.legendmax);
 		var unitIntervalScale = d3.scaleLinear()
 			.domain([theme.choroplethValueScale(theme.legendmin), theme.choroplethValueScale(theme.legendmax)]);
 			if(theme.invertColorScale){
@@ -399,6 +449,56 @@
 				});			
 			}
     }
+
+	// calculates the radius scale factor that will result in the largest circle
+	// occupying the given proportion of the feature area
+	function radiusScaleFac(features, maxOccupancy = 0.35){
+		// determine the largest ratio of value/screenarea
+		if(features == undefined || theme == undefined || $.isNumeric(theme.circleRadiusFcn) == true) {
+			return "undefined";
+		} else {
+			// determine the screen factor (ratio of screen coords to geometry coords)
+			var ele = document.getElementById('map'); // Do not use #
+			var width = ele.clientWidth;
+			var height = ele.clientHeight;		
+			[prj,prjscale,transX,transY]=fitProjection(features, [[0, 0],  [width, height]], true);
+			var path = d3.geoPath().projection(prj);
+			var bounds = path.bounds(features), 
+				dx = bounds[1][0] - bounds[0][0],
+				dy = bounds[1][1] - bounds[0][1],
+				boundsscale = .9 / Math.max(dx / width, dy / height);
+			var screenFac = prjscale*boundsscale*prjscale*boundsscale;
+			// shortcut variables
+			var feats = features.features;
+			var f = theme.circleRadiusFcn;
+			// find the date with the largest sum of values
+			var maxValSum = 0;
+			var maxDate = null;
+			for(i=0;i<dataSource.dates.length;i++){
+				var thisDate = dataSource.dates[i];
+				var curValSum = d3.sum(feats, x => Math.pow(f(x,thisDate),2));
+				if (curValSum > maxValSum){
+					maxValSum = curValSum;
+					maxDate = thisDate;
+				}
+			}			
+			// get areas of all circles and all features
+			var circleArea = 0;
+			var featArea = 0;
+			// check remaining features and update if larger
+			for (let i = 0; i < feats.length; i++){
+				var thisCircleArea = Math.pow(f(feats[i], maxDate),2)*Math.PI;
+				var thisFeatArea = featureArea(feats[i])*screenFac;
+				circleArea += thisCircleArea;
+				featArea += thisFeatArea;
+			}
+			var areaRatio = circleArea/featArea;
+			// calculate radius scale factor needed to make the maxRatio equal to maxOccupancy
+			var scaleFac = Math.sqrt(maxOccupancy/areaRatio);
+			return scaleFac;
+		}
+	}
+
     
     function loadTheme() {
 		// determine the new map theme
@@ -429,7 +529,12 @@
 					},500
 				);
 				playButton.text("►");
-				currentIndex = 35;
+				//currentIndex = 35;
+				// get legend minimum and maximum
+				if (theme.legendmin == null){theme.legendmin = minChoroplethValue(myValueFunction)};
+				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(myValueFunction)};
+				// calculate radius scale factor
+				radScaleFac = radiusScaleFac(dataSource.cartogramFeatures);
 				// update the map and legend
 				if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
@@ -449,6 +554,8 @@
 			// find matching data source
 			var match = dataSources.find(v => v.dataSourceName == dataSourceName);
 			if(match){
+				// for error checking
+				error_displayed=false;
 				// get promised data object
 				match.dataFunc.then(function(the_data_obj){
 					dataSource = the_data_obj; // the data object is what we'll call the dataSource
@@ -462,7 +569,20 @@
 						if(dataSource.dateDistrictData == undefined || featID == undefined){
 							val=0;
 						} else {
+							try{
 							var val = dataSource.dateDistrictData[date][featID][varName];
+							}
+							catch(err){
+								if(error_displayed==false){
+									console.log("ERROR in Canada");
+									console.log(err.message);
+									console.log("date: " + date);
+									console.log("featID: " + featID);
+									console.log("varName: " + varName);
+									console.log(dataSource.dateDistrictData);
+									error_displayed=true;
+								}
+							}
 						}
 						if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
 						if(getIncrease){
@@ -475,7 +595,6 @@
 						return val;
 					}
 					// check to see if there are cartogram features
-					console.log("in dataLoad");
 					if (dataSource.cartogramFeatures == null){
 						// if not, disable map type selector and set cartogram to false
 						document.getElementById("carttoggle").disabled=true;
@@ -484,9 +603,11 @@
 						document.getElementById("cartOptLbl").style.color="#CCCCCC";
 					} else {
 						// otherwise need to make sure it is visible
-						console.log("making things visible again...");
 						document.getElementById("carttoggle").disabled=false;
 						document.getElementById("cartOptLbl").style.color=null;
+						// calculate radius scale factor
+						radScaleFac = radiusScaleFac(dataSource.cartogramFeatures);
+						console.log("Radius factor: " + radScaleFac);
 					}
 					resolve();
 				});
@@ -604,6 +725,9 @@
 			} else {
 				m = loadMap(dataSource.baseFeatures);
 			}
+			// calculate radius scale factor
+			radScaleFac = radiusScaleFac(dataSource.cartogramFeatures);
+			console.log("Radius factor: " + radScaleFac);
 			updateMap();
 			loadLegend();
 			var slider_val = parseInt(slider.value());
@@ -614,8 +738,13 @@
 	});		
 
 	function featureInfoHTML(feature){
+		console.log("showing feature info...");
 		if(theme != undefined){
 			if(feature != null){
+				console.log("theme and feature exist...");
+				console.log(curDate);
+				console.log(feature);
+				console.log(dataSource.getLabel(feature));
 				var realDate = new Date(curDate)
 				var monthID = realDate.getMonth()+1;
 				var day = realDate.getDate();
@@ -627,7 +756,6 @@
 			}
 		}
 	}
-
 
 	function loadMap(featdata,categories, category){
 		console.log("loading map...");
@@ -658,6 +786,7 @@
 				y = (bounds[0][1] + bounds[1][1]) / 2,
 				boundsscale = .9 / Math.max(dx / width, dy / height),
 				translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
+			console.log("boundsscale: " + boundsscale);
 			statepaths.selectAll('path')
 				.remove()
 				.data(featdata.features)
@@ -688,9 +817,8 @@
 					return prjY(centroid(d)[1]);
 				})
 				.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
-				//.style('fill',theme.circleFill)
-				//.style('stroke',theme.circlestroke)
 				.style('stroke-width',1)
+				.style('stroke',"#FFFFCC")
 				.style('opacity',1)
 				.on("click",feature_click)
 				.on("mouseover",feature_mouseover)
@@ -703,11 +831,12 @@
 	// toggles between the current base map and cartogram
 	function toggle_map(milliseconds=1500, callback){
 		oncartogram = !oncartogram;
-		updateMap(milliseconds, delay=0, callback);
+		updateMap(milliseconds, callback);
 	}
 
+
 	// updates map to the user selected type (map or cartogram) and date
-	function updateMap(milliseconds=750,delay=0,callback){
+	function updateMap(milliseconds=750, callback){
 		// change the text describing the map type
 		var mapTypeDescription;
 		if (oncartogram){
@@ -716,7 +845,7 @@
 			mapTypeDescription = "The size of each state represents its <span style='color: #B37; font-weight: 700'>land area</span>.";
 		}
 		document.getElementById("map_type_description").innerHTML ="<i>" + mapTypeDescription + "</i>";
-		
+				
 		// transition the map only if the map svg and date are defined
 		if(mapsvg !== undefined){
 			if(curDate != null){	
@@ -726,25 +855,26 @@
 				var localCircleRadius;
 				var localCircleFill = function(d){return choroplethColor(d, curDate);};
 				var localFeatureStroke;
+				var localCircleStroke;
+
 				if (oncartogram==false){
 					todata=dataSource.baseFeatures;
 					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 					localFeatureStroke = '#DDD';
-					localCircleRadius=0;
+					localCircleStroke = localCircleFill;
 				} else {
 					todata=dataSource.cartogramFeatures;
 					if(theme.circleRadiusFcn==0){
 						localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 						localFeatureStroke = '#DDD';
-						localCircleRadius=0;
+						localCircleStroke = localCircleFill;
 					} else {
 						localFeatureStroke = '#CCC';
 						localChoroplethColor='#F5F5F8';
-						localCircleRadius=function(d){return theme.circleRadiusFcn(d,curDate);};
+						localCircleStroke = '#FFFFCC';
 					}
 				}
-
-				// get scaling parameters based on current map width & height
+				
 				var ele = document.getElementById('map'); // Do not use #
 				var width = ele.clientWidth;
 				var height = ele.clientHeight;
@@ -759,22 +889,37 @@
 					boundsscale = .9 / Math.max(dx / width, dy / height),
 					translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
 
+				// see if we can determine scale factor
+				console.log("scales in prj");
+				console.log(prjscale);
+				console.log(boundsscale);
+				if (oncartogram==false){
+					localCircleRadius=0;
+				} else {
+					todata=dataSource.cartogramFeatures;
+					if(theme.circleRadiusFcn==0){
+						localCircleRadius=0;
+					} else {
+						// radScaleFac=prjscale*boundsscale*prjscale*boundsscale;
+						localCircleRadius=function(d){return radScaleFac * theme.circleRadiusFcn(d,curDate);};
+					}
+				}
+
+
 				// transition district polygons
 				mapsvg.selectAll('path')
 					.transition()
-					.delay(delay)
 					.ease(d3.easeLinear)
 					.attr("d",function(d,i){return path(todata.features[i]);})
 					.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
-					.attr("fill",localChoroplethColor)
 					.attr("stroke",localFeatureStroke)
 					.duration(milliseconds)
+					.attr("fill",localChoroplethColor)
 					.on("end",callback);	
 
 				// transition circle symbols
 				mapsvg.selectAll('circle')
 					.transition()
-					.delay(delay)
 					.ease(d3.easeLinear)
 					.attr("cx", function(d,i){
 						var thisFeat = todata.features[i];				
@@ -788,8 +933,12 @@
 					})
 					.attr('r',localCircleRadius)
 					.style('fill',localCircleFill)
+					.style('stroke',localCircleStroke)
 					.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
 					.duration(milliseconds);
+
+
+
 					
 				// show info tooltip
 				if(active_feature != null){showFeatureInfo(active_feature);}
@@ -821,8 +970,6 @@
 		var truncatedCells
         var truncatedLabels
         console.log("creating legend...");
-		console.log(theme.updateDailyValueRange);
-		console.log(moving);
         if (theme.updateDailyValueRange && moving==false){
              [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
         } else {
@@ -1031,8 +1178,8 @@
                 } else {
 					fixedValueRange();
 				}
-                loadLegend()
-				updateMap(slider_update_duration,0,function()   {return false;});
+				if(moving==false){loadLegend();};
+				updateMap(slider_update_duration);
 			});
 		slider_svg
 			.attr('width', slider_width)
@@ -1099,6 +1246,8 @@
               currentIndex = sliderID;
               }
 			  moving = true;
+			  fixedValueRange();
+			  loadLegend();
 			  //speed = 500;
 			  timer = setInterval(step, speed);
 			  button.text("∥");
@@ -1156,7 +1305,7 @@
                 } else {
 					fixedValueRange();
 				}
-		loadLegend();
+		// loadLegend();
 		currentIndex = currentIndex + 1;
 		if (currentIndex > targetIndex) {
 			moving = false;
