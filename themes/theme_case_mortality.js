@@ -37,7 +37,6 @@ const themeCaseMortality = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'cases');
 		var deaths = getValue(feat, date, 'deaths');
 		if(cases==0){return 0;} else {return 100*deaths/cases;}
@@ -140,7 +139,6 @@ const themeCaseMortality = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'cases',false);
 		var deaths = getValue(feat, date, 'deaths',false);
 		if (isNaN(cases)) {

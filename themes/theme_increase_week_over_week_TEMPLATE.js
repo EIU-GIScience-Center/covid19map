@@ -73,7 +73,7 @@ const themeCaseIncreaseWeekOverWeek = {
 		// Example 2: Get the 7-day average for the previous week
 		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
 		
-		// This theme uses the last two variables to determine the rate at which cases are increaseing or decreasing.
+		// This theme uses the last two variables to determine the rate at which cases are increasing or decreasing.
 		// The following code returns the calculated value
 		// First, handle special cases:
 		if(prior_week==0){

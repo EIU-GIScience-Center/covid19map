@@ -37,7 +37,6 @@ const themePositiveTestRatio = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		var state = feat.properties["ABBREV"];		
 		var cases = getValue(feat, date, 'cases');
 		var tests = getValue(feat, date, 'tests');
 		if(tests==0){return 0;} else {return 100*cases/tests;}
@@ -174,7 +173,7 @@ const themeNewPositiveTestRatio = {
 	 * type: string
 	 */
 	
-	briefDescription: "The ratio of positive test results to total tests during the most recent 3-day period. A high value indicates insufficient testing.",
+	briefDescription: "The ratio of positive test results to total tests during the most recent 7-day period. A high value indicates insufficient testing.",
 
 	/**
 	 * A list of variables required to show this map theme
@@ -192,7 +191,6 @@ const themeNewPositiveTestRatio = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		var state = feat.properties["ABBREV"];		
 		var newcases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
 		var newtests = periodAverage(feat, date, function(f,d){return getValue(f,d,'tests', true, true)}, [1,1,1,1,1,1,1]);
 		if(newtests==0){return 0;} else {return 100*newcases/newtests;}
