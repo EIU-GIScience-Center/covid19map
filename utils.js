@@ -160,6 +160,17 @@ function area(coords){
 	return a/2;
 }
 
+function featureArea(feat){
+	var geo = feat['geometry'];
+	var coordlists = geo['coordinates'];
+	var featArea=0;
+	for(let i=0;i<coordlists.length;i++){
+		var coords = coordlists[i][0];
+		featArea += area(coords);
+	}
+	return featArea;
+}
+
 function coordCentroid(coords, A=-1){
 	var cX=0, cY=0;
 	if(A==-1){A = area(coords)}

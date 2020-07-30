@@ -1,25 +1,25 @@
-// A map theme that shows the cumulative rate and number of cases in each district.
+// A map theme that shows the cumulative rate and number of deaths in each district.
 
 // Utility variables and functions specific to this theme
 // Please follow naming convention: all constants and variables here should start with theme name
 // To avoid conflicts with similar variables in other theme modules
 /* eslint-env es6 */
 /* eslint-disable */
-const casesCumulative_legendMax = 10000;
-const casesCumulative_logScale = d3.scaleLog()
-	.domain([casesCumulative_legendMax, 100*Math.cbrt(10)]);
+const deathsCumulative_legendMax = 10000;
+const deathsCumulative_logScale = d3.scaleLog()
+	.domain([deathsCumulative_legendMax, 100*Math.cbrt(10)]);
 var localScale = d3.scalePow().exponent(0.7)(d3.scaleLog().domain([10000, 100*Math.cbrt(10)]));
 
 
 // The theme object
-const themeCasesCumulative = {
+const themeDeathsCumulative = {
 
 	/**
 	 * The name under which this theme shows up in the theme selector
 	 *
 	 * type: string
 	 */
-	themeName: "Cases, Cumulative",
+	themeName: "Deaths, Cumulative",
 
 	/**
 	 * A brief description, to show in the main window
@@ -27,15 +27,15 @@ const themeCasesCumulative = {
 	 * type: string
 	 */
 	
-	briefDescription: "The cumulative number of confirmed cases.",
-
+	briefDescription: "The cumulative number of deaths.",
+    
 	/**
 	 * A list of variables required to show this map theme
 	 *
 	 * type: array of strings
 	 */
 
-	requiredVariables: ["cases"],
+	requiredVariables: ["deaths"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -45,7 +45,7 @@ const themeCasesCumulative = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		return getValue(feat,date,'cases',true);
+		return getValue(feat,date,'deaths',true);
 	},
 
     
@@ -108,7 +108,7 @@ const themeCasesCumulative = {
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Cases Per Million (total cases indicated by circle size)",
+	choroplethLegendTitle: "deaths Per Million (total deaths indicated by circle size)",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -119,10 +119,10 @@ const themeCasesCumulative = {
 	 *         interpreted as the radius of the circle, in pixels
 	 */
 	circleRadiusFcn: function (feat, curDate) {
-		var todayCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
+		var todaydeaths = getValue(feat,curDate,'deaths',false);
+		// for now, set radius as 1/10th of sqrt of deaths
 		// or return zero for illustrations with no circles
-		return Math.sqrt(todayCases)/8;
+		return Math.sqrt(todaydeaths)/8;
 	},
 
 	/**
@@ -149,32 +149,20 @@ const themeCasesCumulative = {
 	 */
 	tooltipTextFcn: function (feat, date) {
 		var pop = dataSource.getPopulation(feat);
-		var case_count = getValue(feat,date,'cases', false);
-		var case_rate = getValue(feat,date,'cases', true);
-		if (isNaN(case_count)) {
-			case_count = 0;
+		var death_count = getValue(feat,date,'deaths', false);
+		var death_rate = getValue(feat,date,'deaths', true);
+        var tdr = 100*death_count/pop;
+		if (isNaN(death_count)) {
+			death_count = 0;
 		}
-		if (isNaN(case_rate)) {
-			case_rate = 0;
+		if (isNaN(death_rate)) {
+			death_rate = 0;
 		}
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + withCommas(case_count) + " cases</p>";
-		msg += "<p>" + toAppropriateDecimals(case_rate) + " cases per million</p>";		
+		msg += "<p>" + withCommas(death_count) + " deaths</p>";
+		msg += "<p>" + toAppropriateDecimals(death_rate) + " deaths per million</p>";	
+        msg += "<p>Total Mortality: " + tdr.toFixed(2) + "%</p>";
 		return msg;
-	},
-
-	/**
-	 * A function that gives the average choropleth value for a group of features
-	 *
-	 * @param feats: The list of features to be averaged
-	 * @param date: The date for which the features' average value is desired
-	 * @return The average value of the features
-	 */
-	averageValueFcn: function (feats, date) {
-		let avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d,
-			'cases', false)}, function (f, d) {return dataSource.getPopulation(f)})
-
-		return 1000000 * avg;
 	}
 
 }

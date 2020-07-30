@@ -31,8 +31,8 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataJHU_Illinois = {
-	dataSourceName: "Illinois Counties", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+const dataJHU_Florida = {
+	dataSourceName: "Florida Counties", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
@@ -41,7 +41,7 @@ const dataJHU_Illinois = {
 		
 		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/IL_counties_pop2010.geojson", function(src_data) {
+		$.getJSON("data/florida_counties_JHU/florida_counties.geojson", function(src_data) {
 			console.log("got map polygons...")
 			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
@@ -50,7 +50,7 @@ const dataJHU_Illinois = {
 		
 		// GET SOURCE DATASET (cartogram polygons)
 		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/IL_counties_pop2010_cartogram.geojson", function(src_data) {
+		$.getJSON("data/florida_counties_JHU/florida_counties_cartogram.geojson", function(src_data) {
 			console.log("got cartogram polys...")
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
@@ -162,7 +162,7 @@ const dataJHU_Illinois = {
 				var districtIDs = [];
 				for(let i=0; i < case_data.length; i++){
 					var cur_row = case_data[i];
-					if(cur_row.Province_State == "Illinois"){
+					if(cur_row.Province_State == "Florida"){
 							districtIDs.push(cur_row.Admin2);
 					}
 				}
@@ -204,7 +204,7 @@ const dataJHU_Illinois = {
 				// go through src.case_data object and transfer values into dateDistrictData object
 				for(let i=0; i < case_data.length; i++){ // loop through table rows
 					var cur_row = case_data[i]; // get data record
-					if(cur_row.Province_State == "Illinois"){ // check that it is in Illinois
+					if(cur_row.Province_State == "Florida"){ // check that it is in Florida
 						var cur_districtID = cur_row.Admin2; // get district id 
 						for(let j=0; j < dates.length; j++){ // loop through dates
 							var cur_date = dates[j];
@@ -222,7 +222,7 @@ const dataJHU_Illinois = {
 				// go through src.death_data object and transfer values into dateDistrictCata object
 				for(let i=0; i < death_data.length; i++){ // loop through table rows
 					var cur_row = death_data[i]; // get data record
-					if(cur_row.Province_State == "Illinois"){ // check that it is in Illinois
+					if(cur_row.Province_State == "Florida"){ // check that it is in Florida
 						var cur_districtID = cur_row.Admin2; // get district id 
 						for(let j=0; j < dates.length; j++){ // loop through dates
 							var cur_date = dates[j];
@@ -250,7 +250,7 @@ const dataJHU_Illinois = {
 					dateDistrictData: dateDistrictData, 
 					getID: function(feat){return feat.properties.NAME;}, 
 					getLabel: function(feat){return feat.properties.NAME + " County";}, 
-					getPopulation: function(feat){return feat.properties.Pop2010;}, 
+					getPopulation: function(feat){return feat.properties.POP2010;}, 
 				}
 
 				resolve(the_data_object);

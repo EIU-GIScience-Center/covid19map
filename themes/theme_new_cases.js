@@ -14,7 +14,7 @@ const themeNewCases = {
 	 *
 	 * type: string
 	 */
-	themeName: "New Cases (1-day)",
+	themeName: "Cases, New (1-day)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -23,7 +23,7 @@ const themeNewCases = {
 	 */
 	
 	briefDescription: "The number of new cases reported in the most recent 24-hour period.",
-
+    
 	/**
 	 * A list of variables required to show this map theme
 	 *
@@ -89,8 +89,8 @@ const themeNewCases = {
     /**
     *Fixed Legend Value for each theme
     */
-    legendmin: 0,
-    legendmax: 500,
+    legendmin: null,
+    legendmax: null,
 	
     /**
     *updateDailyValueRange will choose whether the legend will be automatically updated or not
@@ -185,7 +185,7 @@ const themeNewCases_7day = {
 	 *
 	 * type: string
 	 */
-	themeName: "New Cases (7-day)",
+	themeName: "Cases, New (7-day)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -261,8 +261,8 @@ const themeNewCases_7day = {
     /**
     *Fixed Legend Value for each theme
     */
-    legendmin: 0,
-    legendmax: 500,
+    legendmin: null,
+    legendmax: null,
 	
     /**
     *updateDailyValueRange will choose whether the legend will be automatically updated or not
@@ -321,7 +321,7 @@ const themeNewCases_7day = {
 		var pop = dataSource.getPopulation(feat);
 		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
 		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1])
-
+		console.log("population: " + pop);
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
 		msg += "<p>" + new_case_count.toFixed(2) + " new cases/day</p>";
 		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		

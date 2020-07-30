@@ -17,14 +17,14 @@
 
 
 // The theme object
-const themeCaseIncreaseWeekOverWeek = {
+const themeDeathIncreaseWeekOverWeek = {
 
 	/**
 	 * The name under which this theme shows up in the theme selector
 	 *
 	 * type: string
 	 */
-	themeName: "Cases, Comparison",
+	themeName: "Deaths, Comparison",
 
 	/**
 	 * A brief description, to show in the main window
@@ -32,7 +32,7 @@ const themeCaseIncreaseWeekOverWeek = {
 	 * type: string
 	 */
 	
-	briefDescription: "The difference between new cases this week vs. the previous week.",
+	briefDescription: "The difference between deaths this week vs. the previous week.",
     
 	/**
 	 * A list of variables required to show this map theme. 
@@ -44,7 +44,7 @@ const themeCaseIncreaseWeekOverWeek = {
 	 * type: array of strings
 	 */
 
-	requiredVariables: ["cases"],
+	requiredVariables: ["deaths"],
 
 	/**
 	 * A function that gives the value used to determine a feature's color
@@ -60,22 +60,22 @@ const themeCaseIncreaseWeekOverWeek = {
 		// It is defined in index.html and has the following signature:
 		// 			getValue = function(feat, date, varName, perMillion=false, getIncrease = false)
 		// Example 1: Get the number of cases on the current date:
-		var currentCases = getValue(feat,date,'cases', false, false)
+		var currentDeaths = getValue(feat,date,'deaths', false, false)
 		// Example 2: Get the number of cases per million people:
-		var currentCasesPerMillion = getValue(feat,date,'cases', true, false)
+		var currentDeathsPerMillion = getValue(feat,date,'deaths', true, false)
 		// Example 3: Get the increase in cases over the previous day (i.e. the number of NEW cases):
-		var increaseInCases = getValue(feat,date,'cases', false, true)
+		var increaseInDeaths = getValue(feat,date,'deaths', false, true)
 		
 		// (2) The ***periodAverage*** function can get an average of any variable for any time period prior to each slider date
 		// It is defined in utils.js and has the following signature:
 		//     periodAverage=function(feat, date, valFunc, periodWts)
 		// You can use "getValue" for the value function, and a simple array of numbers for periodWts.
 		// Example 1: Get the 7-day average number of new cases/day:		
-		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1])
 		// Example 2: Get the 7-day average for the previous week
-		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
 		
-		// This theme uses the last two variables to determine the rate at which cases are increasing or decreasing.
+		// This theme uses the last two variables to determine the rate at which cases are increaseing or decreasing.
 		// The following code returns the calculated value
 		// First, handle special cases:
 		if(prior_week==0){
@@ -182,8 +182,8 @@ const themeCaseIncreaseWeekOverWeek = {
 	tooltipTextFcn: function (feat, date) {
 		// First make some calculations.
 		// You can use the same ***getValue*** and ***periodAverage*** functions as described above.
-		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
-		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])		
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1])		
 		var increase;
 		if(prior_week==0){
 			var increase="Increase: n/a";
@@ -199,44 +199,10 @@ const themeCaseIncreaseWeekOverWeek = {
 			
 		}
 		// The message to show in the tooltip:
-		msg = "<p>Previous week: " + prior_week.toFixed(1) + " new cases/day</p>";
-		msg += "<p>This week: " + this_week.toFixed(1) + " new cases/day</p>";
+		msg = "<p>Previous week: " + prior_week.toFixed(1) + " deaths/day</p>";
+		msg += "<p>This week: " + this_week.toFixed(1) + " deathss/day</p>";
 		msg += "<p>" + increase + "</p>";		
 		return msg;
-	},
-
-	/**
-	 * A function that gives the average choropleth value for a group of features
-	 *
-	 * @param feats: The list of features to be averaged
-	 * @param date: The date for which the features' average value is desired
-	 * @return The average value of the features
-	 */
-	averageValueFcn: function (feats, date) {
-		// The function twoVarAreaAverage in utils makes this easier for most cases - it'll do that work for you given
-		// a function to find the numerator and the denominator value of your rate - but in cases like this, where
-		// you have specific special cases, you might need to average the values by hand, like below.
-
-		var dateID = dataSource.dates.indexOf(date);
-		let total_last_week = 0;
-		let total_this_week = 0;
-
-		for (let f in feats) {
-			total_last_week += periodAverage(feats[f], date,
-				function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1]);
-			total_this_week += periodAverage(feats[f], date,
-				function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
-		}
-
-		if (total_last_week == 0) {
-			if (total_this_week == 0) {
-				return 1;
-			} else {
-				return 2;
-			}
-		} else {
-			return total_this_week / total_last_week;
-		}
 	}
 
 }

@@ -22,7 +22,7 @@ const themeCaseIncreaseDayOverWeek = {
 	 */
 	
 	briefDescription: "The difference between today's cases and the average for the past week.",
-
+    
 	/**
 	 * A list of variables required to show this map theme
 	 *
