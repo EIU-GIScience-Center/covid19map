@@ -211,6 +211,10 @@ const themeCaseIncreaseWeekOverWeek = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
+		// The function twoVarAreaAverage in utils makes this easier for most cases - it'll do that work for you given
+		// a function to find the numerator and the denominator value of your rate - but in cases like this, where
+		// you have specific special cases, you might need to average the values by hand, like below.
+
 		var dateID = dataSource.dates.indexOf(date);
 		let total_last_week = 0;
 		let total_this_week = 0;

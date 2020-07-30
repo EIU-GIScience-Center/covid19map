@@ -337,23 +337,15 @@ const themeCaseMortality_7dayLag = {
 	 */
 	averageValueFcn: function (feats, date) {
 		var dateID = dates.indexOf(date);
-		if (dateID < 7) {
+		if(dateID < 7){
 			return 0;
 		} else {
-			var prevDate = dates[dateID - 7];
-			let totalCases = 0;
-			let totalDeaths = 0;
-
-			for (let f in feats) {
-				totalCases += getValue(feats[f], prevDate, 'cases', false)
-				totalDeaths += getValue(feats[f], date, 'deaths', false)
-			}
-
-			if (totalCases == 0) {
-				return 0;
-			} else {
-				return 100 * totalDeaths / totalCases;
-			}
+			let avg = twoVarAreaAverage(feats, date, function (f, d) {
+					var dateID = dates.indexOf(d);
+					var prevDate = dates[dateID - 7];
+					return getValue(f, prevDate, 'cases', false)},
+				function (f, d) {return getValue(f, d, 'deaths', false)})
+			return 100 * avg;
 		}
 	}
 }
