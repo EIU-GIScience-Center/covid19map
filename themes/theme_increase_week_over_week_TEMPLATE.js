@@ -211,7 +211,7 @@ const themeCaseIncreaseWeekOverWeek = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		var dateID = dates.indexOf(date);
+		var dateID = dataSource.dates.indexOf(date);
 		let total_last_week = 0;
 		let total_this_week = 0;
 
@@ -223,7 +223,7 @@ const themeCaseIncreaseWeekOverWeek = {
 		}
 
 		if (total_last_week == 0) {
-			if (total_today == 0) {
+			if (total_this_week == 0) {
 				return 1;
 			} else {
 				return 2;

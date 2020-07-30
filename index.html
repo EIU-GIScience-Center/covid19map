@@ -455,7 +455,7 @@
 						if(dataSource.dateDistrictData == undefined || featID == undefined){
 							val=0;
 						} else {
-							var val = dataSource.dateDistrictData[date][featID][varName];
+							var val = Number(dataSource.dateDistrictData[date][featID][varName]);
 						}
 						if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
 						if(getIncrease){
@@ -481,6 +481,16 @@
 						document.getElementById("carttoggle").disabled=false;
 						document.getElementById("cartOptLbl").style.color=null;
 					}
+
+					// test the averaging function
+					//console.log("testing averages!");
+					//console.log("Average values for " + dataSourceName + " , for " + dates[dates.length - 1])
+					//for (t in themes) {
+					//	let the = themes[t];
+					//	console.log('Average ' + the.themeName + ":")
+					//	console.log(the.averageValueFcn(dataSource.baseFeatures.features, dates[dates.length - 1]))
+					//}
+
 					resolve();
 				});
 			};		
@@ -1055,7 +1065,7 @@
 					slider_update_duration = 500;
 					slider.value(dataSource.dates.length-1);
 					slider_update_duration = orig_duration;
-				},500
+				}
 			);
 			// resolve promise
 			resolve();
@@ -1185,6 +1195,7 @@
 	});
 		
 	console.log("script finished.");
+
 </script>
 
 </body>
