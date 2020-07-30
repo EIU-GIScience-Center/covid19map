@@ -161,6 +161,20 @@ const themeCasesCumulative = {
 		msg += "<p>" + withCommas(case_count) + " cases</p>";
 		msg += "<p>" + toAppropriateDecimals(case_rate) + " cases per million</p>";		
 		return msg;
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		let avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d,
+			'cases', false)}, function (f, d) {return dataSource.getPopulation(f)})
+
+		return 1000000 * avg;
 	}
 
 }

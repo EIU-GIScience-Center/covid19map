@@ -153,6 +153,21 @@ const themeCaseMortality = {
 		msg += "<p>Deaths: " + withCommas(deaths) + "</p>";
 		msg += "<p>Case Mortality: " + ptr.toFixed(1) + "%</p>";
 		return msg;
+	},
+
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		let avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d, 'deaths')},
+			function (f, d) {return getValue(f, d, 'cases')});
+
+		return 100*avg
 	}
 	
 }
@@ -311,6 +326,34 @@ const themeCaseMortality_7dayLag = {
 			msg += "<p>Case Mortality: " + ptr.toFixed(1) + "%</p>";
 			return msg;
 		}
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		var dateID = dates.indexOf(date);
+		if (dateID < 7) {
+			return 0;
+		} else {
+			var prevDate = dates[dateID - 7];
+			let totalCases = 0;
+			let totalDeaths = 0;
+
+			for (let f in feats) {
+				totalCases += getValue(feats[f], prevDate, 'cases', false)
+				totalDeaths += getValue(feats[f], date, 'deaths', false)
+			}
+
+			if (totalCases == 0) {
+				return 0;
+			} else {
+				return 100 * totalDeaths / totalCases;
+			}
+		}
 	}
-	
 }

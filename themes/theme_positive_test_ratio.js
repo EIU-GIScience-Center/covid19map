@@ -155,6 +155,20 @@ const themePositiveTestRatio = {
 		msg += "<p>Positive: " + withCommas(cases) + "</p>";
 		msg += "<p>Positive Ratio: " + ptr + "</p>";
 		return msg;
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		var avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d, 'cases')},
+			function (f, d) {return getValue(f, d, 'tests')})
+
+		return 100*avg;
 	}
 	
 }
@@ -307,6 +321,40 @@ const themeNewPositiveTestRatio = {
 		msg += "<p>New Cases: " + withCommas(newcases.toFixed(0)) + "</p>";
 		msg += "<p><b>Positive Test Ratio: " + new_PTR + "</b></p>";
 		return msg;
+	},
+
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		var newcases = twoVarAreaAverage(feats, date, function (feat, date) {
+				return periodAverage(feat, date,
+					function (f, d) {
+						return getValue(f, d, 'cases', false, true)
+					}, [1, 1, 1, 1, 1, 1, 1])
+			},
+			function (f, d) {return dataSource.getPopulation(f)});
+
+		var newtests = twoVarAreaAverage(feats, date,
+			function (feat, date) {
+				return periodAverage(feat, date,
+					function (f, d) {
+						return getValue(f, d, 'tests', false, true)
+					}, [1, 1, 1, 1, 1, 1, 1])
+			},
+			function (f, d) {return dataSource.getPopulation(f)});
+
+		if (newtests == 0) {
+			return 0;
+		}
+		else {
+			return 100 * newcases/newtests;
+		}
 	}
 	
 }

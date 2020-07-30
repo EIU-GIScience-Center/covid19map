@@ -128,6 +128,27 @@ function periodAverage(feat, date, valFunc, periodWts){
 	}
 }
 
+function twoVarAreaAverage(feats, date, numFunc, denFunc) {
+	// computes the average for days ending on the input date
+	// of the quotient of two functions: numfunc/denfunc
+	// function must take only feat and date as input
+
+	let totalA = 0;
+	let totalB = 0;
+
+	for (let f in feats) {
+		totalA += numFunc(feats[f], date);
+		totalB += denFunc(feats[f], date);
+	}
+
+	if (totalB == 0) {
+		return 0;
+	} else {
+		return totalA/totalB;
+	}
+
+}
+
 function area(coords){
 	var a=0;
 	for(let i=0; i<coords.length;i++){

@@ -201,6 +201,36 @@ const themeCaseIncreaseWeekOverWeek = {
 		msg += "<p>This week: " + this_week.toFixed(1) + " new cases/day</p>";
 		msg += "<p>" + increase + "</p>";		
 		return msg;
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		var dateID = dates.indexOf(date);
+		let total_last_week = 0;
+		let total_this_week = 0;
+
+		for (let f in feats) {
+			total_last_week += periodAverage(feats[f], date,
+				function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1]);
+			total_this_week += periodAverage(feats[f], date,
+				function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
+		}
+
+		if (total_last_week == 0) {
+			if (total_today == 0) {
+				return 1;
+			} else {
+				return 2;
+			}
+		} else {
+			return total_this_week / total_last_week;
+		}
 	}
 
 }

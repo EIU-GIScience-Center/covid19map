@@ -156,6 +156,24 @@ const themeNewCases = {
 		msg += "<p>" + new_case_count.toFixed(0) + " new cases</p>";
 		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		
 		return msg;
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		var avg = twoVarAreaAverage(feats, date, function (feat, date) {return periodAverage(feat, date,
+			function(f,d){return getValue(f,d,'cases', false, true)}, [1])},
+			function (f, d) {return dataSource.getPopulation(f)})
+
+		avg = 1000000*avg;
+
+		if(avg < 0.49){avg=0.49};
+		return avg;
 	}
 
 };
@@ -308,6 +326,24 @@ const themeNewCases_7day = {
 		msg += "<p>" + new_case_count.toFixed(2) + " new cases/day</p>";
 		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		
 		return msg;
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		var avg = twoVarAreaAverage(feats, date, function (feat, date) {return periodAverage(feat, date,
+			function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])},
+			function (f, d) {return dataSource.getPopulation(f)})
+
+		avg = avg * 1000000
+
+		if(avg < 0.49){avg=0.49};
+		return avg;
 	}
 
 };
