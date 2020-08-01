@@ -171,7 +171,7 @@ const themeCasesCumulative = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		let avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d,
+		let avg = areaAverage(feats, date, function (f, d) {return getValue(f, d,
 			'cases', false)}, function (f, d) {return dataSource.getPopulation(f)})
 
 		return 1000000 * avg;

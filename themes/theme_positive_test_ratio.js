@@ -165,7 +165,7 @@ const themePositiveTestRatio = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		var avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d, 'cases')},
+		var avg = areaAverage(feats, date, function (f, d) {return getValue(f, d, 'cases')},
 			function (f, d) {return getValue(f, d, 'tests')})
 
 		return 100*avg;
@@ -332,7 +332,7 @@ const themeNewPositiveTestRatio = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		var newcases = twoVarAreaAverage(feats, date, function (feat, date) {
+		var newcases = areaAverage(feats, date, function (feat, date) {
 				return periodAverage(feat, date,
 					function (f, d) {
 						return getValue(f, d, 'cases', false, true)
@@ -340,7 +340,7 @@ const themeNewPositiveTestRatio = {
 			},
 			function (f, d) {return dataSource.getPopulation(f)});
 
-		var newtests = twoVarAreaAverage(feats, date,
+		var newtests = areaAverage(feats, date,
 			function (feat, date) {
 				return periodAverage(feat, date,
 					function (f, d) {

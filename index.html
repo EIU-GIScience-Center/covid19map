@@ -618,13 +618,13 @@
 					}
 
 					// test the averaging function
-					//console.log("testing averages!");
-					//console.log("Average values for " + dataSourceName + " , for " + dates[dates.length - 1])
-					//for (t in themes) {
-					//	let the = themes[t];
-					//	console.log('Average ' + the.themeName + ":")
-					//	console.log(the.averageValueFcn(dataSource.baseFeatures.features, dates[dates.length - 1]))
-					//}
+					console.log("testing averages!");
+					console.log("Average values for " + dataSourceName + " , for " + dates[dates.length - 1])
+					for (t in themes) {
+						let the = themes[t];
+						console.log('Average ' + the.themeName + ":")
+						console.log(the.averageValueFcn(dataSource.baseFeatures.features, dates[dates.length - 1]))
+					}
 
 					resolve();
 				});

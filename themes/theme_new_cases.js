@@ -166,7 +166,7 @@ const themeNewCases = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		var avg = twoVarAreaAverage(feats, date, function (feat, date) {return periodAverage(feat, date,
+		var avg = areaAverage(feats, date, function (feat, date) {return periodAverage(feat, date,
 			function(f,d){return getValue(f,d,'cases', false, true)}, [1])},
 			function (f, d) {return dataSource.getPopulation(f)})
 
@@ -336,7 +336,7 @@ const themeNewCases_7day = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		var avg = twoVarAreaAverage(feats, date, function (feat, date) {return periodAverage(feat, date,
+		var avg = areaAverage(feats, date, function (feat, date) {return periodAverage(feat, date,
 			function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])},
 			function (f, d) {return dataSource.getPopulation(f)})
 

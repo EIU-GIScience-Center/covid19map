@@ -203,6 +203,28 @@ const themeDeathIncreaseWeekOverWeek = {
 		msg += "<p>This week: " + this_week.toFixed(1) + " deathss/day</p>";
 		msg += "<p>" + increase + "</p>";		
 		return msg;
+	},
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		// The function areaAverage in utils makes this easier for most cases - it'll do that work for you given
+		// a function to find the numerator and the denominator value of your rate - but in cases like this, where
+		// you have specific special cases, you might need to average the values by hand, like below.
+
+		var avg = areaAverage(feats, date,
+			function (f, d) {return periodAverage(f, d,
+				function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1])},
+			function (f, d) {return periodAverage(f, d,
+				function (f, d) {return getValue(f,d,'deaths', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])},
+			1, 2)
+
+		return avg;
 	}
 
 }

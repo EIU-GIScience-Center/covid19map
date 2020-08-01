@@ -213,30 +213,18 @@ const themeCaseIncreaseWeekOverWeek = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		// The function twoVarAreaAverage in utils makes this easier for most cases - it'll do that work for you given
+		// The function areaAverage in utils makes this easier for most cases - it'll do that work for you given
 		// a function to find the numerator and the denominator value of your rate - but in cases like this, where
 		// you have specific special cases, you might need to average the values by hand, like below.
 
-		var dateID = dataSource.dates.indexOf(date);
-		let total_last_week = 0;
-		let total_this_week = 0;
+		var avg = areaAverage(feats, date,
+			function (f, d) {return periodAverage(f, d,
+				function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])},
+			function (f, d) {return periodAverage(f, d,
+				function (f, d) {return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])},
+			1, 2)
 
-		for (let f in feats) {
-			total_last_week += periodAverage(feats[f], date,
-				function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1]);
-			total_this_week += periodAverage(feats[f], date,
-				function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
-		}
-
-		if (total_last_week == 0) {
-			if (total_this_week == 0) {
-				return 1;
-			} else {
-				return 2;
-			}
-		} else {
-			return total_this_week / total_last_week;
-		}
+		return avg;
 	}
 
 }

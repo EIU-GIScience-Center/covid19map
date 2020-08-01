@@ -172,26 +172,14 @@ const themeCaseIncreaseDayOverWeek = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		var dateID = dates.indexOf(date);
-		let total_last_week = 0;
-		let total_today = 0;
+		var avg = areaAverage(feats, date, function (f, d) {
+			return periodAverage(f, d, function (f, d) {
+				return getValue(f, d, 'cases', false, true)}, [0, 1, 1, 1, 1, 1, 1, 1])},
+			function (f, d) {return periodAverage(f, d, function (f, d) {
+				return getValue(f, d, 'cases', false, true)}, [1])},
+			1, 2)
 
-		for (let f in feats) {
-			total_last_week += periodAverage(feats[f], date,
-				function (f, d) {return getValue(f, d, 'cases', false, true)}, [0, 1, 1, 1, 1, 1, 1, 1]);
-			total_today += periodAverage(feats[f], date,
-				function (f, d) {return getValue(f, d, 'cases', false, true)}, [1])
-		}
-
-		if (total_last_week == 0) {
-			if (total_today == 0) {
-				return 1;
-			} else {
-				return 2;
-			}
-		} else {
-			return total_today / total_last_week;
-		}
+		return avg;
 	}
 
 }

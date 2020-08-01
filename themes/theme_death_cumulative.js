@@ -160,9 +160,24 @@ const themeDeathsCumulative = {
 		}
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
 		msg += "<p>" + withCommas(death_count) + " deaths</p>";
-		msg += "<p>" + toAppropriateDecimals(death_rate) + " deaths per million</p>";	
+		msg += "<p>" + toAppropriateDecimals(death_rate) + " deaths per million</p>";
         msg += "<p>Total Mortality: " + tdr.toFixed(2) + "%</p>";
 		return msg;
+	},
+
+
+	/**
+	 * A function that gives the average choropleth value for a group of features
+	 *
+	 * @param feats: The list of features to be averaged
+	 * @param date: The date for which the features' average value is desired
+	 * @return The average value of the features
+	 */
+	averageValueFcn: function (feats, date) {
+		let avg = areaAverage(feats, date, function (f, d) {return getValue(f, d, 'deaths', false)},
+			function (f, d) {return dataSource.getPopulation(f)});
+
+		return 1000000*avg
 	}
 
 }

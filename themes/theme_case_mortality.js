@@ -164,7 +164,7 @@ const themeCaseMortality = {
 	 * @return The average value of the features
 	 */
 	averageValueFcn: function (feats, date) {
-		let avg = twoVarAreaAverage(feats, date, function (f, d) {return getValue(f, d, 'deaths')},
+		let avg = areaAverage(feats, date, function (f, d) {return getValue(f, d, 'deaths')},
 			function (f, d) {return getValue(f, d, 'cases')});
 
 		return 100*avg
@@ -340,7 +340,7 @@ const themeCaseMortality_7day = {
 		if(dateID < 7){
 			return 0;
 		} else {
-			let avg = twoVarAreaAverage(feats, date, function (f, d) {
+			let avg = areaAverage(feats, date, function (f, d) {
 					var dateID = dates.indexOf(d);
 					var prevDate = dates[dateID - 7];
 					return getValue(f, prevDate, 'cases', false)},
