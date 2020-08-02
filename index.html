@@ -53,14 +53,15 @@
 		<div id="map"></div>
 		<div id="mapbottom">
             <div id = "buttons" class="container">
-            <span class="dot" title="Fastest" onclick="speedDots(0)"></span> 
-            <span class="dot" title="Faster" onclick="speedDots(250)"></span> 
-            <span class="dot" title="Normal" onclick="speedDots(500)"></span>
-            <span class="dot" title="Slower" onclick="speedDots(750)"></span> 
-            <span class="dot" title="Slowest" onclick="speedDots(1000)"></span> 
-            <button id="faster-button" title="Faster">▶▶</button>  
-            <button id="play-button" title="Play">▶</button>
-            <button id="slower-button" title="Slower">◀◀</button>
+            <button id="loop-button" title="Repeat">⭮</button>
+            <button id="faster-button" title="Increase">▶▶</button> 
+            <button id="slower-button" title="Decrease">◀◀</button>
+            <span class="dot" title="Fastest" onclick="delayDots(0)"></span> 
+            <span class="dot" title="Faster" onclick="delayDots(250)"></span> 
+            <span class="dot" title="Normal Speed" onclick="delayDots(500)"></span>
+            <span class="dot" title="Slower" onclick="delayDots(750)"></span> 
+            <span class="dot" title="Slowest" onclick="delayDots(1000)"></span> 
+                <button id="play-button" title="Play">►</button>
             </div>
             <div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
 		</div>
@@ -1229,11 +1230,22 @@
     var currentIndex = sliderID;
     var playButton = d3.select("#play-button");
     var moving = false;
-    var currentSpeed
-    var speed = 500;
+    var looping = false;
+    var delay = 500;
     var dots = document.getElementsByClassName("dot");
     var i;
-    var j;
+    
+    function delayIndi() {
+        for (i = 0; i < dots.length; i++){ 
+        var dotDelay = 250*i
+        if (dotDelay < delay) {
+            dots[i].style.backgroundColor = "#bbb";
+        } else if (dotDelay >= delay){
+            dots[i].style.backgroundColor = "#004C97";
+        }
+    }
+    }
+
     
     playButton
         .on("click", function() {
@@ -1255,55 +1267,15 @@
 			  moving = true;
 			  fixedValueRange();
 			  loadLegend();
-			  //speed = 500;
-			  timer = setInterval(step, speed);
-			  button.text("∥");
-            if (speed <= 0) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 0; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }        
-            if (speed == 250 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 1; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }         
-            if (speed == 500 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 2; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }   
-            if (speed == 750 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 3; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }     
-            if (speed >= 1000 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 4; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            } 
+			  //delay = 500;
+			  timer = setInterval(step, delay);
+			  button.text("∥"); 
 			}
 			console.log("Slider moving: " + moving);
 		});
     
 	function step(){
-		var targetIndex = dataSource.dates.length-1;
+        var targetIndex = dataSource.dates.length-1;
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		updateMap();
@@ -1313,15 +1285,19 @@
 					fixedValueRange();
 				}
 		// loadLegend();
-		currentIndex = currentIndex + 1;
-		if (currentIndex > targetIndex) {
+        if (sliderID == dataSource.dates.length-1 && looping == true) {
+                currentIndex = 35;
+              } else {
+                currentIndex = currentIndex + 1;
+              }
+        if (currentIndex > targetIndex && looping == false) {
 			moving = false;
 			currentIndex = 35;
 			clearInterval(timer);
 			// timer = 0;
 			playButton.text("▶");
 			console.log("Slider moving: " + moving);
-		}   
+		} 
 	}
     
     var slowerButton = d3.select("#slower-button");
@@ -1329,52 +1305,15 @@
             .on("click", function() {
             var button = d3.select(this);
             clearInterval(timer);
-            speed = speed + 250
+            if (delay < 1000) {
+            delay = delay + 250
+            }
             if (moving == true) {
-				timer = setInterval(step, speed);
+				timer = setInterval(step, delay);
 				playButton.text("∥");
                 moving = true;
             }
-            if (speed <= 0) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 0; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }        
-            if (speed == 250 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 1; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }         
-            if (speed == 500 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 2; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }   
-            if (speed == 750 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 3; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            }     
-            if (speed >= 1000 ) {
-            for (j = 0; j < dots.length; j++){
-                for (i = 4; i < dots.length; i++){
-                    dots[j].style.backgroundColor = "#bbb";
-                    dots[i].style.backgroundColor = "#004C97";
-                    }
-                }
-            } 
+                delayIndi()
           });
     
     var fasterButton = d3.select("#faster-button");
@@ -1382,106 +1321,48 @@
 			.on("click", function() {
 				var button = d3.select(this);
 				clearInterval(timer);
-				speed = speed - 250
+                if (delay > 0) {
+                delay = delay - 250
+                }
             if (moving == true) {
-				timer = setInterval(step, speed);
+				timer = setInterval(step, delay);
 				playButton.text("∥");
                 moving = true;
             }
-                if (speed <= 0) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 0; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }        
-                if (speed == 250 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 1; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }         
-                if (speed == 500 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 2; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }   
-                if (speed == 750 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 3; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }     
-                if (speed >= 1000 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 4; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                } 
+                delayIndi()
 			});
     
-    function speedDots(n) {
+    function delayDots(n) {
         clearInterval(timer);
-        speed = n;
+        delay = n;
         if (moving == true) {
-            timer = setInterval(step, speed);
+            timer = setInterval(step, delay);
             playButton.text("∥");
             moving = true;
         }
-                if (speed <= 0) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 0; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }        
-                if (speed == 250 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 1; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }         
-                if (speed == 500 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 2; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }   
-                if (speed == 750 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 3; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                }     
-                if (speed >= 1000 ) {
-                for (j = 0; j < dots.length; j++){
-                    for (i = 4; i < dots.length; i++){
-                        dots[j].style.backgroundColor = "#bbb";
-                        dots[i].style.backgroundColor = "#004C97";
-                        }
-                    }
-                } 
-
+            delayIndi()
     };
-
+    
+    var loopButton = d3.select("#loop-button");
+        loopButton
+            .on("click", function() {
+            var button = d3.select(this);
+            if (button.text() == "⭲") {
+                looping = false;
+                button.text("⭮")
+            } else {
+                looping = true;
+                if (looping == true && moving == true) {
+                    clearInterval(timer);
+                    timer = setInterval(step, delay);
+                    playButton.text("∥");
+                    }
+                    button.text("⭲");
+            }
+            console.log("Looping: " + looping);
+                });
         
+    
 	console.log("STARTING...");
 
 	loadData().then(function(){
