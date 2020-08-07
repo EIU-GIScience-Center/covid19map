@@ -11,7 +11,7 @@ const themeCaseMortality = {
 	 *
 	 * type: string
 	 */
-	themeName: "Mortality Ratio (cumulative)",
+	themeName: "Case Mortality (cumulative)",
 
 	/**
 	 * A brief description, to show in the main window
@@ -105,7 +105,14 @@ const themeCaseMortality = {
 	 */
 	choroplethLegendTitle: "Deaths as a percent of cases",
 
-/**
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
+
+	/**
 	 * The size of the circle symbol (set to zero for no circles).
 	 *
 	 * @param feat The feature whose circle size is desired
@@ -263,6 +270,13 @@ const themeCaseMortality_7day = {
 	 */
 	choroplethLegendTitle: "Deaths as a percent of reported cases.",
 
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
+
 /**
 	 * The size of the circle symbol (set to zero for no circles).
 	 *
@@ -300,6 +314,9 @@ const themeCaseMortality_7day = {
 	tooltipTextFcn: function (feat, date) {
 		var dateID = dates.indexOf(date);
 		if(dateID < 7){
+			console.log("insufficient data for themeCaseMortality");
+			console.log("dateID: " + dateID);
+			console.log(date);
 			return "insufficient data";
 		} else {
 			var prevDate = dates[dateID-7];

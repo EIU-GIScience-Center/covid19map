@@ -32,7 +32,8 @@ To create a new data source:
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
 const dataODWG_Canada_Provinces={
-	dataSourceName: "Canadian Provinces", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+	dataSourceName: "Canada", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
@@ -53,7 +54,6 @@ const dataODWG_Canada_Provinces={
 		// and you can use JQuery's getJSON function:
 		$.getJSON("data/canada_provinces_odwg/Canada_provinces_simplified_cartogram.geojson", function(src_data) {
 			console.log("got Canada cartogram polys...")
-			console.log(src_data);
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -66,7 +66,7 @@ const dataODWG_Canada_Provinces={
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/cases_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data... (cases)");
+				console.log("got Canada case data...");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -80,7 +80,7 @@ const dataODWG_Canada_Provinces={
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/mortality_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data... (death)");
+				console.log("got Canada death data...");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -94,7 +94,7 @@ const dataODWG_Canada_Provinces={
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/testing_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data... (testing)");
+				console.log("got Canada testing data...");
 				src.testing_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -199,9 +199,7 @@ const dataODWG_Canada_Provinces={
 					districtIDs.add(src.map_polys.features[i].properties["Cov19ID"]);
 				}
 				districtIDs = Array.from(districtIDs);
-				console.log("districtIDs:");
-				console.log(districtIDs);
-
+				
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
 				var variableNames = ["cases","tests","deaths"]
 				// You should always use variable names in "data/data_dictionary.txt" if 
@@ -283,17 +281,18 @@ const dataODWG_Canada_Provinces={
 					}
 				}
 				
-				console.log("provinces in IshaBerry:");
-				console.log(provinceSet);
-				
-				console.log("dateDistrictData:");
-				console.log(dateDistrictData);
-
 				// THE DATA OBJECT
 				the_data_object = {
 					briefDescription: "Data from the <a href='https://github.com/ishaberry/Covid19Canada'>COVID-19 Canadian Open Data Working Group</a>.",
-					baseFeatures: src.map_polys,
-					cartogramFeatures: src.carto_polys,
+					baseFeatures: function(filter=null){
+						return src.map_polys;
+					},
+					cartogramFeatures: function(filter=null){
+						return src.carto_polys; 
+					},
+					defaultFilter: null,
+					dataChildName: null,
+					dataParentName: null,
 					dates: dates,
 					districtIDs: districtIDs,
 					variableNames: variableNames,
