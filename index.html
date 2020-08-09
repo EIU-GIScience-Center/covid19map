@@ -12,7 +12,7 @@
   <script src="jquery.csv-0.71.min.js"></script>
   <script src="papaparse.min.js"></script>
   <script src="d3.v5.js" charset="utf-8"></script>
-  <script src="utils.js"></script>
+  <script src="utils.js"></script>  
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
   <script src="data/counties_jhu/data_JHU_Illinois.js"></script>
   <script src="data/florida_counties_jhu/data_JHU_Florida.js"></script>
@@ -53,15 +53,15 @@
 		<div id="map"></div>
 		<div id="mapbottom">
             <div id = "buttons" class="container">
-            <button id="loop-button" title="Repeat">⭮</button>
-            <button id="faster-button" title="Increase">▶▶</button> 
-            <button id="slower-button" title="Decrease">◀◀</button>
-            <span class="dot" title="Fastest" onclick="delayDots(0)"></span> 
-            <span class="dot" title="Faster" onclick="delayDots(250)"></span> 
-            <span class="dot" title="Normal Speed" onclick="delayDots(500)"></span>
-            <span class="dot" title="Slower" onclick="delayDots(750)"></span> 
-            <span class="dot" title="Slowest" onclick="delayDots(1000)"></span> 
-                <button id="play-button" title="Play">►</button>
+            <button id="loop-button" data-tooltip-position="bottom" data-tooltip="Repeat">⭮</button>
+            <button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase">▶▶</button> 
+            <button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease">◀◀</button>
+            <span class="dot" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(0)"></span> 
+            <span class="dot" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(150)"></span> 
+            <span class="dot" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(300)"></span>
+            <span class="dot" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(450)"></span> 
+            <span class="dot" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(600)"></span> 
+            <button id="play-button" data-tooltip-position="bottom" data-tooltip="Play">▶</button>
             </div>
             <div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
 		</div>
@@ -1231,13 +1231,13 @@
     var playButton = d3.select("#play-button");
     var moving = false;
     var looping = false;
-    var delay = 500;
+    var delay = 300;
     var dots = document.getElementsByClassName("dot");
     var i;
     
     function delayIndi() {
         for (i = 0; i < dots.length; i++){ 
-        var dotDelay = 250*i
+        var dotDelay = 150*i
         if (dotDelay < delay) {
             dots[i].style.backgroundColor = "#bbb";
         } else if (dotDelay >= delay){
@@ -1245,7 +1245,6 @@
         }
     }
     }
-
     
     playButton
         .on("click", function() {
@@ -1267,7 +1266,7 @@
 			  moving = true;
 			  fixedValueRange();
 			  loadLegend();
-			  //delay = 500;
+			  //delay = 0;
 			  timer = setInterval(step, delay);
 			  button.text("∥"); 
 			}
@@ -1286,7 +1285,9 @@
 				}
 		// loadLegend();
         if (sliderID == dataSource.dates.length-1 && looping == true) {
-                currentIndex = 35;
+                var pauseStart = setTimeout(function(){
+                    currentIndex = 35;
+                },600);
               } else {
                 currentIndex = currentIndex + 1;
               }
@@ -1305,8 +1306,8 @@
             .on("click", function() {
             var button = d3.select(this);
             clearInterval(timer);
-            if (delay < 1000) {
-            delay = delay + 250
+            if (delay < 600) {
+            delay = delay + 150
             }
             if (moving == true) {
 				timer = setInterval(step, delay);
@@ -1322,7 +1323,7 @@
 				var button = d3.select(this);
 				clearInterval(timer);
                 if (delay > 0) {
-                delay = delay - 250
+                delay = delay - 150
                 }
             if (moving == true) {
 				timer = setInterval(step, delay);
@@ -1352,17 +1353,11 @@
                 button.text("⭮")
             } else {
                 looping = true;
-                if (looping == true && moving == true) {
-                    clearInterval(timer);
-                    timer = setInterval(step, delay);
-                    playButton.text("∥");
-                    }
-                    button.text("⭲");
+                button.text("⭲");
             }
             console.log("Looping: " + looping);
                 });
-        
-    
+
 	console.log("STARTING...");
 
 	loadData().then(function(){
