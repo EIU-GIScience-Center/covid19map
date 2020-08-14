@@ -267,7 +267,7 @@
 	// map theme functions and values
 	var theme;
 	var dataSource;
-	var mapFeatures;
+	var baseFeatures;
 	var cartogramFeatures;
 	var dataSourceFilter;
 	var legendChoropleth;
@@ -387,7 +387,7 @@
 
 
 	function dailymaxChoroplethValue(date, valuefunction){
-		var baseFeat = dataSource.baseFeatures(dataSourceFilter);
+		var baseFeat = baseFeatures;
 		if(baseFeat, date == undefined){
 			return "undefined";
 		} else {
@@ -404,7 +404,7 @@
 
 	// The minimum value across all features on a given date
 	function dailyminChoroplethValue(date, valuefunction){
-		var baseFeat = dataSource.baseFeatures(dataSourceFilter);
+		var baseFeat = baseFeatures;
 		if(baseFeat, date == undefined){
 			return "undefined";
 		} else {   
@@ -421,7 +421,7 @@
 
 	// The minimum value across all features on all dates
 	function minChoroplethValue(valuefunction){
-		if(dataSource.baseFeatures(dataSourceFilter) == undefined){
+		if(baseFeatures == undefined){
 			return "undefined";
 		} else {
 			var globalmin =dailyminChoroplethValue(dataSource.dates[0],valuefunction);
@@ -437,7 +437,7 @@
 
 	// The maximum value across all features on all dates
 	function maxChoroplethValue(valuefunction){
-		if(dataSource.baseFeatures(dataSourceFilter) == undefined){
+		if(baseFeatures == undefined){
 			return "undefined";
 		} else {
 			var globalmax =dailymaxChoroplethValue(dataSource.dates[0],valuefunction);
@@ -572,9 +572,9 @@
 				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(myValueFunction)};
 				// calculate radius scale factor
 				if(oncartogram){
-					radScaleFac = radiusScaleFac(dataSource.cartogramFeatures(dataSourceFilter));
+					radScaleFac = radiusScaleFac(cartogramFeatures);
 				} else {
-					radScaleFac = radiusScaleFac(dataSource.baseFeatures(dataSourceFilter));
+					radScaleFac = radiusScaleFac(baseFeatures);
 				}
 				// update the map and legend
 				if (theme.updateDailyValueRange && moving==false){
@@ -642,8 +642,11 @@
 						}		
 						return val;
 					}
+					// get features
+					baseFeatures = dataSource.baseFeatures(dataSourceFilter);
+					cartogramFeatures = dataSource.cartogramFeatures(dataSourceFilter);
 					// check to see if there are cartogram features
-					if (dataSource.cartogramFeatures(dataSourceFilter) == null){
+					if (cartogramFeatures == null){
 						// if not, disable map type selector and set cartogram to false
 						document.getElementById("carttoggle").disabled=true;
 						document.getElementById("carttoggle").checked=false;
@@ -653,14 +656,14 @@
 						// otherwise need to make sure it is visible
 						document.getElementById("carttoggle").disabled=false;
 						document.getElementById("cartOptLbl").style.color=null;
-						// calculate radius scale factor
+						
 				
 					}
 					// get scale factor for circle symbols
 					if(oncartogram){
-						radScaleFac = radiusScaleFac(dataSource.cartogramFeatures(dataSourceFilter));
+						radScaleFac = radiusScaleFac(cartogramFeatures);
 					} else {
-						radScaleFac = radiusScaleFac(dataSource.baseFeatures(dataSourceFilter));
+						radScaleFac = radiusScaleFac(baseFeatures);
 					}
 					resolve();
 				});
@@ -811,16 +814,16 @@
 				var height = ele.offsetHeight;
 				console.log("SVG dimensions: " + width + " x " + height);
 				if(oncartogram==true){
-					m = loadMap(dataSource.cartogramFeatures(dataSourceFilter));
+					m = loadMap(cartogramFeatures);
 				} else {
-					m = loadMap(dataSource.baseFeatures(dataSourceFilter));
+					m = loadMap(baseFeatures);
 				}
 				
 				// calculate radius scale factor
 				if(oncartogram){
-					radScaleFac = radiusScaleFac(dataSource.cartogramFeatures(dataSourceFilter));
+					radScaleFac = radiusScaleFac(cartogramFeatures);
 				} else {
-					radScaleFac = radiusScaleFac(dataSource.baseFeatures(dataSourceFilter));
+					radScaleFac = radiusScaleFac(baseFeatures);
 				}
 				console.log("Radius factor: " + radScaleFac);
 				updateMap();
@@ -958,9 +961,9 @@
 				// get features (either map or cartogram)
 				var todata; 
 				if (oncartogram==false){
-					todata=dataSource.baseFeatures(dataSourceFilter);
+					todata=baseFeatures;
 				} else {
-					todata=dataSource.cartogramFeatures(dataSourceFilter);
+					todata=cartogramFeatures;
 				};
 				
 				// get projection parameters
@@ -996,14 +999,14 @@
 				// adjust symbology depending on whether we're using a regular map or polygon
 				if (oncartogram==false){
 					// symbology for a regular map
-					todata=dataSource.baseFeatures(dataSourceFilter);
+					todata=baseFeatures;
 					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 					localFeatureStroke = '#DDD';
 					localCircleStroke = '#D00';
 					localCircleFill="rgba(205,205,205,0.3)";
 				} else {
 					// symbology for a cartogram
-					todata=dataSource.cartogramFeatures(dataSourceFilter);
+					todata=cartogramFeatures;
 					if(theme.circleRadiusFcn==0){
 						localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 						localFeatureStroke = '#DDD';
@@ -1123,9 +1126,9 @@
 				// (1) recalculate projection for parent feature set
 				var featdata;
 				if(oncartogram==true){
-					featdata = dataSource.cartogramFeatures(dataSourceFilter);
+					featdata = cartogramFeatures;
 				} else {
-					featdata = dataSource.baseFeatures(dataSourceFilter);
+					featdata = baseFeatures;
 				}
 				var prj,scale,transX,transY;
 				var ele = document.getElementById('map'); // Do not use #
@@ -1416,7 +1419,7 @@
 			// define current date
 			curDate=dataSource.dates[0];
 			// load the map!
-			m = loadMap(dataSource.baseFeatures(dataSourceFilter));
+			m = loadMap(baseFeatures);
 			//load the Theme
 			loadTheme();
 			// resize everything
