@@ -208,5 +208,5 @@ const dataCovidTracking_states={
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
-	}) // end of "new Promise(function(resolve, reject){"
+		}) // end of "new Promise(function(resolve, reject){"
 }; // end of "const dataCovidTracking_states={

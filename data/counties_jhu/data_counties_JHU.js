@@ -43,7 +43,7 @@ const dataJHU_USA_Counties = {
 		
 		// GET SOURCE DATASET (all polygons)
 		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/USA_counties.geojson", function(src_data) {
+		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
 			console.log("got map polygons...")
 			src.all_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
@@ -270,22 +270,30 @@ const dataJHU_USA_Counties = {
 					baseFeatures: function(filter=null){
 						if(filter==null){
 							return src.all_counties;
-						} else if (filter=="Georgia") {
+						} else if (filter=="GA") {
 							return src.Georgia_counties;
-						} else if (filter=="Florida") {
+						} else if (filter=="FL") {
 							return src.florida_counties;
+						} else {
+							
+							var this_state = src.all_counties;
+							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
+							this_state.features = this_state.features.filter(feat => feat.properties.StateAbbre==filter);
+							return this_state;
 						}
 					},
 					cartogramFeatures: function(filter=null){
 						if(filter==null){
 							return null;
-						} else if (filter=="Georgia") {
+						} else if (filter=="GA") {
 							return src.Georgia_cartogram;
-						} else if (filter=="Florida") {
+						} else if (filter=="FL") {
 							return src.florida_cartogram;
+						} else {
+							return null;
 						}
 					},
-					defaultFilter: "Georgia",
+					defaultFilter: "GA",
 					dataChildName: null,
 					dataParentName: "USA",
 					dates: dates, 

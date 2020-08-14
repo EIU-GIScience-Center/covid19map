@@ -305,5 +305,5 @@ const dataODWG_Canada_Provinces={
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
-	}) // end of "new Promise(function(resolve, reject){"
+		}) // end of "new Promise(function(resolve, reject){"
 }; // end of "const dataODWG_Canada_Provinces={
