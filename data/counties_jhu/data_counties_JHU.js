@@ -31,31 +31,58 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataJHU_Illinois = {
-	dataSourceName: "Illinois Counties", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+const dataJHU_USA_Counties = {
+	dataSourceName: "USA Counties", // THIS NAME WILL BE USED FOR IDENTIFICATION, AND APPEAR IN THE DROP-DOWN SELECTOR
+	                       // IF THE NEXT PROPERTY IS TRUE
+	showInSelector: false, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var target_length = 4;
+		var target_length = 7;
 		
-		// GET SOURCE DATASET (map polygons)
+		// GET SOURCE DATASET (all polygons)
 		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/IL_counties_pop2010.geojson", function(src_data) {
+		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
 			console.log("got map polygons...")
-			src.map_polys = src_data; // add to src object
+			src.all_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
 		
-		
-		// GET SOURCE DATASET (cartogram polygons)
+		// GET SOURCE DATASET (Georgia polygons)
 		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/IL_counties_pop2010_cartogram.geojson", function(src_data) {
-			console.log("got cartogram polys...")
-			src.carto_polys = src_data; // add to src object
+		$.getJSON("data/counties_JHU/geojson/Georgia_counties.geojson", function(src_data) {
+			console.log("got Georgia counties...")
+			src.Georgia_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});//.fail(function() { console.log("error"); });			
 		
+		// GET SOURCE DATASET (Florida polygons)
+		// Typically this will be a geojson file placed in the same folder
+		$.getJSON("data/counties_JHU/geojson/Florida_counties.geojson", function(src_data) {
+			console.log("got florida counties...")
+			src.florida_counties = src_data; // add to src object
+			process_data(); // attempt to process all datasets
+		});//.fail(function() { console.log("error"); });			
+
+		
+		// GET SOURCE DATASET (Georgia cartogram polygons)
+		// Typically this will be a geojson file placed in the same folder
+		$.getJSON("data/counties_JHU/geojson/Georgia_counties_cartogram.geojson", function(src_data) {
+			console.log("got Georgia cartogram...")
+			src.Georgia_cartogram = src_data; // add to src object
+			process_data(); // attempt to process all datasets
+		});//.fail(function() { console.log("error"); });			
+		
+		// GET SOURCE DATASET (Florida cartogram polygons)
+		// Typically this will be a geojson file placed in the same folder
+		$.getJSON("data/counties_JHU/geojson/Florida_counties_cartogram.geojson", function(src_data) {
+			console.log("got florida cartogram...")
+			src.florida_cartogram = src_data; // add to src object
+			process_data(); // attempt to process all datasets
+		});//.fail(function() { console.log("error"); });			
+
+
 
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
@@ -65,7 +92,7 @@ const dataJHU_Illinois = {
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got JHU county case data...");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -80,7 +107,7 @@ const dataJHU_Illinois = {
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got tabular data...");
+				console.log("got JHU county death data...");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -110,7 +137,7 @@ const dataJHU_Illinois = {
 			// after all data has been acquired
 			console.log("Processing data...");
 			if (Object.keys(src).length == target_length){
-				console.log("processing all datasets...");
+				console.log("processing all JHU county datasets...");
 				// get tabular data from JHU object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
@@ -162,9 +189,9 @@ const dataJHU_Illinois = {
 				var districtIDs = [];
 				for(let i=0; i < case_data.length; i++){
 					var cur_row = case_data[i];
-					if(cur_row.Province_State == "Illinois"){
-							districtIDs.push(cur_row.Admin2);
-					}
+					//if(cur_row.Province_State == "Georgia"){
+							districtIDs.push(cur_row.Combined_Key);
+					//}
 				}
 				
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
@@ -204,8 +231,8 @@ const dataJHU_Illinois = {
 				// go through src.case_data object and transfer values into dateDistrictData object
 				for(let i=0; i < case_data.length; i++){ // loop through table rows
 					var cur_row = case_data[i]; // get data record
-					if(cur_row.Province_State == "Illinois"){ // check that it is in Illinois
-						var cur_districtID = cur_row.Admin2; // get district id 
+					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
+						var cur_districtID = cur_row.Combined_Key; // get district id 
 						for(let j=0; j < dates.length; j++){ // loop through dates
 							var cur_date = dates[j];
 							var cur_dateString = dateStrings[j];
@@ -216,14 +243,14 @@ const dataJHU_Illinois = {
 								}
 							}
 						}
-					}
+					//}
 				}
 
 				// go through src.death_data object and transfer values into dateDistrictCata object
 				for(let i=0; i < death_data.length; i++){ // loop through table rows
 					var cur_row = death_data[i]; // get data record
-					if(cur_row.Province_State == "Illinois"){ // check that it is in Illinois
-						var cur_districtID = cur_row.Admin2; // get district id 
+					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
+						var cur_districtID = cur_row.Combined_Key; // get district id 
 						for(let j=0; j < dates.length; j++){ // loop through dates
 							var cur_date = dates[j];
 							var cur_dateString = dateStrings[j];
@@ -234,23 +261,48 @@ const dataJHU_Illinois = {
 								}
 							}
 						}
-					}
+					//}
 				}			
-
-				console.log(dateDistrictData);
 				
 				// THE DATA OBJECT
 				the_data_object = {
 					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
-					baseFeatures: src.map_polys, 
-					cartogramFeatures: src.carto_polys, 
+					baseFeatures: function(filter=null){
+						if(filter==null){
+							return src.all_counties;
+						} else if (filter=="GA") {
+							return src.Georgia_counties;
+						} else if (filter=="FL") {
+							return src.florida_counties;
+						} else {
+							
+							var this_state = src.all_counties;
+							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
+							this_state.features = this_state.features.filter(feat => feat.properties.StateAbbre==filter);
+							return this_state;
+						}
+					},
+					cartogramFeatures: function(filter=null){
+						if(filter==null){
+							return null;
+						} else if (filter=="GA") {
+							return src.Georgia_cartogram;
+						} else if (filter=="FL") {
+							return src.florida_cartogram;
+						} else {
+							return null;
+						}
+					},
+					defaultFilter: "GA",
+					dataChildName: null,
+					dataParentName: "USA",
 					dates: dates, 
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
-					getID: function(feat){return feat.properties.NAME;}, 
-					getLabel: function(feat){return feat.properties.NAME + " County";}, 
-					getPopulation: function(feat){return feat.properties.Pop2010;}, 
+					getID: function(feat){return feat.properties.JHU_key;}, 
+					getLabel: function(feat){return feat.properties.CensusName;}, 
+					getPopulation: function(feat){return feat.properties.pop2018;}, 
 				}
 
 				resolve(the_data_object);

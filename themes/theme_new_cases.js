@@ -14,7 +14,7 @@ const themeNewCases = {
 	 *
 	 * type: string
 	 */
-	themeName: "Cases, New (1-day)",
+	themeName: "Daily Cases",
 
 	/**
 	 * A brief description, to show in the main window
@@ -106,6 +106,13 @@ const themeNewCases = {
 	choroplethLegendTitle: "New Cases Per Million",
 
 	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "",
+
+	/**
 	 * The size of the circle symbol (set to zero for no circles).
 	 *
 	 * @param feat The feature whose circle size is desired
@@ -167,7 +174,7 @@ const themeNewCases_7day = {
 	 *
 	 * type: string
 	 */
-	themeName: "Cases, New (7-day)",
+	themeName: "Weekly Cases",
 
 	/**
 	 * A brief description, to show in the main window
@@ -193,7 +200,7 @@ const themeNewCases_7day = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		var avg = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
+		var avg = 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
 		if(avg < 0.49){avg=0.49};
 		return avg;
 	},
@@ -252,12 +259,21 @@ const themeNewCases_7day = {
     *false - legend will not be updated and have fixed value from above(legendmin & legendmax)
     */
     updateDailyValueRange: true,
+	
 	/**
 	 * The title to be used on the legend for this module's feature
 	 *
 	 * type: string
 	 */
 	choroplethLegendTitle: "New Cases Per Million",
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
+
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).
@@ -300,12 +316,15 @@ const themeNewCases_7day = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
+		console.log("TOOLTIPTEXTFCN");
+		console.log(feat);
+		console.log(date);
 		var pop = dataSource.getPopulation(feat);
-		var new_case_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
-		var new_case_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1])
+		var new_case_count = parseInt(7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]))
+		var new_case_rate = 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1])
 		console.log("population: " + pop);
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + new_case_count.toFixed(2) + " new cases/day</p>";
+		msg += "<p>" + withCommas(new_case_count) + " new cases/week</p>";
 		msg += "<p>" + toAppropriateDecimals(new_case_rate) + " new cases per million</p>";		
 		return msg;
 	}

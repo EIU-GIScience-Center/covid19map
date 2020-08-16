@@ -14,26 +14,19 @@
   <script src="d3.v5.js" charset="utf-8"></script>
   <script src="utils.js"></script>  
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
-  <script src="data/counties_jhu/data_JHU_Illinois.js"></script>
-  <script src="data/florida_counties_jhu/data_JHU_Florida.js"></script>
+  <script src="data/counties_jhu/data_counties_JHU.js"></script>
   <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
   <script src="d3-simple-slider.min.js"></script>
   <script src="ResizeSensor.js"></script>
   <script src="legend_susielu.js"></script>
-  <script src="themes/theme_cases_cumulative.js"></script>
-  <script src="themes/theme_new_cases.js"></script>
-  <script src="themes/theme_positive_test_ratio.js"></script>
-  <script src="themes/theme_case_mortality.js"></script>
-  <script src="themes/theme_death_cumulative.js"></script>
-  <script src="themes/theme_increase_day_over_week.js"></script>
-  <script src="themes/theme_increase_week_over_week_TEMPLATE.js"></script>
-  <script src="themes/theme_death_increase_week_over_week.js"></script>
+  <script src="themes/themes_basic_pack.js"></script>
+  
 
 </head>
 
 <body>
 	<div id="opening_screen">
-		<div id="maptop" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
+		<div id="ribbon" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
 			<div id="logo" style="float:left; margin-left: 0.5ex; height: 90%;">
 				<img src="images/EIUSquareWhite.png" style="height: 100%;">
 			</div>
@@ -42,78 +35,92 @@
 					COViz: The Covid-19 Open Visualization Project </h3>
 			</div>
 			<div id="about-link" class="menu">
-			<a href="#contributors" style="color: #FFFFFF; font-style: italic;">contributors</a>
+			<a href="#contributors" style="color: #FFFFFF; font-style: italic;" tabindex=2>contributors</a>
 			</div>
 			<div id="other-link" class="menu">
-			<a href="#about" style="color: #FFFFFF; font-style: italic;">about</a>
+			<a href="#about" style="color: #FFFFFF; font-style: italic;" tabindex=1>about</a>
 			</div>
 			
 		</div>
-						
-		<div id="map"></div>
-		<div id="mapbottom">
-            <div id = "buttons" class="container">
-            <button id="loop-button" data-tooltip-position="bottom" data-tooltip="Repeat">⭮</button>
-            <button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase">▶▶</button> 
-            <button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease">◀◀</button>
-            <span class="dot" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(0)"></span> 
-            <span class="dot" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(150)"></span> 
-            <span class="dot" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(300)"></span>
-            <span class="dot" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(450)"></span> 
-            <span class="dot" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(600)"></span> 
-            <button id="play-button" data-tooltip-position="bottom" data-tooltip="Play">▶</button>
-            </div>
-            <div id="slider" style="align: center; float: left; width: 45%;"></div><div id="legend" style="align: center; float: right; width: 45%;"></div>
+		<div id="map_panel">
+			<div id="map_title"></div>
+			<div id="map"></div>
+			<div id="mapbottom">
+				<div id="legend" style="align: center; float: left; width: 45%;"></div>
+			</div>
 		</div>
-		<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
-			<div id="test" style="display: table-cell; vertical-align: middle;">
-				<table style="border:none; width: 90%; border-spacing: 15px;">
-					<tr>
-						<td>
-							<b>Region:</b>
+		<div id="options_panel">
+			<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
+				<div style="display: table-cell; vertical-align: middle;"  -->
+					<table style="border:5px; width: 90%; border-spacing: 15px;">
+						<tr>
+							<td>
+								<b>Region:</b>
+							</td>
+							<td>
+								<select class="select-css" id="dataSourceSelector">
+								</select>			
+							</td>
+						</tr>
+						<tr id="zoomrow" style="display: none">
+							<td>
+								<b><button id="zoomUp">up</button></b>
+							</td>
+							<td id="zoomtarget">
+										
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2 id="data_source_brief_description">
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Map Theme:</b>
+							</td>
+							<td>
+								<select class="select-css" id="themeSelector">
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2 id="theme_brief_description">
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Map Type:</b>
+							</td>
+							<td>
+								<span>
+									Map
+									<label class = "switch">
+									<input id="carttoggle" type="checkbox">
+									<span class="slider round"></span>
+									</label>
+									<a id="cartOptLbl"> Cartogram</a>
+								</span>					
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2 id="map_type_description">
 						</td>
-						<td>
-							<select class="select-css" id="dataSourceSelector">
-							</select>			
-						</td>
-					</tr>
-					<tr>
-						<td colspan=2 id="data_source_brief_description">
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<b>Map Theme:</b>
-						</td>
-						<td>
-							<select class="select-css" id="themeSelector">
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<td colspan=2 id="theme_brief_description">
-						</td>
-                    </tr>
-					<tr>
-						<td>
-							<b>Map Type:</b>
-						</td>
-						<td>
-							<span>
-								Map
-                                <label class = "switch">
-								<input id="carttoggle" type="checkbox">
-								<span class="slider round"></span>
-								</label>
-								<a id="cartOptLbl"> Cartogram</a>
-							</span>					
-						</td>
-					</tr>
-					<tr>
-						<td colspan=2 id="map_type_description">
-					</td>
-					</tr>
-				</table>		  
+						</tr>
+					</table>		  
+				</div>
+			</div>
+			<div id="time_controls">
+				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play">▶</button>
+				<span class="dot" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(600)"></span> 
+				<span class="dot" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(450)"></span> 
+				<span class="dot" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(300)"></span>
+				<span class="dot" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(150)"></span> 
+				<span class="dot" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(0)"></span>  
+				<button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease">◀◀</button>
+				<button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase">▶▶</button> 
+				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Repeat">⭮</button>
+			</div>
+			<div id="slider"></div>
 			</div>
 		</div>
 	</div>
@@ -247,7 +254,6 @@
 
 <script>
 	console.log("starting main script...");
-	// load default dataset
 	var active_feature = null;
 	var active;
 	var oncartogram = false;
@@ -261,6 +267,10 @@
 	// map theme functions and values
 	var theme;
 	var dataSource;
+	var baseFeatures;
+	var cartogramFeatures;
+	var dataSourceFilter;
+	var legendChoropleth;
 	var choroplethColorScale; // scale function for legend (doesn't include white for zero)
 	var lowValColor = null;
 	var highValColor = null;
@@ -270,6 +280,7 @@
 	var dailymax;
 	var radScaleFac = 0;
     var timer;
+	var do_resize = true;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -280,6 +291,7 @@
         themePositiveTestRatio,
 		themeNewPositiveTestRatio,
         themeCaseMortality,
+		themeCaseMortality_7day,
         themeDeathsCumulative,
         themeDeathIncreaseWeekOverWeek
 	]
@@ -289,8 +301,7 @@
 	var dataSources = [
 		dataCovidTracking_states,
 		dataODWG_Canada_Provinces,
-		dataJHU_Illinois, 
-		dataJHU_Florida
+		dataJHU_USA_Counties
 	]
 
 	function addThemesToSelector(datasource){
@@ -320,10 +331,15 @@
 
 	// Add datasets to the selector
 	const dataSourceSelector = document.getElementById("dataSourceSelector");
+	console.log("ADDING DATASETS");
 	for (i=0; i<dataSources.length; ++i) {
-		const option = document.createElement("option");
-		option.text=dataSources[i].dataSourceName;
-		dataSourceSelector.add(option);
+		var thisDataSrc = dataSources[i];
+		if(thisDataSrc.showInSelector){
+			const option = document.createElement("option");
+			option.text=thisDataSrc.dataSourceName;
+			dataSourceSelector.add(option);
+		}
+		
 	}
 
 	function truncateCellsAndLabels(cells,labels, lowVal, highVal){
@@ -346,6 +362,13 @@
 		
 		right_buffer_proportion = (last_ub-theme.choroplethValueScale(highVal))/(last_ub-last_lb)
 		if(right_buffer_proportion > 0.5 && cells.length > 2){highIndex -=1;};
+		// make sure there are at least four cells
+		while(highIndex-lowIndex <3 && (lowIndex > 0 || highIndex < cells.length-1)){
+			highIndex += 1;
+			if(highIndex > cells.length-1){highIndex = cells.length-1;};
+			lowIndex -= 1;
+			if(lowIndex < 0){lowIndex = 0;};
+		}
 		
 		// slice out the corresponding section of the cells and labels
 		cells = cells.slice(lowIndex, highIndex + 1);
@@ -364,12 +387,13 @@
 
 
 	function dailymaxChoroplethValue(date, valuefunction){
-		if(dataSource.baseFeatures, date == undefined){
+		var baseFeat = baseFeatures;
+		if(baseFeat, date == undefined){
 			return "undefined";
 		} else {
-			var dailymax = valuefunction(dataSource.baseFeatures.features[0], date);
-			for (let i = 0; i < dataSource.baseFeatures.features.length; i++){
-				var currentValue = valuefunction(dataSource.baseFeatures.features[i], date);
+			var dailymax = valuefunction(baseFeat.features[0], date);
+			for (let i = 0; i < baseFeat.features.length; i++){
+				var currentValue = valuefunction(baseFeat.features[i], date);
 				if (currentValue > dailymax){
 					dailymax = currentValue;
 				}
@@ -380,12 +404,13 @@
 
 	// The minimum value across all features on a given date
 	function dailyminChoroplethValue(date, valuefunction){
-		if(dataSource.baseFeatures, date == undefined){
+		var baseFeat = baseFeatures;
+		if(baseFeat, date == undefined){
 			return "undefined";
 		} else {   
-			var dailymin = valuefunction(dataSource.baseFeatures.features[0], date);
-			for (let i = 0; i < dataSource.baseFeatures.features.length; i++){
-				var currentValue = valuefunction(dataSource.baseFeatures.features[i], date);
+			var dailymin = valuefunction(baseFeat.features[0], date);
+			for (let i = 0; i < baseFeat.features.length; i++){
+				var currentValue = valuefunction(baseFeat.features[i], date);
 				if (currentValue < dailymin){
 					dailymin = currentValue;
 				}
@@ -396,7 +421,7 @@
 
 	// The minimum value across all features on all dates
 	function minChoroplethValue(valuefunction){
-		if(dataSource.baseFeatures == undefined){
+		if(baseFeatures == undefined){
 			return "undefined";
 		} else {
 			var globalmin =dailyminChoroplethValue(dataSource.dates[0],valuefunction);
@@ -412,7 +437,7 @@
 
 	// The maximum value across all features on all dates
 	function maxChoroplethValue(valuefunction){
-		if(dataSource.baseFeatures == undefined){
+		if(baseFeatures == undefined){
 			return "undefined";
 		} else {
 			var globalmax =dailymaxChoroplethValue(dataSource.dates[0],valuefunction);
@@ -429,6 +454,10 @@
 	function updateValueRange(date){
 		dailymin = dailyminChoroplethValue(date, myValueFunction);             
 		dailymax = dailymaxChoroplethValue(date, myValueFunction);
+		// determine legend span, and expand range to include legend span
+		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
+		dailymin = truncatedCells[0];
+		dailymax = truncatedCells[truncatedCells.length-1];
 		// truncate legend cells and labels to low and high values
 		var unitIntervalScale = d3.scaleLinear()
 		.domain([theme.choroplethValueScale(dailymin), theme.choroplethValueScale(dailymax)]);
@@ -542,7 +571,11 @@
 				if (theme.legendmin == null){theme.legendmin = minChoroplethValue(myValueFunction)};
 				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(myValueFunction)};
 				// calculate radius scale factor
-				radScaleFac = radiusScaleFac(dataSource.cartogramFeatures);
+				if(oncartogram){
+					radScaleFac = radiusScaleFac(cartogramFeatures);
+				} else {
+					radScaleFac = radiusScaleFac(baseFeatures);
+				}
 				// update the map and legend
 				if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
@@ -555,18 +588,25 @@
 		} // datasource is defined
 	} // loadTheme function
 
-	var loadData = function() {
+	var loadData = function(dataSourceName, filterValue=null) {
+		console.log("creating loadData promise function...");
 		return new Promise(function(resolve,reject){
-			// get name from drop-down selector
-			var dataSourceName = document.getElementById("dataSourceSelector").value;
 			// find matching data source
 			var match = dataSources.find(v => v.dataSourceName == dataSourceName);
+			
 			if(match){
 				// for error checking
 				error_displayed=false;
 				// get promised data object
+				console.log(match.dataFunc);
 				match.dataFunc.then(function(the_data_obj){
+					console.log("Got the DATA OBJECT");
 					dataSource = the_data_obj; // the data object is what we'll call the dataSource
+					dataSourceFilter = filterValue;
+					if(dataSourceFilter==null){dataSourceFilter = dataSource.defaultFilter;};
+					// get rid of any tooltip
+					active_feature = null;
+					feature_mouseout(null,null);
 					// show the description of the data source
 					document.getElementById("data_source_brief_description").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 					addThemesToSelector(dataSource); // determine which themes are valid for this data source
@@ -602,8 +642,11 @@
 						}		
 						return val;
 					}
+					// get features
+					baseFeatures = dataSource.baseFeatures(dataSourceFilter);
+					cartogramFeatures = dataSource.cartogramFeatures(dataSourceFilter);
 					// check to see if there are cartogram features
-					if (dataSource.cartogramFeatures == null){
+					if (cartogramFeatures == null){
 						// if not, disable map type selector and set cartogram to false
 						document.getElementById("carttoggle").disabled=true;
 						document.getElementById("carttoggle").checked=false;
@@ -613,9 +656,14 @@
 						// otherwise need to make sure it is visible
 						document.getElementById("carttoggle").disabled=false;
 						document.getElementById("cartOptLbl").style.color=null;
-						// calculate radius scale factor
-						radScaleFac = radiusScaleFac(dataSource.cartogramFeatures);
-						console.log("Radius factor: " + radScaleFac);
+						
+				
+					}
+					// get scale factor for circle symbols
+					if(oncartogram){
+						radScaleFac = radiusScaleFac(cartogramFeatures);
+					} else {
+						radScaleFac = radiusScaleFac(baseFeatures);
 					}
 					resolve();
 				});
@@ -659,8 +707,7 @@
 			return trans-y*scale;
 		}
 		return f;
-	}
-
+	}	
 	
 	function fitProjection(data, box, center) {
 		// get the bounding box for the data - might be more efficient approaches
@@ -717,53 +764,99 @@
 			transY = transY - (transY + startbox[1][1] * scale - box[1][1])/2;
 			transX = transX - (transX + startbox[1][0] * scale - box[1][0])/2;
 		}
+		// this is crap, let's try something simple
+		/*
+		projection = d3.geoIdentity().reflectY(true);
+		// reset projection
+		projection
+			.scale(1)
+			.translate([0, 0]);
+		return [projection,1,0,0];
+		
+		OK, darn - this messes up the stroke width
+		
 		
 		// if using real projection (as opposed to geoIdentity), 
 		// set precision to zero to prevent D3 from adding points through "adaptive sampling"
+		/*
+		*/
 		return [projection.scale(scale).translate([transX, transY]),scale,transX,transY];
+		
 	}	
+
+	function fullZoomTransformation(featdata,width,height,prj,prjscale,transX,transY){
+		// returns a translation and scale factor for transforming features, 
+		// from a fit projection
+		var path = d3.geoPath()
+			.projection(prj);
+		var bounds = path.bounds(featdata), 
+			dx = bounds[1][0] - bounds[0][0],
+			dy = bounds[1][1] - bounds[0][1],
+			x = (bounds[0][0] + bounds[1][0]) / 2,
+			y = (bounds[0][1] + bounds[1][1]) / 2,
+			boundsscale = .9 / Math.max(dx / width, dy / height),
+			translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
+		return([translate, boundsscale]);
+	}
+
+
+	function resize(){
+		if(do_resize){
+			if (curDate != null){
+				console.log("Resizing...");			
+				// update map, legend and slider
+				var curDateID = dataSource.dates.indexOf(curDate);
+							
+				// debugging
+				divid='map';
+				var ele = document.getElementById(divid); // Do not use #
+				var width = ele.offsetWidth;
+				var height = ele.offsetHeight;
+				console.log("SVG dimensions: " + width + " x " + height);
+				if(oncartogram==true){
+					m = loadMap(cartogramFeatures);
+				} else {
+					m = loadMap(baseFeatures);
+				}
+				
+				// calculate radius scale factor
+				if(oncartogram){
+					radScaleFac = radiusScaleFac(cartogramFeatures);
+				} else {
+					radScaleFac = radiusScaleFac(baseFeatures);
+				}
+				console.log("Radius factor: " + radScaleFac);
+				updateMap();
+				//loadLegend();
+				var slider_val = parseInt(slider.value());
+				//loadSlider();
+				slider.value(slider_val);
+			}
+		}
+	}
 
 	// handle resizing
 	new ResizeSensor(jQuery('#map'), function(){ 	
-		if (curDate != null){
-			// update map, legend and slider
-			var curDateID = dataSource.dates.indexOf(curDate);
-			if(oncartogram==true){
-				m = loadMap(dataSource.cartogramFeatures);
-			} else {
-				m = loadMap(dataSource.baseFeatures);
-			}
-			// calculate radius scale factor
-			radScaleFac = radiusScaleFac(dataSource.cartogramFeatures);
-			console.log("Radius factor: " + radScaleFac);
-			updateMap();
-			loadLegend();
-			var slider_val = parseInt(slider.value());
-			loadSlider();
-			slider.value(slider_val);
-//			slider_svg.call(slider);
-		}
+		resize();
 	});		
 
 	function featureInfoHTML(feature){
 		console.log("showing feature info...");
 		if(theme != undefined){
 			if(feature != null){
-				console.log("theme and feature exist...");
-				console.log(curDate);
-				console.log(feature);
-				console.log(dataSource.getLabel(feature));
+				// show data
 				var realDate = new Date(curDate)
 				var monthID = realDate.getMonth()+1;
 				var day = realDate.getDate();
 				showHTML = "<B>" + dataSource.getLabel(feature) + " (" + monthString(monthID) + " " + day + ")</B><BR>";
-				showHTML += theme.tooltipTextFcn(feature,curDate);
+				showHTML += theme.tooltipTextFcn(feature,curDate);				
 				return showHTML;
 			} else {
 				return "";
 			}
 		}
 	}
+
 
 	function loadMap(featdata,categories, category){
 		console.log("loading map...");
@@ -773,39 +866,36 @@
 			var ele = document.getElementById(divid); // Do not use #
 			var width = ele.offsetWidth;
 			var height = ele.offsetHeight;
-			
 			divid = '#' + divid;
 			d3.select(divid).selectAll('svg').remove();			
 			mapsvg = d3.select(divid)
 					.append('svg')
 					.attr('width',width)
 					.attr('height',height)
-					.on('click',reset);
+					.on('click',reset);		
 			var statepaths = mapsvg.append('g');
-			var prj,scale,transX,transY;
 
+			// get projection parameters
+			var prj,scale,transX,transY;
 			[prj,prjscale,transX,transY]=fitProjection(featdata, [[0, 0],  [width, height]], true)
-			var path = d3.geoPath()
-				.projection(prj);
-			var bounds = path.bounds(featdata), 
-				dx = bounds[1][0] - bounds[0][0],
-				dy = bounds[1][1] - bounds[0][1],
-				x = (bounds[0][0] + bounds[1][0]) / 2,
-				y = (bounds[0][1] + bounds[1][1]) / 2,
-				boundsscale = .9 / Math.max(dx / width, dy / height),
-				translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
-			console.log("boundsscale: " + boundsscale);
+			var translation, scalefactor;
+			[translation, scalefactor] = fullZoomTransformation(featdata,width,height,prj,scale,transX,transY);
+
+			// calculate radius scale 
+			radScaleFac = radiusScaleFac(featdata);
+			console.log("radScaleFac: " + radScaleFac);
+			// remove and re-create paths in SVG
 			statepaths.selectAll('path')
 				.remove()
 				.data(featdata.features)
 				.enter()
 				.append('path')
-				.attr('d',path)
+				.attr('d',null)
 				.attr("class","feature")
 				.attr("stroke", "#EEE")
 				.attr("stroke-width", "1px")
 				.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
-				.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+				.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 				.on("click",feature_click)
 				.on("mouseover",feature_mouseover)
 				.on("mouseout",feature_mouseout);	
@@ -824,7 +914,7 @@
 					var prjY = prjYFunction(prjscale,transY); 
 					return prjY(centroid(d)[1]);
 				})
-				.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+				.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 				.style('stroke-width',1)
 				.style('stroke',"#FFFFCC")
 				.style('opacity',1)
@@ -843,6 +933,16 @@
 	}
 
 
+	// updates the map title based on current selections
+	function updateMapTitle(){
+		var newtitle= "<b>" + theme.themeName + "</b> (";
+		if(theme.datePrefix != null){
+			newtitle += theme.datePrefix + " ";
+		}
+		newtitle += curDate + ")";
+		document.getElementById("map_title").innerHTML=newtitle;
+	}
+
 	// updates map to the user selected type (map or cartogram) and date
 	function updateMap(milliseconds=750, callback){
 		// change the text describing the map type
@@ -857,7 +957,25 @@
 		// transition the map only if the map svg and date are defined
 		if(mapsvg !== undefined){
 			if(curDate != null){	
-				var todata; // either map or cartogram features
+
+				// get features (either map or cartogram)
+				var todata; 
+				if (oncartogram==false){
+					todata=baseFeatures;
+				} else {
+					todata=cartogramFeatures;
+				};
+				
+				// get projection parameters
+				var ele = document.getElementById('map'); // Do not use #
+				var width = ele.clientWidth;
+				var height = ele.clientHeight;
+				var prj,scale,transX,transY;
+				[prj,prjscale,transX,transY]=fitProjection(todata, [[0, 0],  [width, height]], true)
+				var path = d3.geoPath().projection(prj);
+				var translation, scalefactor;
+				[translation, scalefactor] = fullZoomTransformation(todata,width,height,prj,scale,transX,transY);
+
 				// get data and choropleth/symbol functions depending on if we're showing a map or cartogram
 				var localChoroplethColor;
 				var localCircleRadius;
@@ -865,61 +983,49 @@
 				var localFeatureStroke;
 				var localCircleStroke;
 
+				if(theme.circleRadiusFcn==0){
+					localCircleRadius=0;
+				} else {
+					localCircleRadius=function(d){
+						var cRad = radScaleFac * theme.circleRadiusFcn(d,curDate);
+						if(isNaN(cRad)){
+							console.log("Not a Number in localCircleRadius!!!");
+							console.log(radScaleFac);
+							console.log(theme.circleRadiusFcn(d,curDate));
+						}
+						return radScaleFac * theme.circleRadiusFcn(d,curDate);
+					};
+				}
+				// adjust symbology depending on whether we're using a regular map or polygon
 				if (oncartogram==false){
-					todata=dataSource.baseFeatures;
+					// symbology for a regular map
+					todata=baseFeatures;
 					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 					localFeatureStroke = '#DDD';
-					localCircleStroke = localCircleFill;
+					localCircleStroke = '#D00';
+					localCircleFill="rgba(205,205,205,0.3)";
 				} else {
-					todata=dataSource.cartogramFeatures;
+					// symbology for a cartogram
+					todata=cartogramFeatures;
 					if(theme.circleRadiusFcn==0){
 						localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 						localFeatureStroke = '#DDD';
 						localCircleStroke = localCircleFill;
+						localCircleRadius=0;
 					} else {
 						localFeatureStroke = '#CCC';
 						localChoroplethColor='#F5F5F8';
 						localCircleStroke = '#FFFFCC';
+						//localCircleRadius=function(d){return radScaleFac * theme.circleRadiusFcn(d,curDate);};
 					}
 				}
-				
-				var ele = document.getElementById('map'); // Do not use #
-				var width = ele.clientWidth;
-				var height = ele.clientHeight;
-				var prj,scale,transX,transY;
-				[prj,prjscale,transX,transY]=fitProjection(todata, [[0, 0],  [width, height]], true)
-				var path = d3.geoPath().projection(prj);
-				var bounds = path.bounds(todata), 
-					dx = bounds[1][0] - bounds[0][0],
-					dy = bounds[1][1] - bounds[0][1],
-					x = (bounds[0][0] + bounds[1][0]) / 2,
-					y = (bounds[0][1] + bounds[1][1]) / 2,
-					boundsscale = .9 / Math.max(dx / width, dy / height),
-					translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
-
-				// see if we can determine scale factor
-				console.log("scales in prj");
-				console.log(prjscale);
-				console.log(boundsscale);
-				if (oncartogram==false){
-					localCircleRadius=0;
-				} else {
-					todata=dataSource.cartogramFeatures;
-					if(theme.circleRadiusFcn==0){
-						localCircleRadius=0;
-					} else {
-						// radScaleFac=prjscale*boundsscale*prjscale*boundsscale;
-						localCircleRadius=function(d){return radScaleFac * theme.circleRadiusFcn(d,curDate);};
-					}
-				}
-
 
 				// transition district polygons
 				mapsvg.selectAll('path')
 					.transition()
 					.ease(d3.easeLinear)
 					.attr("d",function(d,i){return path(todata.features[i]);})
-					.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+					.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 					.attr("stroke",localFeatureStroke)
 					.duration(milliseconds)
 					.attr("fill",localChoroplethColor)
@@ -942,26 +1048,23 @@
 					.attr('r',localCircleRadius)
 					.style('fill',localCircleFill)
 					.style('stroke',localCircleStroke)
-					.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+					.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 					.duration(milliseconds);
-
-
-
-					
+				// reload legend
+				loadLegend();
+				// update map title
+				updateMapTitle();
 				// show info tooltip
-				if(active_feature != null){showFeatureInfo(active_feature);}
-
+				if(active_feature != null){showFeatureInfo(active_feature, true);}
 			} // end if date is not null
 		} // end if mapsvg is not null
 	}
 
-
-
 	function loadLegend(){
+		do_resize=false; // prevent repeated resizing
 		console.log("Loading Legend...");
-		// get available width
-		// var viewportwidth = $(window).width();
 		var legwidth = 0.45*(document.getElementById("mapbottom").offsetWidth);
+		legwidth = $("#map_panel").width();
 		if(legwidth < 100){legwidth=100;};	
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
@@ -972,7 +1075,7 @@
 			.attr('width',legwidth)
 			.attr('height',60);		
 		legendsvg.append("g")
-		  .attr("class", "legendSequential")
+		  .attr("class", "legendChoropleth")
 		  .attr("transform", "translate(20,20)");
 		// create legend
 		var truncatedCells
@@ -981,13 +1084,11 @@
         if (theme.updateDailyValueRange && moving==false){
              [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
         } else {
-            //truncatedCells = theme.choroplethCells;
-            //truncatedLabels = theme.choroplethLabels;
 			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
         }        
 		
         var numCells = truncatedCells.length;
-		var legendSequential = d3.legendColor()
+		legendChoropleth = d3.legendColor()
 			.shapeWidth((legwidth-30)/numCells)
 			.title(theme.choroplethLegendTitle)
 			.cells(truncatedCells)
@@ -998,17 +1099,112 @@
 			.shapeHeight(15)
 			.labelOffset(6); 
 		// call function to draw legend in svg
-		legendsvg.select(".legendSequential")
-		  .call(legendSequential);
+		legendsvg.select(".legendChoropleth")
+		  .call(legendChoropleth);
+		do_resize=true;
 	}
-    
+
+	
+
+	// zoom to child 
+    function zoomToChild(feat){
+		console.log("Zooming to:" + dataSource.getLabel(feat));
+		// first zoom to feature
+		
+		// get child data source
+		var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
+		if(match){
+			// get promised data object
+			match.dataFunc.then(function(the_data_obj){
+				// temporary; need to change this to implement zoom effect
+				loadData(dataSource.dataChildName, dataSourceFilter).then(function(){
+					handleDataLoaded(); // show child features
+					document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+				})
+				/* non-working code below
+				// CREATE EFFECT OF ZOOMING TO CHILD FEATURE
+				// (1) recalculate projection for parent feature set
+				var featdata;
+				if(oncartogram==true){
+					featdata = cartogramFeatures;
+				} else {
+					featdata = baseFeatures;
+				}
+				var prj,scale,transX,transY;
+				var ele = document.getElementById('map'); // Do not use #
+				var width = ele.clientWidth;
+				var height = ele.clientHeight;		
+				[prj,prjscale,transX,transY]=fitProjection(featdata, [[0, 0],  [width, height]], true)
+				
+				// (2) calculate scale and translation to zoom to child feature
+				// get feature collection with just child feature			
+				featdata.features =	featdata.features.filter(feat => dataSource.getID(feat)==dataSourceFilter)
+				// determine scaling factor and translation factor we need 
+				var path = d3.geoPath()
+					.projection(prj);
+				var bounds = path.bounds(featdata), 
+					dx = bounds[1][0] - bounds[0][0],
+					dy = bounds[1][1] - bounds[0][1],
+					x = (bounds[0][0] + bounds[1][0]) / 2,
+					y = (bounds[0][1] + bounds[1][1]) / 2,
+					boundsscale = .9 / Math.max(dx / width, dy / height),
+					translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
+				// load child feature data but don't map it yet
+				loadData(dataSource.dataChildName, dataSourceFilter).then(function(){
+					// apply new scaling and translation factors to parent features in a transition
+					m.selectAll('path')
+						.transition()
+						.duration(1000)
+						.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
+						.on("end",function(d,i){
+							// when we get to the end of the transition, load the child feature set
+							// but we want to do this only once, so do it only for the first feature
+							if(i==0){
+								handleDataLoaded(); // show child features
+								document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+							};
+						});
+				});
+				*/
+				
+			})
+		};
+	}
+	
+	function zoomToParent(){
+		console.log("Zooming up");
+		loadData(dataSource.dataParentName).then(function(){
+			dataSourceFilter=null;
+			handleDataLoaded();
+		});	
+	}
+	
+	
 	// show information when user selects or mouses over a feature	
-	function showFeatureInfo(d){		
+	function showFeatureInfo(d, showInteractiveElements=true){		
+		// get feature info
+		var showHTML = featureInfoHTML(d);
+		// add interactive elements
+		if(showInteractiveElements){
+			// button to show child data source
+			if(dataSource.dataChildName != null){
+				showHTML += "<div style='float: left;'>";
+				showHTML += "<button id='zoomDown'>Zoom Down</button>";
+				showHTML += "</div>"
+			};
+		}
 		// determine if tooltip will go above or below cursor
 		d3.select('#tooltip')
 			.style('opacity',1)
-			.html(featureInfoHTML(d))
+			.html(showHTML)
 			.raise();
+		// add events to interactive elements
+		if(showInteractiveElements){
+			if(dataSource.dataChildName != null){
+				dataSourceFilter = dataSource.getID(d);
+				document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
+			};
+		}
 		if(d3.event != null){
 			if(d3.event.pageY < window.innerHeight/3){
 				d3.select('#tooltip')
@@ -1024,6 +1220,9 @@
 		}
 	}
 
+
+
+
 	// processes user click on a specific district
 	function feature_click(d,i) {
 	  // d is the geometry object
@@ -1037,12 +1236,12 @@
 	  d3.event.stopPropagation();
 	  // record that we have an active feature
 	  active_feature = d;
-	  showFeatureInfo(d);
+	  showFeatureInfo(d, true);
 	}
 
 	function feature_mouseover(d,i){
 		if (active_feature == null){
-			showFeatureInfo(d);
+			showFeatureInfo(d, false);
 		}
 	}
 
@@ -1132,7 +1331,8 @@
 		}
 		// get available width
 		var viewportwidth = $(window).width();
-		var slider_width = 0.45*(viewportwidth);
+		// var slider_width = 0.45*(viewportwidth);
+		var slider_width = $("#options_panel").width();
 		if(slider_width < 100){slider_width=100;};
 		var secretCode="Yes please show month!";
 		function dateString(sliderID, showMonthParam){
@@ -1152,10 +1352,12 @@
 			.attr('align','center')
 			.append('svg');
 		textData=[0];
+		/*
 		var dateTextGroup = slider_svg.selectAll("text")
 			.data(textData)
 			.enter()
 			.append("text");
+		*/
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
 		slider = d3
@@ -1173,6 +1375,7 @@
 				curDate = dataSource.dates[sliderID];
 				slider.displayValue("Hi there!");
 				d3.select('#value').text("???");
+				/*
 				var dateText = dateTextGroup
 					.attr("x",function(d){return slider_width/2;})
 					.attr("y",function(d){return 20;})
@@ -1181,7 +1384,8 @@
 					.attr("font-family", "sans-serif")
 					.attr("font-size", "15px")
 					.attr("fill", "red");
-                if (theme.updateDailyValueRange && moving==false){
+                */
+				if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
 					fixedValueRange();
@@ -1202,14 +1406,24 @@
 
 	function handleDataLoaded(){return new Promise(function(resolve,reject){
 		// update the slider
+		console.log("HANDLING DATA...");
+		// report current dataset
+		if(dataSource.dataParentName==null){
+			document.getElementById("zoomrow").style.display="none";
+		} else {
+			document.getElementById("zoomrow").style.display='';
+			document.getElementById("zoomtarget").innerHTML="zoomed to: " + dataSourceFilter;
+		};
 		loadSlider().then(function(){
 			console.log("slider loaded:");
 			// define current date
 			curDate=dataSource.dates[0];
 			// load the map!
-			m = loadMap(dataSource.baseFeatures);
+			m = loadMap(baseFeatures);
 			//load the Theme
 			loadTheme();
+			// resize everything
+			resize();
 			// a bit of animation to show functionality
 			setTimeout(function()
 				{
@@ -1237,14 +1451,15 @@
     
     function delayIndi() {
         for (i = 0; i < dots.length; i++){ 
-        var dotDelay = 150*i
-        if (dotDelay < delay) {
-            dots[i].style.backgroundColor = "#bbb";
-        } else if (dotDelay >= delay){
-            dots[i].style.backgroundColor = "#004C97";
-        }
+			var dotDelay = 600-150*i
+			if (dotDelay < delay) {
+				dots[i].style.backgroundColor = "#bbb";
+			} else if (dotDelay >= delay){
+				dots[i].style.backgroundColor = "#004C97";
+			}
+		}
     }
-    }
+
     
     playButton
         .on("click", function() {
@@ -1360,16 +1575,12 @@
 
 	console.log("STARTING...");
 
-	loadData().then(function(){
-		handleDataLoaded().then(function(){
-			
-				
-		});
+	loadData(document.getElementById("dataSourceSelector").value).then(function(){
+		handleDataLoaded();//.then(function(){});
 	});
 
     //set 3dots
-    for (i = 2; i < dots.length; i++){
-                dots[i].style.backgroundColor = "#004C97";}
+	delayIndi();
 	// load the invisible tooltip div...
 	loadTooltips();
 
@@ -1378,17 +1589,17 @@
 	document.getElementById("carttoggle").addEventListener("change",function(){
 		toggle_map(1500);
 	});
-	//document.getElementById("carttoggle").checked = false;
 	document.getElementById("themeSelector").addEventListener("change",function(){loadTheme();});
 	document.getElementById("dataSourceSelector").addEventListener(
 		"change",function(){
-			loadData().then(
+			loadData(document.getElementById("dataSourceSelector").value).then(
 				function(){
 					handleDataLoaded()
 				}
 			);
 		}
 	);
+	document.getElementById('zoomUp').addEventListener("click",zoomToParent);
 	$('themeSelector').on('keydown', function(e){
 		if(e.keyCode === 37 || e.keyCode === 39) { //left or right
 			e.preventDefault();

@@ -19,7 +19,7 @@ const themeCasesCumulative = {
 	 *
 	 * type: string
 	 */
-	themeName: "Cases, Cumulative",
+	themeName: "Total Cases",
 
 	/**
 	 * A brief description, to show in the main window
@@ -108,7 +108,14 @@ const themeCasesCumulative = {
 	 *
 	 * type: string
 	 */
-	choroplethLegendTitle: "Cases Per Million (total cases indicated by circle size)",
+	choroplethLegendTitle: "Cases Per Million",
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).

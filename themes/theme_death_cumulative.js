@@ -19,7 +19,7 @@ const themeDeathsCumulative = {
 	 *
 	 * type: string
 	 */
-	themeName: "Deaths, Cumulative",
+	themeName: "Total Deaths",
 
 	/**
 	 * A brief description, to show in the main window
@@ -109,6 +109,13 @@ const themeDeathsCumulative = {
 	 * type: string
 	 */
 	choroplethLegendTitle: "deaths Per Million (total deaths indicated by circle size)",
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
 
 	/**
 	 * The size of the circle symbol (set to zero for no circles).

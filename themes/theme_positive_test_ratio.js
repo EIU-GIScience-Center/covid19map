@@ -106,7 +106,15 @@ const themePositiveTestRatio = {
 	 */
 	choroplethLegendTitle: "Percent of tests with positive result.",
 
-/**
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
+
+	/**
 	 * The size of the circle symbol (set to zero for no circles).
 	 *
 	 * @param feat The feature whose circle size is desired
@@ -257,6 +265,13 @@ const themeNewPositiveTestRatio = {
 	 * type: string
 	 */
 	choroplethLegendTitle: "Percent of tests with positive result.",
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
 
 /**
 	 * The size of the circle symbol (set to zero for no circles).
