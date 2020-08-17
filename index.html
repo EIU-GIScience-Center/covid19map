@@ -5,6 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <meta property="og:image" content="./images/preview.png" />
   <link rel="stylesheet" href="d3_map_styles.css"> 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap" rel="stylesheet">
   <title>COViz</title>
@@ -64,7 +65,7 @@
 						</tr>
 						<tr id="zoomrow" style="display: none">
 							<td>
-								<b><button id="zoomUp">up</button></b>
+								<b><button id="zoomUp"><img src="images/minus.png" alt="zoomUp" width="16.7" height="25"></button></b>
 							</td>
 							<td id="zoomtarget">
 										
@@ -110,7 +111,7 @@
 				</div>
 			</div>
 			<div id="time_controls">
-				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play">▶</button>
+				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play">►</button>
 				<span class="dot" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(600)"></span> 
 				<span class="dot" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(450)"></span> 
 				<span class="dot" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(300)"></span>
@@ -118,7 +119,7 @@
 				<span class="dot" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(0)"></span>  
 				<button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease">◀◀</button>
 				<button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase">▶▶</button> 
-				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Repeat">⭮</button>
+				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Repeat">↻</button>
 			</div>
 			<div id="slider"></div>
 			</div>
@@ -1002,8 +1003,8 @@
 					todata=baseFeatures;
 					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 					localFeatureStroke = '#DDD';
-					localCircleStroke = '#D00';
-					localCircleFill="rgba(205,205,205,0.3)";
+					localCircleStroke = "rgba(0, 255, 255,0.35)";
+					localCircleFill="rgba(0, 255, 255,0.35)";
 				} else {
 					// symbology for a cartogram
 					todata=cartogramFeatures;
@@ -1189,7 +1190,7 @@
 			// button to show child data source
 			if(dataSource.dataChildName != null){
 				showHTML += "<div style='float: left;'>";
-				showHTML += "<button id='zoomDown'>Zoom Down</button>";
+				showHTML += "<button id='zoomDown'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
 				showHTML += "</div>"
 			};
 		}
@@ -1448,7 +1449,7 @@
     var delay = 300;
     var dots = document.getElementsByClassName("dot");
     var i;
-    
+
     function delayIndi() {
         for (i = 0; i < dots.length; i++){ 
 			var dotDelay = 600-150*i
@@ -1471,7 +1472,7 @@
 			  moving = false;
 			  clearInterval(timer);
 			  // timer = 0;
-			  button.text("▶");
+			  button.text("►");
 			} else { 
               if (sliderID == dataSource.dates.length-1) {
                   currentIndex = 35;
@@ -1563,12 +1564,12 @@
         loopButton
             .on("click", function() {
             var button = d3.select(this);
-            if (button.text() == "⭲") {
+            if (button.text() == "⇥") {
                 looping = false;
-                button.text("⭮")
+                button.text("↻")
             } else {
                 looping = true;
-                button.text("⭲");
+                button.text("⇥");
             }
             console.log("Looping: " + looping);
                 });
