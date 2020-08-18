@@ -65,7 +65,7 @@
 						</tr>
 						<tr id="zoomrow" style="display: none">
 							<td>
-								<b><button id="zoomUp"><img src="images/minus.png" alt="zoomUp" width="16.7" height="25"></button></b>
+								<b><button id="zoomUp" data-tooltip-position="bottom" data-tooltip="ZoomOut"><img src="images/minus.png" alt="zoomUp" width="16.7" height="25"></button></b>
 							</td>
 							<td id="zoomtarget">
 										
@@ -1190,7 +1190,7 @@
 			// button to show child data source
 			if(dataSource.dataChildName != null){
 				showHTML += "<div style='float: left;'>";
-				showHTML += "<button id='zoomDown'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
+				showHTML += "<button id='zoomDown' data-tooltip-position='bottom' data-tooltip='Zoom In'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
 				showHTML += "</div>"
 			};
 		}
