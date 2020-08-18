@@ -48,7 +48,7 @@ const dataJHU_USA_Counties = {
 			src.all_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
-		
+
 		// GET SOURCE DATASET (Georgia polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/counties_JHU/geojson/Georgia_counties.geojson", function(src_data) {
@@ -65,7 +65,7 @@ const dataJHU_USA_Counties = {
 			process_data(); // attempt to process all datasets
 		});//.fail(function() { console.log("error"); });			
 
-		
+
 		// GET SOURCE DATASET (Georgia cartogram polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/counties_JHU/geojson/Georgia_counties_cartogram.geojson", function(src_data) {
@@ -284,7 +284,7 @@ const dataJHU_USA_Counties = {
 					},
 					cartogramFeatures: function(filter=null){
 						if(filter==null){
-							return null;
+							return null;						
 						} else if (filter=="GA") {
 							return src.Georgia_cartogram;
 						} else if (filter=="FL") {
