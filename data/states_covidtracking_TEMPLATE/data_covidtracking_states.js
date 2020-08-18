@@ -32,7 +32,8 @@ To create a new data source:
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
 const dataCovidTracking_states={
-	dataSourceName: "US States", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+	dataSourceName: "USA", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
+	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
@@ -61,7 +62,7 @@ const dataCovidTracking_states={
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a geojson service
 
-		$.getJSON("https://covidtracking.com/api/v1/states/daily.json", function(src_data) {
+		$.getJSON("https://api.covidtracking.com/v1/states/daily.json", function(src_data) {
 			console.log("got tabular data...")
 			src.tab_data = src_data; // add to src object
 			process_data(); // attempt to process all datasets
@@ -186,8 +187,15 @@ const dataCovidTracking_states={
 				// THE DATA OBJECT
 				the_data_object = {
 					briefDescription: "Data from <a href='https://covidtracking.com/'>The COVID Tracking Project</a>.",
-					baseFeatures: src.map_polys, 
-					cartogramFeatures: src.carto_polys, 
+					baseFeatures: function(filter=null){
+						return src.map_polys;
+					},
+					cartogramFeatures: function(filter=null){
+						return src.carto_polys; 
+					},
+					defaultFilter: null,
+					dataChildName: "USA Counties",
+					dataParentName: null,
 					dates: dates, 
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
@@ -200,5 +208,5 @@ const dataCovidTracking_states={
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
-	}) // end of "new Promise(function(resolve, reject){"
+		}) // end of "new Promise(function(resolve, reject){"
 }; // end of "const dataCovidTracking_states={

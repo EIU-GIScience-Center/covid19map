@@ -51,9 +51,9 @@ html, body, #fullheight {
 #map_panel{
 	grid-column: 1;
 	grid-row: 2;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+	display: grid;
+	grid-template-columns: 100%;
+	grid-template-rows: auto auto 88px;
 	height: 93vh;
 	width: 100%;
 	margin-left: 0ex;
@@ -64,9 +64,10 @@ html, body, #fullheight {
 }
 
 #map_title{
-	flex-grow: 0;
+	grid-column: 1;
+	grid-row: 1;
 	font-size: 150%;
-	text-align: left;
+	text-align: center;
 	color: #004C97;
 	width: 100%;
 	margin-left: 0ex;
@@ -76,8 +77,9 @@ html, body, #fullheight {
 }
 
 #map{
-	flex-grow: 1;
-	width: 100%;
+	grid-column: 1;
+	grid-row: 2;
+	height: auto;
 	min-height: 100px;
 	min-width: 300px;
 	width: 65vw;
@@ -88,7 +90,8 @@ html, body, #fullheight {
 }
 
 #mapbottom{
-	flex-grow: 0;	
+	grid-column: 1;
+	grid-row: 3;	
 	align: center;
 	height: 55px;
 	min-height: 75px;
@@ -109,7 +112,6 @@ html, body, #fullheight {
 	grid-template-rows: auto 50px 85px;
 	height: 93vh;
 	width: 100%;
-	min-width: 300px;
 	margin-left: 0ex;
 	margin-right: 0ex;
 	margin-top:0ex; 
@@ -132,14 +134,11 @@ html, body, #fullheight {
 	margin-bottom: 0ex;
 	
 }
-#zoomrow{
-	display: none;
-}
 
 #time_controls{
 	grid-column: 1;
 	grid-row: 2;
-	height: 90px;
+	height: 70px;
 	width: 32vw;
 	min-width: 300px;
 	vertical-align: middle
@@ -224,8 +223,6 @@ rect {
   height: 24px;
 }
 
-
-
 /* Hide default HTML checkbox */
 .switch input {
   opacity: 0;
@@ -265,15 +262,8 @@ input:checked + .slider {
 }
 
 input:focus + .slider {
-
-    border-color: #aaa;
-    box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
-    box-shadow: 0 0 0 2px -moz-mac-focusring;
-    color: #222; 
-    outline: none;
-
+  box-shadow: 3 3 3px #2196F3;
 }
-
 
 input:checked + .slider:before {
   -webkit-transform: translateX(26px);
@@ -373,24 +363,6 @@ input:checked + .slider:before {
     z-index: 50;
 }
 
-#zoomDown, #zoomUp {
-      position: relative;
-      background: #ECF0F1;
-      padding-right: 26px;
-      border-radius: 50%;
-      color: black;
-      padding: 0 0px;
-      width: 35px;
-      cursor: pointer;
-      height: 35px;
-    }
-#zoomDown:hover, #zoomUp:hover {
-      background-color: #F4F6F7;
-      border-color: #888;
-      border-radius: 50%;
-      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
-    }
-
 #play-button {
       font-family: 'Montserrat';
       font-size: 25px;
@@ -482,9 +454,8 @@ input:checked + .slider:before {
 /* The dots/bullets/indicators */
 .dot {
   cursor: pointer;
-  font-size: 10px;
-  height: 8px;
-  width: 8px;
+  height: 15px;
+  width: 15px;
   margin: 20px 2px 0 3px;
   float: left;
   background-color: #bbb;
@@ -493,7 +464,7 @@ input:checked + .slider:before {
   transition: background-color 0.6s ease;
 }
 
-.active, #dot:hover {
+.active, .dot:hover {
   background-color: #004C97;
 }
 

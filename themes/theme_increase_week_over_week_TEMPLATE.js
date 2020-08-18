@@ -147,6 +147,13 @@ const themeCaseIncreaseWeekOverWeek = {
 	choroplethLegendTitle: "Increase vs. previous week",
 
 	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
+
+	/**
 	 * The size of the circle symbol (set to zero for no circles).
 	 * May be a function or a constant value.
 	 * If using a function, it should have the following parameters:
