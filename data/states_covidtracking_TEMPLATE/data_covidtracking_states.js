@@ -62,7 +62,7 @@ const dataCovidTracking_states={
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a geojson service
 
-		$.getJSON("https://covidtracking.com/api/v1/states/daily.json", function(src_data) {
+		$.getJSON("https://api.covidtracking.com/v1/states/daily.json", function(src_data) {
 			console.log("got tabular data...")
 			src.tab_data = src_data; // add to src object
 			process_data(); // attempt to process all datasets
