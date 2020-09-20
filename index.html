@@ -124,7 +124,6 @@
 			<div id="slider"></div>
 			</div>
 		</div>
-	</div>
 	<div id="below_screen">
 		<div class="doc_section_title" id="about">
 			<div style="float: left"><H3> About </H3></div>
@@ -264,6 +263,7 @@
 	var slider_update_duration = 750;
 	// map objects
 	var mapsvg; // svg containing map 
+    var statepaths;
 	var circles; // svg group within mapsvg containing smaller circle for each state
 	// map theme functions and values
 	var theme;
@@ -271,6 +271,7 @@
 	var baseFeatures;
 	var cartogramFeatures;
 	var dataSourceFilter;
+    var mapdiv
 	var legendChoropleth;
 	var choroplethColorScale; // scale function for legend (doesn't include white for zero)
 	var lowValColor = null;
@@ -496,16 +497,14 @@
 			return "undefined";
 		} else {
 			// determine the screen factor (ratio of screen coords to geometry coords)
-			var ele = document.getElementById('map'); // Do not use #
-			var width = ele.clientWidth;
-			var height = ele.clientHeight;		
-			[prj,prjscale,transX,transY]=fitProjection(features, [[0, 0],  [width, height]], true);
-			var path = d3.geoPath().projection(prj);
-			var bounds = path.bounds(features), 
-				dx = bounds[1][0] - bounds[0][0],
-				dy = bounds[1][1] - bounds[0][1],
-				boundsscale = .9 / Math.max(dx / width, dy / height);
-			var screenFac = prjscale*boundsscale*prjscale*boundsscale;
+            mapdiv = document.getElementById('map'); // Do not use #
+			var width = mapdiv.clientWidth;
+			var height = mapdiv.clientHeight;		
+            if(oncartogram){
+                        var zoomPathFunc = divPathFunc("mapdiv", cartogramFeatures, 30);
+                    } else {
+                        var zoomPathFunc = divPathFunc("mapdiv", baseFeatures, 30);
+                    }
 			// shortcut variables
 			var feats = features.features;
 			var f = theme.circleRadiusFcn;
@@ -526,7 +525,7 @@
 			// check remaining features and update if larger
 			for (let i = 0; i < feats.length; i++){
 				var thisCircleArea = Math.pow(f(feats[i], maxDate),2)*Math.PI;
-				var thisFeatArea = featureArea(feats[i])*screenFac;
+				var thisFeatArea = zoomPathFunc.area(feats[i]);
 				circleArea += thisCircleArea;
 				featArea += thisFeatArea;
 			}
@@ -537,7 +536,6 @@
 		}
 	}
 
-    
     function loadTheme() {
 		// determine the new map theme
 		var themeName = document.getElementById("themeSelector").value;		
@@ -693,113 +691,35 @@
 		var featval =theme.choroplethValueFcn(feat,date);
 		return extendColorScale(choroplethColorScale,featval);
 	}			
-	
-	function prjXFunction(scale,trans){
-		var f = function(x){		
-			return x*scale+trans;
-		}
-		return f;
-	}
+    
+    // HELPER FUNCTIONS
+    function divPathFunc(divid,geojsonObj,padding=0){
+    /* returns a "path" function to construct svg paths from geojson features, 
+       such that the resulting svg paths fit in the div
+        divId:		id of the div to contain the feature paths
+        geojsonObj:	geojson feature or feature collection 
+        padding:	space between features and edge of div, in pixels
+    */
+        // get width and height of div
+        divid='map';
+        mapdiv = document.getElementById(divid); 
+            var width = mapdiv.offsetWidth;
+            var height = mapdiv.offsetHeight;
 
-	function prjYFunction(scale,trans){
-		// Why is this formula different for y than for x?? 
-		// I have no idea, something to do with flipped coordinates... anyway this just works.
-		var f = function(y){		
-			return trans-y*scale;
-		}
-		return f;
-	}	
-	
-	function fitProjection(data, box, center) {
-		// get the bounding box for the data - might be more efficient approaches
-		var left = Infinity,
-			bottom = Infinity,
-			right = -Infinity,
-			top = -Infinity;
-		// get "projection"
-		var projection = d3.geoIdentity().reflectY(true);
-		// reset projection
-		projection
-			.scale(1)
-			.translate([0, 0]);
-		data.features.forEach(function(feature) {
-			coords = feature.geometry.coordinates[0][0];
-			var minX = d3.min(coords, function(array) {return array[0];});
-			var maxX = d3.max(coords, function(array) {return array[0];});
-			var minY = d3.min(coords, function(array) {return array[1];});
-			var maxY = d3.max(coords, function(array) {return array[1];});
-			if (minX < left) {left = minX;};
-			if (maxX > right) {right = maxX;};
-			if (minY < bottom) {bottom = minY;};
-			if (maxY > top) {top = maxY;};
-			
-			});
-		var temp = bottom;
-		bottom = top;
-		top =  temp;
-		
-		// project the bounding box, find aspect ratio
-		function width(bb) {
-			return (bb[1][0] - bb[0][0])
-			}
-
-		function height(bb) {
-			return (bb[1][1] - bb[0][1]);
-			}
-		  
-		function aspect(bb) {
-			return width(bb) / height(bb);
-			}		var startbox = [[left, top],  [right, bottom]],
-			a1 = aspect(startbox),
-			a2 = aspect(box),
-			widthDetermined = a1 > a2,
-			scale = widthDetermined ?
-			// scales determined by width & height
-			width(box) / width(startbox) :
-			height(box) / height(startbox),
-			// set x & y translations
-			transX = box[0][0] - startbox[0][0] * scale,
-			transY = box[0][1] - startbox[0][1] * scale;
-		// center if requested
-		if (center) {
-			transY = transY - (transY + startbox[1][1] * scale - box[1][1])/2;
-			transX = transX - (transX + startbox[1][0] * scale - box[1][0])/2;
-		}
-		// this is crap, let's try something simple
-		/*
-		projection = d3.geoIdentity().reflectY(true);
-		// reset projection
-		projection
-			.scale(1)
-			.translate([0, 0]);
-		return [projection,1,0,0];
-		
-		OK, darn - this messes up the stroke width
-		
-		
-		// if using real projection (as opposed to geoIdentity), 
-		// set precision to zero to prevent D3 from adding points through "adaptive sampling"
-		/*
-		*/
-		return [projection.scale(scale).translate([transX, transY]),scale,transX,transY];
-		
-	}	
-
-	function fullZoomTransformation(featdata,width,height,prj,prjscale,transX,transY){
-		// returns a translation and scale factor for transforming features, 
-		// from a fit projection
-		var path = d3.geoPath()
-			.projection(prj);
-		var bounds = path.bounds(featdata), 
-			dx = bounds[1][0] - bounds[0][0],
-			dy = bounds[1][1] - bounds[0][1],
-			x = (bounds[0][0] + bounds[1][0]) / 2,
-			y = (bounds[0][1] + bounds[1][1]) / 2,
-			boundsscale = .9 / Math.max(dx / width, dy / height),
-			translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
-		return([translate, boundsscale]);
-	}
-
+        // create 'projection' to fit features to div
+        // the geoIdentity function creates a fake projection that just uses the base coordinates
+        // the added reflectY function puts a minus sign before the Y coordinate, because SVG y-coordinates are upside-down
+        // the added fitExtent function does most of the work. It creates translation and scaling parameters to automatically
+        // fit the input features to the box inside the div
+        var zoomProjection = d3.geoIdentity()
+            .reflectY(true)
+            .fitExtent([[padding,padding],[width-padding, height-padding]],geojsonObj);
+        // create path constructor using above projection
+        var zoomPath = d3.geoPath()
+            .projection(zoomProjection);
+        // return to sender
+        return zoomPath;
+    }
 
 	function resize(){
 		if(do_resize){
@@ -810,9 +730,9 @@
 							
 				// debugging
 				divid='map';
-				var ele = document.getElementById(divid); // Do not use #
-				var width = ele.offsetWidth;
-				var height = ele.offsetHeight;
+				mapdiv = document.getElementById(divid); // Do not use #
+				var width = mapdiv.offsetWidth;
+				var height = mapdiv.offsetHeight;
 				console.log("SVG dimensions: " + width + " x " + height);
 				if(oncartogram==true){
 					m = loadMap(cartogramFeatures);
@@ -858,15 +778,14 @@
 		}
 	}
 
-
 	function loadMap(featdata,categories, category){
 		console.log("loading map...");
 		// make sure we have a data source
 		if(dataSource !== undefined){		
 			divid='map';
-			var ele = document.getElementById(divid); // Do not use #
-			var width = ele.offsetWidth;
-			var height = ele.offsetHeight;
+			mapdiv = document.getElementById(divid); // Do not use #
+			var width = mapdiv.offsetWidth;
+			var height = mapdiv.offsetHeight;
 			divid = '#' + divid;
 			d3.select(divid).selectAll('svg').remove();			
 			mapsvg = d3.select(divid)
@@ -874,14 +793,8 @@
 					.attr('width',width)
 					.attr('height',height)
 					.on('click',reset);		
-			var statepaths = mapsvg.append('g');
-
-			// get projection parameters
-			var prj,scale,transX,transY;
-			[prj,prjscale,transX,transY]=fitProjection(featdata, [[0, 0],  [width, height]], true)
-			var translation, scalefactor;
-			[translation, scalefactor] = fullZoomTransformation(featdata,width,height,prj,scale,transX,transY);
-
+			statepaths = mapsvg.append('g');
+            
 			// calculate radius scale 
 			radScaleFac = radiusScaleFac(featdata);
 			console.log("radScaleFac: " + radScaleFac);
@@ -891,31 +804,29 @@
 				.data(featdata.features)
 				.enter()
 				.append('path')
-				.attr('d',null)
+				.attr('d',divPathFunc("mapdiv", featdata, 30))
 				.attr("class","feature")
 				.attr("stroke", "#EEE")
 				.attr("stroke-width", "1px")
 				.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
-				.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 				.on("click",feature_click)
 				.on("mouseover",feature_mouseover)
 				.on("mouseout",feature_mouseout);	
 
 			circles = mapsvg.append('g');
-
+            
+            var zoomPath = divPathFunc("mapdiv", featdata, 30)
 			circles.selectAll('circle')
 				.data(featdata.features)
 				.enter()
 				.append('circle')
+                .attr('d', zoomPath)
 				.attr("cx", function(d){
-					var prjX = prjXFunction(prjscale,transX); 
-					return prjX(centroid(d)[0]);
+					return zoomPath.centroid(d)[0];
 				})
 				.attr("cy", function(d){
-					var prjY = prjYFunction(prjscale,transY); 
-					return prjY(centroid(d)[1]);
+					return zoomPath.centroid(d)[1];
 				})
-				.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 				.style('stroke-width',1)
 				.style('stroke',"#FFFFCC")
 				.style('opacity',1)
@@ -954,7 +865,11 @@
 			mapTypeDescription = "The size of each state represents its <span style='color: #B37; font-weight: 700'>land area</span>.";
 		}
 		document.getElementById("map_type_description").innerHTML ="<i>" + mapTypeDescription + "</i>";
-				
+		divid='map';
+			mapdiv = document.getElementById(divid); // Do not use #
+			var width = mapdiv.offsetWidth;
+			var height = mapdiv.offsetHeight;
+			divid = '#' + divid;		
 		// transition the map only if the map svg and date are defined
 		if(mapsvg !== undefined){
 			if(curDate != null){	
@@ -967,16 +882,6 @@
 					todata=cartogramFeatures;
 				};
 				
-				// get projection parameters
-				var ele = document.getElementById('map'); // Do not use #
-				var width = ele.clientWidth;
-				var height = ele.clientHeight;
-				var prj,scale,transX,transY;
-				[prj,prjscale,transX,transY]=fitProjection(todata, [[0, 0],  [width, height]], true)
-				var path = d3.geoPath().projection(prj);
-				var translation, scalefactor;
-				[translation, scalefactor] = fullZoomTransformation(todata,width,height,prj,scale,transX,transY);
-
 				// get data and choropleth/symbol functions depending on if we're showing a map or cartogram
 				var localChoroplethColor;
 				var localCircleRadius;
@@ -1020,13 +925,13 @@
 						//localCircleRadius=function(d){return radScaleFac * theme.circleRadiusFcn(d,curDate);};
 					}
 				}
-
+                var zoomPath = divPathFunc("mapdiv", todata, 30)
 				// transition district polygons
 				mapsvg.selectAll('path')
 					.transition()
 					.ease(d3.easeLinear)
-					.attr("d",function(d,i){return path(todata.features[i]);})
-					.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
+                    .attr("d",function(d,i){return zoomPath(todata.features[i]);})
+					/*.attr("d", divPathFunc("mapdiv", todata, 30))*/
 					.attr("stroke",localFeatureStroke)
 					.duration(milliseconds)
 					.attr("fill",localChoroplethColor)
@@ -1036,20 +941,18 @@
 				mapsvg.selectAll('circle')
 					.transition()
 					.ease(d3.easeLinear)
+                    .attr("d", zoomPath)
 					.attr("cx", function(d,i){
 						var thisFeat = todata.features[i];				
-						var prjX = prjXFunction(prjscale,transX); 
-						return prjX(centroid(thisFeat)[0]);
+						return zoomPath.centroid(thisFeat)[0];
 					})
 					.attr("cy", function(d,i){
 						var thisFeat = todata.features[i];			
-						var prjY = prjYFunction(prjscale,transY); 
-						return prjY(centroid(thisFeat)[1]);
+						return zoomPath.centroid(thisFeat)[1];
 					})
 					.attr('r',localCircleRadius)
 					.style('fill',localCircleFill)
 					.style('stroke',localCircleStroke)
-					.attr("transform", "translate(" + translation + ")scale(" + scalefactor + ")")
 					.duration(milliseconds);
 				// reload legend
 				loadLegend();
@@ -1105,71 +1008,51 @@
 		do_resize=true;
 	}
 
-	
+
 
 	// zoom to child 
     function zoomToChild(feat){
-		console.log("Zooming to:" + dataSource.getLabel(feat));
-		// first zoom to feature
-		
-		// get child data source
-		var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
-		if(match){
-			// get promised data object
-			match.dataFunc.then(function(the_data_obj){
-				// temporary; need to change this to implement zoom effect
-				loadData(dataSource.dataChildName, dataSourceFilter).then(function(){
-					handleDataLoaded(); // show child features
-					document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+        function loadChildData() {
+            console.log("second function executed");
+            console.log("Zooming to:" + dataSource.getLabel(feat));
+            // obtain path function for all features
+            // apply path construction/projection function
+            // get child data source
+            var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
+            if(match){
+                // get promised data object
+                match.dataFunc.then(function(the_data_obj){
+                    // temporary; need to change this to implement zoom effect
+                    loadData(dataSource.dataChildName, dataSourceFilter).then(function(){
+                        handleDataLoaded(); // show child features
+                        document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+                    })
+                })
+            };
+        }
+        console.log("zooming into child");
+		reset();
+        var zoomPathFunc = divPathFunc("mapdiv", feat, 30);
+            // transition to new path construction/projection function
+			mapsvg.selectAll('circle')
+				.transition()
+				.duration(3000)
+				.attr("d", zoomPathFunc)
+				.attr("cx", function(d,i){
+					return zoomPathFunc.centroid(d)[0];
 				})
-				/* non-working code below
-				// CREATE EFFECT OF ZOOMING TO CHILD FEATURE
-				// (1) recalculate projection for parent feature set
-				var featdata;
-				if(oncartogram==true){
-					featdata = cartogramFeatures;
-				} else {
-					featdata = baseFeatures;
-				}
-				var prj,scale,transX,transY;
-				var ele = document.getElementById('map'); // Do not use #
-				var width = ele.clientWidth;
-				var height = ele.clientHeight;		
-				[prj,prjscale,transX,transY]=fitProjection(featdata, [[0, 0],  [width, height]], true)
-				
-				// (2) calculate scale and translation to zoom to child feature
-				// get feature collection with just child feature			
-				featdata.features =	featdata.features.filter(feat => dataSource.getID(feat)==dataSourceFilter)
-				// determine scaling factor and translation factor we need 
-				var path = d3.geoPath()
-					.projection(prj);
-				var bounds = path.bounds(featdata), 
-					dx = bounds[1][0] - bounds[0][0],
-					dy = bounds[1][1] - bounds[0][1],
-					x = (bounds[0][0] + bounds[1][0]) / 2,
-					y = (bounds[0][1] + bounds[1][1]) / 2,
-					boundsscale = .9 / Math.max(dx / width, dy / height),
-					translate = [width / 2 - boundsscale * x, height / 2 - boundsscale * y];
-				// load child feature data but don't map it yet
-				loadData(dataSource.dataChildName, dataSourceFilter).then(function(){
-					// apply new scaling and translation factors to parent features in a transition
-					m.selectAll('path')
-						.transition()
-						.duration(1000)
-						.attr("transform", "translate(" + translate + ")scale(" + boundsscale + ")")
-						.on("end",function(d,i){
-							// when we get to the end of the transition, load the child feature set
-							// but we want to do this only once, so do it only for the first feature
-							if(i==0){
-								handleDataLoaded(); // show child features
-								document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
-							};
-						});
-				});
-				*/
-				
-			})
-		};
+				.attr("cy", function(d,i){		
+					return zoomPathFunc.centroid(d)[1];
+				})
+			statepaths.selectAll('path')
+				.transition().on("end", zoomPathFunc)
+				.duration(3000)
+				.attr('d',zoomPathFunc);  
+
+        setTimeout(function() {
+            loadChildData();
+        }, 3000);
+        
 	}
 	
 	function zoomToParent(){
