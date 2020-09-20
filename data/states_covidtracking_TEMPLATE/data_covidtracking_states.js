@@ -31,7 +31,7 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataCovidTracking_states={
+function dataCovidTracking_states(){ return {
 	dataSourceName: "USA", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
@@ -208,5 +208,6 @@ const dataCovidTracking_states={
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
-		}) // end of "new Promise(function(resolve, reject){"
-}; // end of "const dataCovidTracking_states={
+	}) // end of "new Promise(function(resolve, reject){"
+}
+} ; // end of function dataCovidTracking_states	
