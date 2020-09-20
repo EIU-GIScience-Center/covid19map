@@ -31,7 +31,7 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataJHU_USA_Counties = {
+function dataJHU_USA_Counties(){return {
 	dataSourceName: "USA Counties", // THIS NAME WILL BE USED FOR IDENTIFICATION, AND APPEAR IN THE DROP-DOWN SELECTOR
 	                       // IF THE NEXT PROPERTY IS TRUE
 	showInSelector: false, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
@@ -310,4 +310,5 @@ const dataJHU_USA_Counties = {
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
 	}) // end of "new Promise(function(resolve, reject){"
-}; // end of "const dataCovidTracking_states={
+}
+}; // end of function dataCovidTracking_states=

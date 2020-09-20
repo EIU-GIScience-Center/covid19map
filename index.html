@@ -301,10 +301,11 @@
 	// array of data sources
 	// each data source should be defined in a separate file; see data_covidtracking_states.js for a template
 	var dataSources = [
-		dataCovidTracking_states,
-		dataODWG_Canada_Provinces,
-		dataJHU_USA_Counties
-	]
+		dataCovidTracking_states()]
+		/*,
+		dataODWG_Canada_Provinces(),
+		dataJHU_USA_Counties()
+	]*/
 
 	function addThemesToSelector(datasource){
 		// get selector object
@@ -331,18 +332,20 @@
 		
 	}
 
-	// Add datasets to the selector
-	const dataSourceSelector = document.getElementById("dataSourceSelector");
-	console.log("ADDING DATASETS");
-	for (i=0; i<dataSources.length; ++i) {
-		var thisDataSrc = dataSources[i];
-		if(thisDataSrc.showInSelector){
-			const option = document.createElement("option");
-			option.text=thisDataSrc.dataSourceName;
-			dataSourceSelector.add(option);
+	function addDataSourcesToSelector(dataSourcesToAdd){
+		// Add datasets to the selector
+		const dataSourceSelector = document.getElementById("dataSourceSelector");
+		console.log("ADDING DATASETS");
+		for (i=0; i<dataSourcesToAdd.length; ++i) {
+			var thisDataSrc = dataSourcesToAdd[i];
+			if(thisDataSrc.showInSelector){
+				const option = document.createElement("option");
+				option.text=thisDataSrc.dataSourceName;
+				dataSourceSelector.add(option);
+			}			
 		}
-		
 	}
+	addDataSourcesToSelector(dataSources);
 
 	function truncateCellsAndLabels(cells,labels, lowVal, highVal){
 		// get indices of highest cell below lowVal, and lowest cell above highVal
@@ -778,6 +781,51 @@
 		}
 	}
 
+	function addDataToMap(featdata,categories, category){
+		statepaths = mapsvg.append('g');
+		
+		// calculate radius scale 
+		radScaleFac = radiusScaleFac(featdata);
+		console.log("radScaleFac: " + radScaleFac);
+		// remove and re-create paths in SVG
+		statepaths.selectAll('path')
+			//.remove()
+			.data(featdata.features)
+			.enter()
+			.append('path')
+			.attr('d',divPathFunc("mapdiv", featdata, 30))
+			.attr("class","feature")
+			.attr("stroke", "#EEE")
+			.attr("stroke-width", "1px")
+			.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
+			.on("click",feature_click)
+			.on("mouseover",feature_mouseover)
+			.on("mouseout",feature_mouseout);	
+
+		circles = mapsvg.append('g');
+		
+		var zoomPath = divPathFunc("mapdiv", featdata, 30)
+		circles.selectAll('circle')
+			.data(featdata.features)
+			.enter()
+			.append('circle')
+			.attr('d', zoomPath)
+			.attr("cx", function(d){
+				return zoomPath.centroid(d)[0];
+			})
+			.attr("cy", function(d){
+				return zoomPath.centroid(d)[1];
+			})
+			.style('stroke-width',1)
+			.style('stroke',"#FFFFCC")
+			.style('opacity',1)
+			.on("click",feature_click)
+			.on("mouseover",feature_mouseover)
+			.on("mouseout",feature_mouseout);			
+		statepaths.exit().remove();
+		return statepaths;
+	}
+
 	function loadMap(featdata,categories, category){
 		console.log("loading map...");
 		// make sure we have a data source
@@ -787,54 +835,15 @@
 			var width = mapdiv.offsetWidth;
 			var height = mapdiv.offsetHeight;
 			divid = '#' + divid;
-			d3.select(divid).selectAll('svg').remove();			
+			
+			d3.select(divid).selectAll('svg').remove();		
+			
 			mapsvg = d3.select(divid)
 					.append('svg')
 					.attr('width',width)
 					.attr('height',height)
 					.on('click',reset);		
-			statepaths = mapsvg.append('g');
-            
-			// calculate radius scale 
-			radScaleFac = radiusScaleFac(featdata);
-			console.log("radScaleFac: " + radScaleFac);
-			// remove and re-create paths in SVG
-			statepaths.selectAll('path')
-				.remove()
-				.data(featdata.features)
-				.enter()
-				.append('path')
-				.attr('d',divPathFunc("mapdiv", featdata, 30))
-				.attr("class","feature")
-				.attr("stroke", "#EEE")
-				.attr("stroke-width", "1px")
-				.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
-				.on("click",feature_click)
-				.on("mouseover",feature_mouseover)
-				.on("mouseout",feature_mouseout);	
-
-			circles = mapsvg.append('g');
-            
-            var zoomPath = divPathFunc("mapdiv", featdata, 30)
-			circles.selectAll('circle')
-				.data(featdata.features)
-				.enter()
-				.append('circle')
-                .attr('d', zoomPath)
-				.attr("cx", function(d){
-					return zoomPath.centroid(d)[0];
-				})
-				.attr("cy", function(d){
-					return zoomPath.centroid(d)[1];
-				})
-				.style('stroke-width',1)
-				.style('stroke',"#FFFFCC")
-				.style('opacity',1)
-				.on("click",feature_click)
-				.on("mouseover",feature_mouseover)
-				.on("mouseout",feature_mouseout);			
-			statepaths.exit().remove();
-			return statepaths;
+			return addDataToMap(featdata,categories,category);
 		} // end if dataSource is not undefined
 	}
 
@@ -1069,13 +1078,23 @@
 		// get feature info
 		var showHTML = featureInfoHTML(d);
 		// add interactive elements
-		if(showInteractiveElements){
-			// button to show child data source
-			if(dataSource.dataChildName != null){
-				showHTML += "<div style='float: left;'>";
+		
+		if (/Mobi/.test(navigator.userAgent)) {
+			console.log("MOBILE DEVICE!");
+		} else {
+			console.log("NOT A MOBILE DEVICE!");
+		}
+		
+		if(dataSource.dataChildName != null){
+			showHTML += "<div style='float: left;'>";
+			if(showInteractiveElements){
+				// button to show child data source	
 				showHTML += "<button id='zoomDown' data-tooltip-position='bottom' data-tooltip='Zoom In'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
-				showHTML += "</div>"
+			} else {
+				// hint that button exists
+				showHTML += "&lt;click map for zoom button&gt;";
 			};
+			showHTML += "</div>"
 		}
 		// determine if tooltip will go above or below cursor
 		d3.select('#tooltip')
@@ -1290,7 +1309,7 @@
 
 	function handleDataLoaded(){return new Promise(function(resolve,reject){
 		// update the slider
-		console.log("HANDLING DATA...");
+		console.log("HANDLING DATA LOADED...");
 		// report current dataset
 		if(dataSource.dataParentName==null){
 			document.getElementById("zoomrow").style.display="none";
@@ -1461,37 +1480,46 @@
 
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
 		handleDataLoaded();//.then(function(){});
-	});
+		//set 3dots
+		delayIndi();
+		// load the invisible tooltip div...
+		loadTooltips();
 
-    //set 3dots
-	delayIndi();
-	// load the invisible tooltip div...
-	loadTooltips();
-
-	// set defaults, add event listeners
-	document.onkeydown=handlekeydown;			
-	document.getElementById("carttoggle").addEventListener("change",function(){
-		toggle_map(1500);
-	});
-	document.getElementById("themeSelector").addEventListener("change",function(){loadTheme();});
-	document.getElementById("dataSourceSelector").addEventListener(
-		"change",function(){
-			loadData(document.getElementById("dataSourceSelector").value).then(
-				function(){
-					handleDataLoaded()
-				}
-			);
-		}
-	);
-	document.getElementById('zoomUp').addEventListener("click",zoomToParent);
-	$('themeSelector').on('keydown', function(e){
-		if(e.keyCode === 37 || e.keyCode === 39) { //left or right
-			e.preventDefault();
-			return false;
-		}
-	});
+		// set defaults, add event listeners
+		document.onkeydown=handlekeydown;			
+		document.getElementById("carttoggle").addEventListener("change",function(){
+			toggle_map(1500);
+		});
+		document.getElementById("themeSelector").addEventListener("change",function(){loadTheme();});
+		document.getElementById("dataSourceSelector").addEventListener(
+			"change",function(){
+				loadData(document.getElementById("dataSourceSelector").value).then(
+					function(){
+						handleDataLoaded()
+					}
+				);
+			}
+		);
+		document.getElementById('zoomUp').addEventListener("click",zoomToParent);
+		$('themeSelector').on('keydown', function(e){
+			if(e.keyCode === 37 || e.keyCode === 39) { //left or right
+				e.preventDefault();
+				return false;
+			}
+		});
+			
+		console.log("script finished.");		
 		
-	console.log("script finished.");
+		var newDataSources = [
+			dataODWG_Canada_Provinces(),
+			dataJHU_USA_Counties()
+		];
+		
+		dataSources=dataSources.concat(newDataSources);
+		addDataSourcesToSelector(newDataSources);
+	});
+
+
 </script>
 
 </body>
