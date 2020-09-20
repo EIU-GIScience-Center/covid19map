@@ -1031,12 +1031,24 @@
             };
         }
         console.log("zooming into child");
+		reset();
         var zoomPathFunc = divPathFunc("mapdiv", feat, 30);
             // transition to new path construction/projection function
-                        statepaths.selectAll('path')
-                            .transition().on("end", zoomPathFunc)
-                            .duration(3000)
-                            .attr('d',zoomPathFunc);  
+			mapsvg.selectAll('circle')
+				.transition()
+				.duration(3000)
+				.attr("d", zoomPathFunc)
+				.attr("cx", function(d,i){
+					return zoomPathFunc.centroid(d)[0];
+				})
+				.attr("cy", function(d,i){		
+					return zoomPathFunc.centroid(d)[1];
+				})
+			statepaths.selectAll('path')
+				.transition().on("end", zoomPathFunc)
+				.duration(3000)
+				.attr('d',zoomPathFunc);  
+
         setTimeout(function() {
             loadChildData();
         }, 3000);
