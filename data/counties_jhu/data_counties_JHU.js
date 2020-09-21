@@ -39,8 +39,34 @@ function dataJHU_USA_Counties(){return {
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var target_length = 7;
+		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho"};
+		var stateIDs = Object.keys(cart_states);
+		var num_states = stateIDs.length;
+		var target_length = num_states*2+3;
 		
+		// get geoJSONs one after the other so that the variables don't update in between
+		function getGeoJsons(id){
+			console.log("Getting geojsons #" + id);
+			if(id<num_states){
+				var stateID = stateIDs[id];
+				var stateName = cart_states[stateID];
+				 
+				$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties.geojson", function(src_data) {
+					console.log("got " + stateName + " counties...")
+					src[stateID] = src_data; // add to src object
+					$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties_cartogram.geojson", function(src_data) {
+						console.log("got " + stateName + " cartogram...")
+						src[stateID + "_cartogram"] = src_data; // add to src object
+						getGeoJsons(id+1);
+						process_data(); // attempt to process all datasets
+					});	
+				});
+			}
+		}
+
+		getGeoJsons(0);
+
+
 		// GET SOURCE DATASET (all polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
@@ -48,41 +74,6 @@ function dataJHU_USA_Counties(){return {
 			src.all_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
-
-		// GET SOURCE DATASET (Georgia polygons)
-		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/geojson/Georgia_counties.geojson", function(src_data) {
-			console.log("got Georgia counties...")
-			src.Georgia_counties = src_data; // add to src object
-			process_data(); // attempt to process all datasets
-		});//.fail(function() { console.log("error"); });			
-		
-		// GET SOURCE DATASET (Florida polygons)
-		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/geojson/Florida_counties.geojson", function(src_data) {
-			console.log("got florida counties...")
-			src.florida_counties = src_data; // add to src object
-			process_data(); // attempt to process all datasets
-		});//.fail(function() { console.log("error"); });			
-
-
-		// GET SOURCE DATASET (Georgia cartogram polygons)
-		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/geojson/Georgia_counties_cartogram.geojson", function(src_data) {
-			console.log("got Georgia cartogram...")
-			src.Georgia_cartogram = src_data; // add to src object
-			process_data(); // attempt to process all datasets
-		});//.fail(function() { console.log("error"); });			
-		
-		// GET SOURCE DATASET (Florida cartogram polygons)
-		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/geojson/Florida_counties_cartogram.geojson", function(src_data) {
-			console.log("got florida cartogram...")
-			src.florida_cartogram = src_data; // add to src object
-			process_data(); // attempt to process all datasets
-		});//.fail(function() { console.log("error"); });			
-
-
 
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
@@ -136,8 +127,10 @@ function dataJHU_USA_Counties(){return {
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			console.log("Processing data...");
+			console.log(Object.keys(src).length);
 			if (Object.keys(src).length == target_length){
 				console.log("processing all JHU county datasets...");
+				console.log(src);
 				// get tabular data from JHU object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
@@ -270,10 +263,12 @@ function dataJHU_USA_Counties(){return {
 					baseFeatures: function(filter=null){
 						if(filter==null){
 							return src.all_counties;
-						} else if (filter=="GA") {
+						/*} else if (filter=="GA") {
 							return src.Georgia_counties;
 						} else if (filter=="FL") {
-							return src.florida_counties;
+							return src.florida_counties;*/
+						} else if (stateIDs.includes(filter)) {
+							return src[filter];
 						} else {
 							
 							var this_state = src.all_counties;
@@ -285,10 +280,12 @@ function dataJHU_USA_Counties(){return {
 					cartogramFeatures: function(filter=null){
 						if(filter==null){
 							return null;						
-						} else if (filter=="GA") {
+						/*} else if (filter=="GA") {
 							return src.Georgia_cartogram;
 						} else if (filter=="FL") {
-							return src.florida_cartogram;
+							return src.florida_cartogram;*/
+						} else if (stateIDs.includes(filter)) {
+							return src[filter + "_cartogram"];
 						} else {
 							return null;
 						}
