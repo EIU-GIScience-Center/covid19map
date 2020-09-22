@@ -103,7 +103,8 @@ function dataCovidTracking_states(){ return {
 					var dateInteger = dateInteger-year*10000;
 					var month = Math.floor(dateInteger/100);
 					var day = dateInteger - month*100;
-					return new Date(year, month-1,day,0,0,0,0).toDateString();
+					var defaultDateString = new Date(year, month-1,day,0,0,0,0).toDateString()
+					return defaultDateString.slice(4,-5) + "," + defaultDateString.slice(-5);
 				}			
 				
 				for(let i=0; i < src.tab_data.length; i++){
