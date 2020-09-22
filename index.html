@@ -8,6 +8,7 @@
   <meta property="og:image" content="./images/preview.png" />
   <link rel="stylesheet" href="d3_map_styles.css"> 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=B612+Mono&display=swap" rel="stylesheet">
   <title>COViz</title>
   <script src="jquery-3.4.1.js"></script>
   <script src="jquery.csv-0.71.min.js"></script>
@@ -44,7 +45,10 @@
 			
 		</div>
 		<div id="map_panel">
-			<div id="map_title"></div>
+			<div id="map_top">
+				<div id="map_title" style="float: left"></div>
+				<div id="map_date" style="float: right; font-family: 'B612+Mono', sans-serif;"></div>
+			</div>
 			<div id="map"></div>
 			<div id="mapbottom">
 				<div id="legend" style="align: center; float: left; width: 45%;"></div>
@@ -557,18 +561,7 @@
 					lowValColor = theme.choroplethColorInterpolator(0);
 					highValColor = theme.choroplethColorInterpolator(1);
 				}	
-				// update the timer
-				 clearInterval(timer);
-				setTimeout(function()
-					{
-						orig_duration = slider_update_duration;
-						slider_update_duration = 500;
-						slider.value(dataSource.dates.length-1);
-						slider_update_duration = orig_duration;
-					},500
-				);
-				playButton.text("►");
-				//currentIndex = 35;
+				
 				// get legend minimum and maximum
 				if (theme.legendmin == null){theme.legendmin = minChoroplethValue(myValueFunction)};
 				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(myValueFunction)};
@@ -856,12 +849,12 @@
 
 	// updates the map title based on current selections
 	function updateMapTitle(){
-		var newtitle= "<b>" + theme.themeName + "</b> (";
-		if(theme.datePrefix != null){
-			newtitle += theme.datePrefix + " ";
-		}
-		newtitle += curDate + ")";
+		var newtitle= "<b>" + theme.themeName + "</b>";
 		document.getElementById("map_title").innerHTML=newtitle;
+		if(theme.datePrefix != null){
+			var newdate = curDate;
+			document.getElementById("map_date").innerHTML=newdate;
+		}
 	}
 
 	// updates map to the user selected type (map or cartogram) and date
@@ -1092,7 +1085,7 @@
 				showHTML += "<button id='zoomDown' data-tooltip-position='bottom' data-tooltip='Zoom In'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
 			} else {
 				// hint that button exists
-				showHTML += "&lt;click map for zoom button&gt;";
+				showHTML += "&lt;click to zoom button&gt;";
 			};
 			showHTML += "</div>"
 		}
@@ -1278,16 +1271,6 @@
 				curDate = dataSource.dates[sliderID];
 				slider.displayValue("Hi there!");
 				d3.select('#value').text("???");
-				/*
-				var dateText = dateTextGroup
-					.attr("x",function(d){return slider_width/2;})
-					.attr("y",function(d){return 20;})
-					.text(function(d){return dateString(sliderID,secretCode);})
-					.attr("text-anchor","middle")
-					.attr("font-family", "sans-serif")
-					.attr("font-size", "15px")
-					.attr("fill", "red");
-                */
 				if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
@@ -1364,58 +1347,65 @@
     }
 
     
+	function handlePlayButtonClick(){	
+		var button = d3.select(playButton);
+		console.log("*******************");
+		console.log("CLICKED PLAY:");
+		console.log("current button: " + button.text());
+		console.log("*******************");
+		console.log(sliderID);
+		console.log(dataSource.dates.length);
+		if (playButton.text() == "∥") {
+		  moving = false;
+		  clearInterval(timer);
+		  // timer = 0;
+		  playButton.text("►");
+		} else { 
+		  if (sliderID == dataSource.dates.length-1) {
+			  currentIndex = 35;
+		  } else {
+		  currentIndex = sliderID;
+		  }
+		  moving = true;
+		  fixedValueRange();
+		  loadLegend();
+		  //delay = 0;
+		  timer = setInterval(step, delay);
+		  playButton.text("∥"); 
+		}
+		console.log("Slider moving: " + moving);
+	}
+	
     playButton
-        .on("click", function() {
-			var button = d3.select(this);
-			console.log("CLICKED PLAY:");
-			console.log(sliderID);
-			console.log(dataSource.dates.length);
-			if (button.text() == "∥") {
-			  moving = false;
-			  clearInterval(timer);
-			  // timer = 0;
-			  button.text("►");
-			} else { 
-              if (sliderID == dataSource.dates.length-1) {
-                  currentIndex = 35;
-              } else {
-              currentIndex = sliderID;
-              }
-			  moving = true;
-			  fixedValueRange();
-			  loadLegend();
-			  //delay = 0;
-			  timer = setInterval(step, delay);
-			  button.text("∥"); 
-			}
-			console.log("Slider moving: " + moving);
-		});
+        .on("click", handlePlayButtonClick);
     
 	function step(){
         var targetIndex = dataSource.dates.length-1;
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		updateMap();
+		console.log("Slider moving: " + moving);
 		if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
 					fixedValueRange();
 				}
-		// loadLegend();
+		// pause at end of loop (if looping)
         if (sliderID == dataSource.dates.length-1 && looping == true) {
                 var pauseStart = setTimeout(function(){
                     currentIndex = 35;
-                },600);
+                },3000);
               } else {
                 currentIndex = currentIndex + 1;
               }
+		// stop at end of loop otherwise
         if (currentIndex > targetIndex && looping == false) {
 			moving = false;
 			currentIndex = 35;
 			clearInterval(timer);
 			// timer = 0;
-			playButton.text("▶");
-			console.log("Slider moving: " + moving);
+			playButton.text("►");
+			// playButton.text("▶");
 		} 
 	}
     
@@ -1479,11 +1469,13 @@
 	console.log("STARTING...");
 
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
-		handleDataLoaded();//.then(function(){});
+		
 		//set 3dots
 		delayIndi();
 		// load the invisible tooltip div...
 		loadTooltips();
+		
+
 
 		// set defaults, add event listeners
 		document.onkeydown=handlekeydown;			
@@ -1517,6 +1509,24 @@
 		
 		dataSources=dataSources.concat(newDataSources);
 		addDataSourcesToSelector(newDataSources);
+		handleDataLoaded().then(function(){
+			console.log("DATA LOADED AND READY");
+			// Start default animation!
+			setTimeout(handlePlayButtonClick,2000);
+			setTimeout(function(){
+				if(moving){
+					document.getElementById("carttoggle").checked=true;
+					toggle_map(2000);
+				};
+			},15000);
+			setTimeout(function(){
+				if(moving){
+					document.getElementById("carttoggle").checked=false;
+					toggle_map(2000);
+				}
+			},25000);
+		});
+		//setTimeout(handlePlayButtonClick,2000);
 	});
 
 
