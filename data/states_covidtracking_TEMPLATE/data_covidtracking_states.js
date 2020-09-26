@@ -31,7 +31,7 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-const dataCovidTracking_states={
+function dataCovidTracking_states(){ return {
 	dataSourceName: "USA", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
@@ -103,7 +103,8 @@ const dataCovidTracking_states={
 					var dateInteger = dateInteger-year*10000;
 					var month = Math.floor(dateInteger/100);
 					var day = dateInteger - month*100;
-					return new Date(year, month-1,day,0,0,0,0).toDateString();
+					var defaultDateString = new Date(year, month-1,day,0,0,0,0).toDateString()
+					return defaultDateString.slice(4,-5) + "," + defaultDateString.slice(-5);
 				}			
 				
 				for(let i=0; i < src.tab_data.length; i++){
@@ -208,5 +209,6 @@ const dataCovidTracking_states={
 
 			} // end of "if (Object.keys(src).length == 3){"
 		} // end of "function process_data(){"								
-		}) // end of "new Promise(function(resolve, reject){"
-}; // end of "const dataCovidTracking_states={
+	}) // end of "new Promise(function(resolve, reject){"
+}
+} ; // end of function dataCovidTracking_states	

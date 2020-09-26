@@ -63,7 +63,7 @@ html, body, #fullheight {
 	overflow: none;
 }
 
-#map_title{
+#map_top{
 	flex-grow: 0;
 	font-size: 150%;
 	text-align: left;
