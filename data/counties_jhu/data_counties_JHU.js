@@ -39,7 +39,8 @@ function dataJHU_USA_Counties(){return {
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho"};
+		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho", 
+							"IA":"Iowa", "LA":"Louisiana", "MS":"Mississippi", "NH":"New Hampshire"};
 		var stateIDs = Object.keys(cart_states);
 		var num_states = stateIDs.length;
 		var target_length = num_states*2+3;
