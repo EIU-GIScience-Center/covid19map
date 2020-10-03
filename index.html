@@ -287,6 +287,7 @@
 	var radScaleFac = 0;
     var timer;
 	var do_resize = true;
+	var touring = false;
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -1014,6 +1015,7 @@
 
 	// zoom to child 
     function zoomToChild(feat){
+		touring=false;
         function loadChildData() {
             console.log("second function executed");
             console.log("Zooming to:" + dataSource.getLabel(feat));
@@ -1468,6 +1470,23 @@
 
 	console.log("STARTING...");
 
+	function playTour(){
+		touring=true;
+		setTimeout(handlePlayButtonClick,2000);
+		setTimeout(function(){
+			if(touring){
+				document.getElementById("carttoggle").checked=true;
+				toggle_map(2000);
+			};
+		},15000);
+		setTimeout(function(){
+			if(touring){
+				document.getElementById("carttoggle").checked=false;
+				toggle_map(2000);
+			}
+		},25000);
+	}
+
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
 		
 		//set 3dots
@@ -1480,11 +1499,13 @@
 		// set defaults, add event listeners
 		document.onkeydown=handlekeydown;			
 		document.getElementById("carttoggle").addEventListener("change",function(){
+			touring=false;
 			toggle_map(1500);
 		});
-		document.getElementById("themeSelector").addEventListener("change",function(){loadTheme();});
+		document.getElementById("themeSelector").addEventListener("change",function(){touring=false;loadTheme();});
 		document.getElementById("dataSourceSelector").addEventListener(
 			"change",function(){
+				touring=false;
 				loadData(document.getElementById("dataSourceSelector").value).then(
 					function(){
 						handleDataLoaded()
@@ -1511,20 +1532,8 @@
 		addDataSourcesToSelector(newDataSources);
 		handleDataLoaded().then(function(){
 			console.log("DATA LOADED AND READY");
-			// Start default animation!
-			setTimeout(handlePlayButtonClick,2000);
-			setTimeout(function(){
-				if(moving){
-					document.getElementById("carttoggle").checked=true;
-					toggle_map(2000);
-				};
-			},15000);
-			setTimeout(function(){
-				if(moving){
-					document.getElementById("carttoggle").checked=false;
-					toggle_map(2000);
-				}
-			},25000);
+			// Start default animation tour!
+			playTour();
 		});
 		//setTimeout(handlePlayButtonClick,2000);
 	});
