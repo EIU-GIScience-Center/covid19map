@@ -879,7 +879,7 @@ const themeCaseMortality = {
 	/**
 	 * If true, the color scheme will be reversed.
 	 */
-	invertColorScale: true,
+	invertColorScale: false,
 
 	/**
 	 * The values to show colors for on the choropleth legend
@@ -986,7 +986,7 @@ const themeCaseMortality_7day = {
 	 * type: string
 	 */
 	
-	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier.",
+	briefDescription: "The ratio of deaths in the past 7 days to new confirmed cases in the previous 7 days.",
     
 	/**
 	 * A list of variables required to show this map theme
@@ -1004,14 +1004,15 @@ const themeCaseMortality_7day = {
 	 * @return An appropriate number
 	 */
 	choroplethValueFcn: function (feat, date) {
-		var dateID = dates.indexOf(date);
+		var dateID = dataSource.dates.indexOf(date);
 		if(dateID < 7){
 			return 0;
 		} else {
-			var prevDate = dates[dateID-7];
+			
+			var prevDate = dataSource.dates[dateID-7];
 			var state = feat.properties["ABBREV"];		
-			var cases = getValue(feat, prevDate, 'cases');
-			var deaths = getValue(feat, date, 'deaths');
+			var cases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
+			var deaths = periodAverage(feat, prevDate, function(f,d){return getValue(f,d,'deaths', true, true)}, [1,1,1,1,1,1,1]);
 			if(cases==0){return 0;} else {return 100*deaths/cases;}
 		}
 	},
@@ -1045,7 +1046,7 @@ const themeCaseMortality_7day = {
 	/**
 	 * If true, the color scheme will be reversed.
 	 */
-	invertColorScale: true,
+	invertColorScale: false,
 
 	/**
 	 * The values to show colors for on the choropleth legend
@@ -1118,21 +1119,23 @@ const themeCaseMortality_7day = {
 	 *         on the given date
 	 */
 	tooltipTextFcn: function (feat, date) {
-		var dateID = dates.indexOf(date);
+		var dateID = dataSource.dates.indexOf(date);
 		if(dateID < 7){
 			console.log("insufficient data for themeCaseMortality");
 			console.log("dateID: " + dateID);
 			console.log(date);
 			return "insufficient data";
 		} else {
-			var prevDate = dates[dateID-7];
+			var prevDate = dataSource.dates[dateID-7];
 			var state = feat.properties["ABBREV"];		
-			var cases = getValue(feat, prevDate, 'cases');
-			var deaths = getValue(feat, date, 'deaths');
+			//var cases = getValue(feat, prevDate, 'cases');
+			//var deaths = getValue(feat, date, 'deaths');
+			var cases = 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
+			var deaths = 7*periodAverage(feat, prevDate, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]);
 			var ptr;
 			if(cases==0){ptr=0} else {ptr = 100*deaths/cases};
-			msg = "<p>Cases (7-days prior): " + withCommas(cases) + "</p>";
-			msg += "<p>Deaths: " + withCommas(deaths) + "</p>";
+			var msg = "<p>Deaths (past week): " + withCommas(deaths.toFixed(0)) + "</p>";
+			msg += "<p>Cases (previous week): " + withCommas(cases.toFixed(0)) + "</p>";
 			msg += "<p>Case Mortality: " + ptr.toFixed(1) + "%</p>";
 			return msg;
 		}
