@@ -66,7 +66,11 @@ function previousDate(date, dates){
  * Adds commas to a number for display purposes
  */
 function withCommas(num) {
-	return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+	if(num == undefined){
+		return "";
+	} else {
+		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+	}
 }
 
 /**

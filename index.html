@@ -15,24 +15,34 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <meta property="og:image" content="./images/preview.png" />
-  <meta name="description" content="COVIZ is an open-source data visualization project focused on innovated cartography and animated mapping of the Covid-19 pandemic. Our project is situated in a cartographic analysis of other dashboards created by state, city and country governments, university research groups such as the John Hopkins University CSSE, and private enterprises such as Worldometer, 1point3acres and ncov2019.live. The COVIZ project is unique in its combination of principled cartographic symbolization, animation (using D3), hand-drawn cartograms and choice of epidemiological variables such as recent weekly average new case counts and positive test ratios.">
+  <meta name="description" content="COVIZ is an open-source data visualization project focused on innovative cartography and animated mapping of the Covid-19 pandemic. Our project is situated in a cartographic analysis of other dashboards created by state, city and country governments, university research groups such as the John Hopkins University CSSE, and private enterprises such as Worldometer, 1point3acres and ncov2019.live. The COVIZ project is unique in its combination of principled cartographic symbolization, animation (using D3), hand-drawn cartograms and choice of epidemiological variables such as recent weekly average new case counts and positive test ratios.">
   <meta name="keywords" content="data visualization, cartography, animation, epidemiology, Covid-19, pandemic, dashboards, COVIZ, EIU, eastern illinois university">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="d3_map_styles.css"> 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap" rel="stylesheet">
  <link href="https://fonts.googleapis.com/css2?family=B612+Mono&display=swap" rel="stylesheet">
   <title>COViz</title>
+  <script>console.log("loading jquery...");</script>
   <script src="jquery-3.4.1.js"></script>
   <script src="jquery.csv-0.71.min.js"></script>
+  <script>console.log("loading papaparse...");</script>
   <script src="papaparse.min.js"></script>
   <script src="d3.v5.js" charset="utf-8"></script>
+  <script>console.log("loading utils...");</script>
   <script src="utils.js"></script>  
+  <script>console.log("loading covidtracking...");</script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
+  <script>console.log("loading jhu...");</script>
   <script src="data/counties_jhu/data_counties_JHU.js"></script>
+  <script>console.log("loading canada...");</script>
   <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
+  <script>console.log("loading slider...");</script>
   <script src="d3-simple-slider.min.js"></script>
+  <script>console.log("loading resize sensor...");</script>
   <script src="ResizeSensor.js"></script>
+  <script>console.log("loading susielu...");</script>
   <script src="legend_susielu.js"></script>
+  <script>console.log("loading themes...");</script>
   <script src="themes/themes_basic_pack.js"></script>
   
 
@@ -127,15 +137,16 @@
 				</div>
 			</div>
 			<div id="time_controls">
-				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play">►</button>
-				<span class="dot" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(600)"></span> 
-				<span class="dot" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(450)"></span> 
-				<span class="dot" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(300)"></span>
-				<span class="dot" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(150)"></span> 
-				<span class="dot" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(0)"></span>  
-				<button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease">◀◀</button>
-				<button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase">▶▶</button> 
-				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Repeat">↻</button>
+			
+				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play/Pause">►</button>
+				<span class="dot" id="Slowest" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(0)"></span> 
+				<span class="dot" id="Slower" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(1)"></span> 
+				<span class="dot" id="Normal Speed" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(2)"></span>
+				<span class="dot" id="Faster" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(3)"></span> 
+				<span class="dot" id="Fastest" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(4)"></span>  
+				<button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease Speed">◀◀</button>
+				<button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase Speed">▶▶</button> 
+				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
 			</div>
 			<div id="slider"></div>
 			</div>
@@ -279,15 +290,18 @@
 	var slider_update_duration = 750;
 	// map objects
 	var mapsvg; // svg containing map 
-    var statepaths;
+    var districtPaths;
 	var circles; // svg group within mapsvg containing smaller circle for each state
 	// map theme functions and values
 	var theme;
 	var dataSource;
 	var baseFeatures;
 	var cartogramFeatures;
+	var curZoomFunc;
 	var dataSourceFilter;
-    var mapdiv
+    var mapdiv;
+	var mapWidth;
+	var mapHeight;
 	var legendChoropleth;
 	var choroplethColorScale; // scale function for legend (doesn't include white for zero)
 	var lowValColor = null;
@@ -298,8 +312,12 @@
 	var dailymax;
 	var radScaleFac = 0;
     var timer;
-	var do_resize = true;
-	var touring = false;
+	var do_resize = true; // if true, map will reload on change in page size
+	var touring = false; // if true, we are in the middle of an animated tour
+	var busy = false; // if true, user controls will not work
+	var defaultPlayStart = 35; // the day to start playing from when the user plays from the end
+	var playStart;
+	var delayIntervals = [600,450,300,150,0];
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -513,6 +531,7 @@
 	// occupying the given proportion of the feature area
 	function radiusScaleFac(features, maxOccupancy = 0.35){
 		// determine the largest ratio of value/screenarea
+		
 		if(features == undefined || theme == undefined || $.isNumeric(theme.circleRadiusFcn) == true) {
 			return "undefined";
 		} else {
@@ -520,11 +539,13 @@
             mapdiv = document.getElementById('map'); // Do not use #
 			var width = mapdiv.clientWidth;
 			var height = mapdiv.clientHeight;		
+			/*
             if(oncartogram){
-                        var zoomPathFunc = divPathFunc("mapdiv", cartogramFeatures, 30);
+                        curZoomFunc = divPathFunc("mapdiv", cartogramFeatures, 30);
                     } else {
-                        var zoomPathFunc = divPathFunc("mapdiv", baseFeatures, 30);
+                        curZoomFunc = divPathFunc("mapdiv", baseFeatures, 30);
                     }
+			*/
 			// shortcut variables
 			var feats = features.features;
 			var f = theme.circleRadiusFcn;
@@ -545,7 +566,7 @@
 			// check remaining features and update if larger
 			for (let i = 0; i < feats.length; i++){
 				var thisCircleArea = Math.pow(f(feats[i], maxDate),2)*Math.PI;
-				var thisFeatArea = zoomPathFunc.area(feats[i]);
+				var thisFeatArea = curZoomFunc.area(feats[i]);
 				circleArea += thisCircleArea;
 				featArea += thisFeatArea;
 			}
@@ -590,8 +611,10 @@
 				} else {
 					fixedValueRange();
 				}   
+				console.log("updating map from loadTheme");
 				updateMap();
-				loadLegend();				
+				// console.log("loading legend from loadTheme");
+				// loadLegend(); not necessary; updateMap calls loadLegend				
 			} // found match
 		} // datasource is defined
 	} // loadTheme function
@@ -720,6 +743,7 @@
         // the added reflectY function puts a minus sign before the Y coordinate, because SVG y-coordinates are upside-down
         // the added fitExtent function does most of the work. It creates translation and scaling parameters to automatically
         // fit the input features to the box inside the div
+		console.log("fitting extent in divPathFunc...");
         var zoomProjection = d3.geoIdentity()
             .reflectY(true)
             .fitExtent([[padding,padding],[width-padding, height-padding]],geojsonObj);
@@ -733,34 +757,41 @@
 	function resize(){
 		if(do_resize){
 			if (curDate != null){
-				console.log("Resizing...");			
-				// update map, legend and slider
-				var curDateID = dataSource.dates.indexOf(curDate);
-							
-				// debugging
+				console.log("resize triggered...");
 				divid='map';
 				mapdiv = document.getElementById(divid); // Do not use #
 				var width = mapdiv.offsetWidth;
 				var height = mapdiv.offsetHeight;
 				console.log("SVG dimensions: " + width + " x " + height);
-				if(oncartogram==true){
-					m = loadMap(cartogramFeatures);
-				} else {
-					m = loadMap(baseFeatures);
+				// update map, legend and slider only if div size has changed
+				if(width != mapWidth || height != mapHeight){
+					console.log("Resizing...");		
+					// record new width/height so we can avoid resizing next time if this doesn't change
+					mapWidth = width;					
+					mapHeight = height;
+					// update map, legend and slider
+					var curDateID = dataSource.dates.indexOf(curDate);
+
+					if(oncartogram==true){
+						loadMap(cartogramFeatures);
+					} else {
+						loadMap(baseFeatures);
+					}
+					
+					// calculate radius scale factor
+					if(oncartogram){
+						radScaleFac = radiusScaleFac(cartogramFeatures);
+					} else {
+						radScaleFac = radiusScaleFac(baseFeatures);
+					}
+					console.log("Radius factor: " + radScaleFac);
+					console.log("updating map from resize");
+					updateMap();
+					//loadLegend();
+					var slider_val = parseInt(slider.value());
+					//loadSlider();
+					slider.value(slider_val);
 				}
-				
-				// calculate radius scale factor
-				if(oncartogram){
-					radScaleFac = radiusScaleFac(cartogramFeatures);
-				} else {
-					radScaleFac = radiusScaleFac(baseFeatures);
-				}
-				console.log("Radius factor: " + radScaleFac);
-				updateMap();
-				//loadLegend();
-				var slider_val = parseInt(slider.value());
-				//loadSlider();
-				slider.value(slider_val);
 			}
 		}
 	}
@@ -787,19 +818,104 @@
 		}
 	}
 
-	function addDataToMap(featdata,categories, category){
-		statepaths = mapsvg.append('g');
-		
+	function transitionMapData(featdata,categories, category){return new Promise(function(resolve,reject){
+		// zooms to new feature data and then 
+		// replaces current map polygons
+		// *** need to:
+		//     1. get the circles back
+		//     2. test zooming when cartogram is showing
+		do_resize=false; // prevent repeated resizing
+		circles.remove(); // remove circles while zooming
+		// get old and new zoom functions
+		var oldZoomPathFunc = curZoomFunc;
+		var newZoomPathFunc = divPathFunc("mapdiv",featdata,30);
+		localChoroplethColor=function(d){return choroplethColor(d, curDate);};
+
+		// transition old district paths to new zoom
+		districtPaths.selectAll('path')
+			.transition()
+			.duration(3000)
+			.attr('d',newZoomPathFunc);
+		// create new district paths
+		var newPaths = mapsvg.append('g');
+		// add new district paths in (invisible)
+		newPaths.selectAll('path')			
+			.data(featdata.features)
+			.enter()
+			.append('path')
+			.attr('pointer-events', 'all')
+			.attr('d',oldZoomPathFunc)
+			.attr("class","feature")
+			.attr("stroke", "#EEE")
+			.attr("stroke-width", "1px")
+			.attr("fill", localChoroplethColor) 
+			.style('opacity',0)
+			.on("click",feature_click)
+			.on("mouseover",feature_mouseover)
+			.on("mouseout",feature_mouseout)	
+			.transition()
+			.duration(3000)
+			.style('opacity',1)
+			.attr('d',newZoomPathFunc);
+		// fade in and zoom new district paths
+		districtPaths.transition()
+			.duration(5000)
+			.style("opacity",0)
+			.end()
+			.then(() => {
+				// remove and replace district paths
+				districtPaths.remove();
+				districtPaths = newPaths;
+				// record new zoom function
+				curZoomFunc = newZoomPathFunc;
+				// add circles back in (with zero radius...)
+				circles = mapsvg.append('g');		
+				circles.selectAll('circle')
+					.data(featdata.features)
+					.enter()
+					.append('circle')
+					.attr('pointer-events', 'none')
+					.attr('d', curZoomFunc)
+					.attr("cx", function(d){
+						return curZoomFunc.centroid(d)[0];
+					})
+					.attr("cy", function(d){
+						return curZoomFunc.centroid(d)[1];
+					})
+					.style('stroke-width',1)
+					.style('stroke',"#FFFFCC")
+					.style('opacity',1)
+					.on("click",feature_click)
+					.on("mouseover",feature_mouseover)
+					.on("mouseout",feature_mouseout);			
+
+				do_resize=true; // prevent repeated resizing
+				console.log("resolving transition...");
+				resolve();
+			});
+			
+	});}
+
+	function replaceMapData(featdata,categories, category){
+		console.log("replacing map data...");
+		// replaces current map polygons with reatdata
+		// remove all paths from map
+		mapsvg.selectAll("g").remove();
+		// mapsvg.remove();
+		// create new group for district paths
+		districtPaths = mapsvg.append('g');
 		// calculate radius scale 
 		radScaleFac = radiusScaleFac(featdata);
 		console.log("radScaleFac: " + radScaleFac);
 		// remove and re-create paths in SVG
-		statepaths.selectAll('path')
+		curZoomFunc = divPathFunc("mapdiv", featdata, 30);
+		districtPaths.selectAll('path')
 			//.remove()
 			.data(featdata.features)
 			.enter()
 			.append('path')
-			.attr('d',divPathFunc("mapdiv", featdata, 30))
+			.attr('pointer-events', 'all')
+			.attr('d',curZoomFunc)
 			.attr("class","feature")
 			.attr("stroke", "#EEE")
 			.attr("stroke-width", "1px")
@@ -810,17 +926,17 @@
 
 		circles = mapsvg.append('g');
 		
-		var zoomPath = divPathFunc("mapdiv", featdata, 30)
 		circles.selectAll('circle')
 			.data(featdata.features)
 			.enter()
 			.append('circle')
-			.attr('d', zoomPath)
+			.attr('pointer-events', 'none')
+			.attr('d', curZoomFunc)
 			.attr("cx", function(d){
-				return zoomPath.centroid(d)[0];
+				return curZoomFunc.centroid(d)[0];
 			})
 			.attr("cy", function(d){
-				return zoomPath.centroid(d)[1];
+				return curZoomFunc.centroid(d)[1];
 			})
 			.style('stroke-width',1)
 			.style('stroke',"#FFFFCC")
@@ -828,12 +944,17 @@
 			.on("click",feature_click)
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);			
-		statepaths.exit().remove();
-		return statepaths;
+		districtPaths.exit().remove();
 	}
 
-	function loadMap(featdata,categories, category){
+	
+
+
+	function loadMap(featdata,categories, category, transition=false){return new Promise(function(resolve,reject){
 		console.log("loading map...");
+		console.log("Transition: " + transition);
+		console.log(categories);
+		console.log(category);
 		// make sure we have a data source
 		if(dataSource !== undefined){		
 			divid='map';
@@ -842,20 +963,41 @@
 			var height = mapdiv.offsetHeight;
 			divid = '#' + divid;
 			
-			d3.select(divid).selectAll('svg').remove();		
-			
-			mapsvg = d3.select(divid)
-					.append('svg')
-					.attr('width',width)
-					.attr('height',height)
-					.on('click',reset);		
-			return addDataToMap(featdata,categories,category);
-		} // end if dataSource is not undefined
-	}
+			// d3.select(divid).selectAll('svg').remove();		
+			// create svg object inside map div
+			console.log("Debugging - loadMap");
+			console.log(mapsvg);
+			if(mapsvg == undefined){
+				mapsvg = d3.select(divid)
+						.append('svg')
+						.attr('width',width)
+						.attr('height',height)
+						.on('click',reset);		
+			}
+			console.log("In loadMap function...");
+			console.log("Transition: " + transition);
+			if(transition){
+				transitionMapData(featdata,categories,category).then(function(){
+					console.log("resolving loadMap after transition");
+					resolve();
+				});
+			} else {
+				replaceMapData(featdata,categories,category);
+				console.log("resolving loadMap after replace");
+				resolve();
+			}
+			// end if dataSource is not undefined
+		}  else {
+			console.log("resolving loadMap after data undefined");
+			resolve();
+		}
+	});}
 
 	// toggles between the current base map and cartogram
 	function toggle_map(milliseconds=1500, callback){
 		oncartogram = !oncartogram;
+		document.getElementById("carttoggle").checked=oncartogram;
+		console.log("updating map from toggle_map");
 		updateMap(milliseconds, callback);
 	}
 
@@ -872,6 +1014,7 @@
 
 	// updates map to the user selected type (map or cartogram) and date
 	function updateMap(milliseconds=750, callback){
+		// transitions the map features and symbology based on current theme, map type and data source
 		// change the text describing the map type
 		var mapTypeDescription;
 		if (oncartogram){
@@ -891,12 +1034,14 @@
 
 				// get features (either map or cartogram)
 				var todata; 
+				console.log("updating map...");
 				if (oncartogram==false){
 					todata=baseFeatures;
 				} else {
 					todata=cartogramFeatures;
 				};
-				
+				console.log("Features in updateMap:");
+				console.log(todata);
 				// get data and choropleth/symbol functions depending on if we're showing a map or cartogram
 				var localChoroplethColor;
 				var localCircleRadius;
@@ -937,39 +1082,47 @@
 						localFeatureStroke = '#CCC';
 						localChoroplethColor='#F5F5F8';
 						localCircleStroke = '#FFFFCC';
-						//localCircleRadius=function(d){return radScaleFac * theme.circleRadiusFcn(d,curDate);};
 					}
 				}
-                var zoomPath = divPathFunc("mapdiv", todata, 30)
+                curZoomFunc = divPathFunc("mapdiv", todata, 30)
 				// transition district polygons
 				mapsvg.selectAll('path')
 					.transition()
 					.ease(d3.easeLinear)
-                    .attr("d",function(d,i){return zoomPath(todata.features[i]);})
-					/*.attr("d", divPathFunc("mapdiv", todata, 30))*/
+					.attr("d",function(d,i){return curZoomFunc(todata.features[i]);})
+                    //.attr("d",curZoomFunc) 
 					.attr("stroke",localFeatureStroke)
 					.duration(milliseconds)
 					.attr("fill",localChoroplethColor)
-					.on("end",callback);	
+					.style('opacity',1)
+					.end()
+					.then(() => {
+						if(callback != undefined){
+							console.log(callback);
+							callback();
+						};
+					});
+					//.on("end",callback);	
 
 				// transition circle symbols
 				mapsvg.selectAll('circle')
 					.transition()
 					.ease(d3.easeLinear)
-                    .attr("d", zoomPath)
+                    .attr("d", curZoomFunc)
 					.attr("cx", function(d,i){
 						var thisFeat = todata.features[i];				
-						return zoomPath.centroid(thisFeat)[0];
+						return curZoomFunc.centroid(thisFeat)[0];
 					})
 					.attr("cy", function(d,i){
 						var thisFeat = todata.features[i];			
-						return zoomPath.centroid(thisFeat)[1];
+						return curZoomFunc.centroid(thisFeat)[1];
 					})
 					.attr('r',localCircleRadius)
 					.style('fill',localCircleFill)
 					.style('stroke',localCircleStroke)
 					.duration(milliseconds);
 				// reload legend
+				console.log("loading legend from updateMap");
 				loadLegend();
 				// update map title
 				updateMapTitle();
@@ -999,7 +1152,6 @@
 		// create legend
 		var truncatedCells
         var truncatedLabels
-        console.log("creating legend...");
         if (theme.updateDailyValueRange && moving==false){
              [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
         } else {
@@ -1023,60 +1175,62 @@
 		do_resize=true;
 	}
 
-
+	// smooth zoom
+	function smoothZoom(toDataSource){
+		toDataSource.dataFunc.then(function(the_data_obj){
+		// if on cartogram, first toggle back to map
+		if(oncartogram){
+			busy = true;
+			toggle_map(750,function(){
+				console.log("loading data from Zoom to Child toggle...");
+				loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
+					handleDataLoaded(transition=true).then(function(){
+						document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+						if(cartogramFeatures != null){
+							toggle_map(750);
+							busy = false;
+						} else {
+							busy = false;
+						};
+					});
+				});
+			});
+		} else {
+			console.log("loading data from Zoom to Child...");
+			loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){
+				handleDataLoaded(transition=true).then(function(){
+					document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+				});
+			});
+		}
+	})};
 
 	// zoom to child 
     function zoomToChild(feat){
 		touring=false;
-        function loadChildData() {
-            console.log("second function executed");
-            console.log("Zooming to:" + dataSource.getLabel(feat));
-            // obtain path function for all features
-            // apply path construction/projection function
-            // get child data source
-            var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
-            if(match){
-                // get promised data object
-                match.dataFunc.then(function(the_data_obj){
-                    // temporary; need to change this to implement zoom effect
-                    loadData(dataSource.dataChildName, dataSourceFilter).then(function(){
-                        handleDataLoaded(); // show child features
-                        document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
-                    })
-                })
-            };
-        }
-        console.log("zooming into child");
 		reset();
-        var zoomPathFunc = divPathFunc("mapdiv", feat, 30);
-            // transition to new path construction/projection function
-			mapsvg.selectAll('circle')
-				.transition()
-				.duration(3000)
-				.attr("d", zoomPathFunc)
-				.attr("cx", function(d,i){
-					return zoomPathFunc.centroid(d)[0];
-				})
-				.attr("cy", function(d,i){		
-					return zoomPathFunc.centroid(d)[1];
-				})
-			statepaths.selectAll('path')
-				.transition().on("end", zoomPathFunc)
-				.duration(3000)
-				.attr('d',zoomPathFunc);  
-
-        setTimeout(function() {
-            loadChildData();
-        }, 3000);
-        
+		console.log("Zooming to:" + dataSource.getLabel(feat));
+		// obtain path function for all features
+		
+		var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
+		if(match){
+			smoothZoom(match);
+		};      
 	}
 	
 	function zoomToParent(){
 		console.log("Zooming up");
+		var match = dataSources.find(v => v.dataSourceName == dataSource.dataParentName);			
+		dataSourceFilter=null;
+		if(match){
+			smoothZoom(match);
+		};      
+		/*
 		loadData(dataSource.dataParentName).then(function(){
 			dataSourceFilter=null;
-			handleDataLoaded();
-		});	
+			handleDataLoaded(transition=true);
+		});
+		*/
 	}
 	
 	
@@ -1084,14 +1238,7 @@
 	function showFeatureInfo(d, showInteractiveElements=true){		
 		// get feature info
 		var showHTML = featureInfoHTML(d);
-		// add interactive elements
-		
-		if (/Mobi/.test(navigator.userAgent)) {
-			console.log("MOBILE DEVICE!");
-		} else {
-			console.log("NOT A MOBILE DEVICE!");
-		}
-		
+		// add interactive elements		
 		if(dataSource.dataChildName != null){
 			showHTML += "<div style='float: left;'>";
 			if(showInteractiveElements){
@@ -1099,7 +1246,7 @@
 				showHTML += "<button id='zoomDown' data-tooltip-position='bottom' data-tooltip='Zoom In'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
 			} else {
 				// hint that button exists
-				showHTML += "&lt;click to zoom button&gt;";
+				showHTML += "&lt;click for zoom button&gt;";
 			};
 			showHTML += "</div>"
 		}
@@ -1139,9 +1286,9 @@
 	  // if user clicked on active feature, reset map
 	  if (active_feature === d){return reset()};
 	  // otherwise, set all features on both maps to inactive
-	  m.selectAll(".active").classed("active", false);
+	  districtPaths.selectAll(".active").classed("active", false);
 	  // set user-clicked feature on both maps to active
-	  d3.select(m.node().children[i]).
+	  d3.select(districtPaths.node().children[i]).
 		classed("active", active = d);
 	  d3.event.stopPropagation();
 	  // record that we have an active feature
@@ -1150,6 +1297,7 @@
 	}
 
 	function feature_mouseover(d,i){
+		console.log("Mouseover: " + dataSource.getLabel(d));
 		if (active_feature == null){
 			showFeatureInfo(d, false);
 		}
@@ -1163,9 +1311,9 @@
 
 	// unselect any selected features
 	function reset() {
-			m.selectAll(".active").classed("active", active = false);
+			districtPaths.selectAll(".active").classed("active", active = false);
 			active_feature = null;
-			m.transition().duration(750).attr("transform", "");
+			districtPaths.transition().duration(750).attr("transform", "");
 			d3.select('#tooltip').style('opacity',0);
 	}
 
@@ -1235,6 +1383,8 @@
 	}
 
   	var loadSlider=function(){return new Promise(function(resolve, reject){
+		console.log("loading slider...");
+		console.log(curDate);
 		// remove existing slider
 		if (slider_svg != null){
 			slider_svg.remove();
@@ -1262,12 +1412,6 @@
 			.attr('align','center')
 			.append('svg');
 		textData=[0];
-		/*
-		var dateTextGroup = slider_svg.selectAll("text")
-			.data(textData)
-			.enter()
-			.append("text");
-		*/
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
 		slider = d3
@@ -1290,7 +1434,11 @@
                 } else {
 					fixedValueRange();
 				}
-				if(moving==false){loadLegend();};
+				if(moving==false){
+					// console.log("loading legend from slider change");
+					// loadLegend();
+				};
+				console.log("updating map from slider change");
 				updateMap(slider_update_duration);
 			});
 		slider_svg
@@ -1301,12 +1449,23 @@
 			.attr('transform', 'translate(30,30)')
 			.call(slider);
 		// report that function worked
+		console.log("slider initial date:");
+		console.log(dataSource.dates[slider.value()]);
+		var nearestDate = dataSource.dates.reduce((a,b) => {
+					return Math.abs(Date.parse(b)-Date.parse(curDate)) , Math.abs(Date.parse(a)-Date.parse(curDate)) ? b : a;
+				});
+				curDate = nearestDate
+		// slider.value(dataSource.dates.indexOf(curDate));
+		console.log("best date:");
+		console.log(curDate);
 		resolve();
 	})}
 
-	function handleDataLoaded(){return new Promise(function(resolve,reject){
+	function handleDataLoaded(transition=false){return new Promise(function(resolve,reject){
+		// loads new data into the map and updates the slider
 		// update the slider
 		console.log("HANDLING DATA LOADED...");
+		console.log("Transition: " + transition);
 		// report current dataset
 		if(dataSource.dataParentName==null){
 			document.getElementById("zoomrow").style.display="none";
@@ -1317,29 +1476,32 @@
 		loadSlider().then(function(){
 			console.log("slider loaded:");
 			// define current date
-			curDate=dataSource.dates[0];
+			var oldDate = curDate;
+			 // change this to get the nearest date
+			if(oldDate != null && curDate != null){
+				// get the nearest date in the new data source to the old date
+				var nearestDate = dataSource.dates.reduce((a,b) => {
+					return Math.abs(Date.parse(b)-Date.parse(oldDate)) , Math.abs(Date.parse(a)-Date.parse(oldDate)) ? b : a;
+				});
+				curDate = nearestDate
+			} else {
+				curDate=dataSource.dates[0];
+			}
 			// load the map!
-			m = loadMap(baseFeatures);
-			//load the Theme
-			loadTheme();
-			// resize everything
-			resize();
-			// a bit of animation to show functionality
-			setTimeout(function()
-				{
-					orig_duration = slider_update_duration;
-					slider_update_duration = 500;
-					slider.value(dataSource.dates.length-1);
-					slider_update_duration = orig_duration;
-				},500
-			);
-			// resolve promise
-			resolve();
+			console.log("loading map from handleDataLoaded...");
+			loadMap(baseFeatures,undefined, undefined, transition).then(function(){
+				//load the Theme
+				console.log("loading Theme from handleDataLoaded");
+				loadTheme();
+				// resize everything
+				resize();
+				slider.value(dataSource.dates.indexOf(curDate));
+				// resolve promise
+				resolve();
+			});			
 		});	
 	})};
     
-    
-
     var sliderID
     var currentIndex = sliderID;
     var playButton = d3.select("#play-button");
@@ -1351,7 +1513,7 @@
 
     function delayIndi() {
         for (i = 0; i < dots.length; i++){ 
-			var dotDelay = 600-150*i
+			var dotDelay = delayIntervals[i];
 			if (dotDelay < delay) {
 				dots[i].style.backgroundColor = "#bbb";
 			} else if (dotDelay >= delay){
@@ -1360,6 +1522,16 @@
 		}
     }
 
+    function delayDots(n) {
+        clearInterval(timer);
+        delay = delayIntervals[n];
+        if (moving == true) {
+            timer = setInterval(step, delay);
+            playButton.text("∥");
+            moving = true;
+        }
+            delayIndi()
+    };
     
 	function handlePlayButtonClick(){	
 		var button = d3.select(playButton);
@@ -1371,17 +1543,21 @@
 		console.log(dataSource.dates.length);
 		if (playButton.text() == "∥") {
 		  moving = false;
+		  touring = false;
+		  busy = false;
 		  clearInterval(timer);
 		  // timer = 0;
 		  playButton.text("►");
 		} else { 
 		  if (sliderID == dataSource.dates.length-1) {
-			  currentIndex = 35;
+			  currentIndex = defaultPlayStart;
 		  } else {
-		  currentIndex = sliderID;
+			currentIndex = sliderID;
 		  }
+		  playStart = currentIndex;
 		  moving = true;
 		  fixedValueRange();
+		  console.log("loading legend from handlePlayButtonClick");
 		  loadLegend();
 		  //delay = 0;
 		  timer = setInterval(step, delay);
@@ -1397,7 +1573,6 @@
         var targetIndex = dataSource.dates.length-1;
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
-		updateMap();
 		console.log("Slider moving: " + moving);
 		if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
@@ -1407,7 +1582,7 @@
 		// pause at end of loop (if looping)
         if (sliderID == dataSource.dates.length-1 && looping == true) {
                 var pauseStart = setTimeout(function(){
-                    currentIndex = 35;
+                    currentIndex = playStart;
                 },3000);
               } else {
                 currentIndex = currentIndex + 1;
@@ -1415,7 +1590,7 @@
 		// stop at end of loop otherwise
         if (currentIndex > targetIndex && looping == false) {
 			moving = false;
-			currentIndex = 35;
+			currentIndex = defaultPlayStart;
 			clearInterval(timer);
 			// timer = 0;
 			playButton.text("►");
@@ -1455,48 +1630,58 @@
                 delayIndi()
 			});
     
-    function delayDots(n) {
-        clearInterval(timer);
-        delay = n;
-        if (moving == true) {
-            timer = setInterval(step, delay);
-            playButton.text("∥");
-            moving = true;
-        }
-            delayIndi()
-    };
     
+	function handleLoopButtonClick(){
+		var button = d3.select(this);
+		if (button.text() == "⇥") {
+			looping = false;
+			button.text("↻")
+		} else {
+			looping = true;
+			button.text("⇥");
+		}
+		console.log("Looping: " + looping);	
+	}
+	
     var loopButton = d3.select("#loop-button");
         loopButton
-            .on("click", function() {
-            var button = d3.select(this);
-            if (button.text() == "⇥") {
-                looping = false;
-                button.text("↻")
-            } else {
-                looping = true;
-                button.text("⇥");
-            }
-            console.log("Looping: " + looping);
-                });
+            .on("click", handleLoopButtonClick);
 
 	console.log("STARTING...");
 
 	function playTour(){
+		console.log("******PLAYING TOUR **********");
+		console.log("******PLAYING TOUR **********");
+		// restrict user control
+		busy=true;
 		touring=true;
-		setTimeout(handlePlayButtonClick,2000);
+		document.getElementById("Faster").click();
+		console.log(slider.value());
+		
 		setTimeout(function(){
 			if(touring){
 				document.getElementById("carttoggle").checked=true;
-				toggle_map(2000);
+				toggle_map(2000, function(){
+					// enter looping mode
+					delayDots(3);
+					handleLoopButtonClick();
+					loopButton.text("⇥");
+					// start playing animation
+					handlePlayButtonClick();
+					// give back user control
+					busy=false;
+					touring=false;
+				});
 			};
-		},15000);
+		},5000);
+		/*
 		setTimeout(function(){
 			if(touring){
 				document.getElementById("carttoggle").checked=false;
 				toggle_map(2000);
 			}
-		},25000);
+		},18000);
+		*/
 	}
 
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
@@ -1512,20 +1697,34 @@
 		document.onkeydown=handlekeydown;			
 		document.getElementById("carttoggle").addEventListener("change",function(){
 			touring=false;
-			toggle_map(1500);
+			console.log("clicked toggle...");
+			console.log("busy: " + busy);
+			if(busy == false){toggle_map(1500);};
 		});
-		document.getElementById("themeSelector").addEventListener("change",function(){touring=false;loadTheme();});
+		document.getElementById("themeSelector").addEventListener("change",function(){
+			touring=false;
+			console.log("loading theme from theme option change");
+			if(busy == false){loadTheme();};
+		});
 		document.getElementById("dataSourceSelector").addEventListener(
 			"change",function(){
 				touring=false;
-				loadData(document.getElementById("dataSourceSelector").value).then(
-					function(){
-						handleDataLoaded()
-					}
-				);
+				if(busy == false){
+					console.log("loading data from dataSourceSelector change...");
+					loadData(document.getElementById("dataSourceSelector").value).then(
+						function(){
+							console.log("handling data loaded from change in data source selector");
+							handleDataLoaded()
+						}
+					);
+				};
 			}
 		);
-		document.getElementById('zoomUp').addEventListener("click",zoomToParent);
+		document.getElementById('zoomUp').addEventListener("click",function(){
+			console.log("Zoom up clicked...");
+			console.log("busy: " + busy);
+			if(busy == false){zoomToParent();};
+		});
 		$('themeSelector').on('keydown', function(e){
 			if(e.keyCode === 37 || e.keyCode === 39) { //left or right
 				e.preventDefault();
@@ -1543,11 +1742,20 @@
 		dataSources=dataSources.concat(newDataSources);
 		addDataSourcesToSelector(newDataSources);
 		handleDataLoaded().then(function(){
+			defaultPlayStart = dataSource.dates.length-56; // by default play the last 8 weeks
+			if(defaultPlayStart < 0){defaultPlayStart = 0;};
+			setTimeout(function()
+				{
+					orig_duration = slider_update_duration;
+					slider_update_duration = 500;
+					slider.value(dataSource.dates.length-1);
+					slider_update_duration = orig_duration;
+				},500
+			);
 			console.log("DATA LOADED AND READY");
 			// Start default animation tour!
 			playTour();
 		});
-		//setTimeout(handlePlayButtonClick,2000);
 	});
 
 
