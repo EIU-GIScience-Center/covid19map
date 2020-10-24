@@ -321,16 +321,18 @@
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
-		themeNewCases_7day,
-		themeNewCases,
+		themeWeeklyCases,
+		themeWeeklyDeaths,
+		themeWeeklyChangeCases,
+        themeWeeklyChangeDeaths,
+		themeWeeklyPositivityRate,
+		themeWeeklyCaseMortality,
+		themeDailyCases,
+		themeDailyDeaths,
         themeCasesCumulative,
-        themeCaseIncreaseWeekOverWeek,
-        themePositiveTestRatio,
-		themeNewPositiveTestRatio,
-        themeCaseMortality,
-		themeCaseMortality_7day,
-        themeDeathsCumulative,
-        themeDeathIncreaseWeekOverWeek
+		themeDeathsCumulative,
+        themeCaseMortality,        
+        themePositivityRate,
 	]
 
 	// array of data sources
@@ -1001,15 +1003,11 @@
 		updateMap(milliseconds, callback);
 	}
 
-
 	// updates the map title based on current selections
 	function updateMapTitle(){
 		var newtitle= "<b>" + theme.themeName + "</b>";
 		document.getElementById("map_title").innerHTML=newtitle;
-		if(theme.datePrefix != null){
-			var newdate = curDate;
-			document.getElementById("map_date").innerHTML=newdate;
-		}
+		document.getElementById("map_date").innerHTML=curDate;
 	}
 
 	// updates map to the user selected type (map or cartogram) and date
@@ -1651,7 +1649,6 @@
 
 	function playTour(){
 		console.log("******PLAYING TOUR **********");
-		console.log("******PLAYING TOUR **********");
 		// restrict user control
 		busy=true;
 		touring=true;
@@ -1664,8 +1661,8 @@
 				toggle_map(2000, function(){
 					// enter looping mode
 					delayDots(3);
-					handleLoopButtonClick();
-					loopButton.text("⇥");
+					// handleLoopButtonClick();
+					// loopButton.text("⇥");
 					// start playing animation
 					handlePlayButtonClick();
 					// give back user control
@@ -1674,14 +1671,6 @@
 				});
 			};
 		},5000);
-		/*
-		setTimeout(function(){
-			if(touring){
-				document.getElementById("carttoggle").checked=false;
-				toggle_map(2000);
-			}
-		},18000);
-		*/
 	}
 
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
