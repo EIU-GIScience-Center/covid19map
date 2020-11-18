@@ -68,8 +68,11 @@
 		</div>
 		<div id="map_panel">
 			<div id="map_top">
-				<div id="map_title" style="float: left"></div>
-				<div id="map_date" style="float: right; font-family: 'B612+Mono', sans-serif;"></div>
+				<div id="map_title_left" style="float: left; margin: 3 auto;"></div>
+				<div id="map_title_center" style="float: left; margin: 3 10; padding-left: 3ex; text-align: center;"></div>
+				<div id="map_title_right" style="float: right; margin: 3 auto; "></div>
+				<!-- font-family: 'B612+Mono', sans-serif; -->
+				
 			</div>
 			<div id="map"></div>
 			<div id="mapbottom">
@@ -329,10 +332,10 @@
 		themeWeeklyCaseMortality,
 		themeDailyCases,
 		themeDailyDeaths,
-        themeCasesCumulative,
-		themeDeathsCumulative,
-        themeCaseMortality,        
-        themePositivityRate,
+        themeCumulativeCases,
+		themeCumulativeDeaths,
+        themeCumulativePositivityRate,
+		themeCumulativeCaseMortality        
 	]
 
 	// array of data sources
@@ -804,7 +807,6 @@
 	});		
 
 	function featureInfoHTML(feature){
-		console.log("showing feature info...");
 		if(theme != undefined){
 			if(feature != null){
 				// show data
@@ -1006,8 +1008,13 @@
 	// updates the map title based on current selections
 	function updateMapTitle(){
 		var newtitle= "<b>" + theme.themeName + "</b>";
-		document.getElementById("map_title").innerHTML=newtitle;
-		document.getElementById("map_date").innerHTML=curDate;
+		document.getElementById("map_title_left").innerHTML=newtitle;
+		document.getElementById("map_title_center").innerHTML=datePeriodExpression(curDate, theme.dateRange, dataSource.dates);
+		if(theme.aggregateLabelFcn == undefined){
+			document.getElementById("map_title_right").innerHTML="";
+		} else {
+			document.getElementById("map_title_right").innerHTML=theme.aggregateLabelFcn(baseFeatures.features,curDate);
+		}
 	}
 
 	// updates map to the user selected type (map or cartogram) and date
@@ -1096,7 +1103,6 @@
 					.end()
 					.then(() => {
 						if(callback != undefined){
-							console.log(callback);
 							callback();
 						};
 					});
@@ -1155,7 +1161,6 @@
         } else {
 			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
         }        
-		
         var numCells = truncatedCells.length;
 		legendChoropleth = d3.legendColor()
 			.shapeWidth((legwidth-30)/numCells)
@@ -1295,7 +1300,6 @@
 	}
 
 	function feature_mouseover(d,i){
-		console.log("Mouseover: " + dataSource.getLabel(d));
 		if (active_feature == null){
 			showFeatureInfo(d, false);
 		}

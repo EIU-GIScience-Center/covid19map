@@ -207,6 +207,7 @@ function dataCovidTracking_states(){ return {
 					getID: function(feat){return feat.properties.ABBREV;}, 
 					getLabel: function(feat){return feat.properties.STATE_NAME;}, 
 					getPopulation: function(feat){return feat.properties.POP_2010;}, 
+					aggregateLabel: function(){return "USA";}
 				}
 				resolve(the_data_object);
 
