@@ -90,9 +90,9 @@ html, body, #fullheight {
 #mapbottom{
 	flex-grow: 0;	
 	align: center;
-	height: 55px;
+	height: 120px;
 	min-height: 75px;
-	max-height: 75px;
+	max-height: 120px;
 	margin-left: 0ex;
 	margin-right: 0ex;
 	margin-top:0ex; 

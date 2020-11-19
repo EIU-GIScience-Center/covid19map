@@ -69,21 +69,30 @@ const themeDailyCases = {
 	
 	// String: title to be used on the legend
 	choroplethLegendTitle: "New Cases Per Million",
-
-	// string: prefix to the date display for this theme, for example indicating the time period covered
-	// no longer used (?)
+    circleLegendTitle: "New Cases Per Day",
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
 	datePrefix: "",
 
-	// function of (feature, date) or fixed number representing the base radius of the circle symbol (set to zero for no circles).
-	circleRadiusFcn: function (feat, curDate) {
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: true,
+	circleAreaFcn: function (feat, curDate) {
 		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases',false, true);}, [1]);
-		if(isNaN(todayCases)){return 0;};
-		if(todayCases > 0){
-			// for now, set radius as sqrt of cases/fixed constant
-			return Math.sqrt(todayCases)/3;
-		} else {
-			return 0;
-		}
+				if(todayCases > 0){
+					return todayCases;
+				} else {
+					return 0;
+				}
 	},
 
 	// The fill color of the circle
@@ -162,12 +171,19 @@ const themeDailyDeaths = {
     // false - legend will not be updated and have fixed value from above(legendmin & legendmax)
     updateDailyValueRange: true,
 	
-	// String: title to be used on the legend
-	choroplethLegendTitle: "New Deaths Per Million",
-
-	// string: prefix to the date display for this theme, for example indicating the time period covered
-	// no longer used (?)
-	datePrefix: "",
+	/**
+	 * The title to be used on the legend for this module's feature
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "New Cases Per Million",
+    circleLegendTitle: "New Cases Per Week",
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
 
 	// function of (feature, date) or fixed number representing the base radius of the circle symbol (set to zero for no circles).
 	circleRadiusFcn: function (feat, curDate) {
@@ -181,66 +197,19 @@ const themeDailyDeaths = {
 		}
 	},
 
-	// The fill color of the circle
-	circleFill: '#45c',
-
-	// border color of the circle
-	circleStroke: '#459',
-	
-	// function of (feature, date) that gives the tooltip text
-	tooltipTextFcn: function (feat, date) {
-		var pop = dataSource.getPopulation(feat);
-		var new_death_count = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1])
-		var new_death_rate = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', true, true)}, [1])
-		msg = "<p>Population: " + withCommas(pop) + "</p>";
-		msg += "<p>" + new_death_count.toFixed(0) + " new deaths</p>";
-		msg += "<p>" + toAppropriateDecimals(new_death_rate) + " new deaths per million</p>";		
-		return msg;
-	}
-};
-
-const themeWeeklyCases = {
-	themeName: "Weekly Cases",
-	briefDescription: "New cases recorded in the most recent 7-day period.",
-	requiredVariables: ["cases"],
-	dateRange: [-6,0],
-	aggregateLabelFcn: function(feats,date){
-		var totalCases=0;
-		for(i=0;i<feats.length;i++){
-			var feat = feats[i];
-			totalCases += 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
-		}
-		var aggLbl = "overall";
-		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalCases.toFixed(0));
-		return msg;
-	},
-	choroplethValueFcn: function (feat, date) {
-		var avg = 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
-		if(avg < 0.49){avg=0.49};
-		return avg;
-	},
-	choroplethColorInterpolator: d3.interpolateMagma,
-    choroplethValueScale: function(d){
-            if(d < 0){
-                return Math.pow(Math.log(0 + 10),0.7);
-            } else {
-                return Math.pow(Math.log(d + 10),0.7);
-            }
-        },
-	invertColorScale: true,
-	choroplethCells: expBase10CellsAndLabels()[0],
-	choroplethLabels: expBase10CellsAndLabels()[1],
-    legendmin: null,
-    legendmax: null,
-    updateDailyValueRange: true,
-	choroplethLegendTitle: "New Cases Per Million",
-	datePrefix: "week ending",
-	circleRadiusFcn: function (feat, curDate) {
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: true,
+	circleAreaFcn: function (feat, curDate) {
 		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases',false, true);}, [1,1,1,1,1,1,1]);
 				if(todayCases > 0){
-					// for now, set radius as sqrt of cases/fixed constant
-					return Math.sqrt(todayCases)/3;
+					return todayCases;
 				} else {
 					return 0;
 				}
@@ -294,16 +263,34 @@ const themeWeeklyDeaths = {
     legendmin: null,
     legendmax: null,
     updateDailyValueRange: true,
-	choroplethLegendTitle: "New Deaths Per Million",
-	datePrefix: "week ending",
-	circleRadiusFcn: function (feat, curDate) {
-		var todayDeaths = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'deaths',false, true);}, [1,1,1,1,1,1,1]);
-				if(todayDeaths > 0){
-					// for now, set radius as sqrt of deaths/fixed constant
-					return Math.sqrt(todayDeaths)/3;
-				} else {
-					return 0;
-				}
+	/**
+	 * The title to be used on the legend for this module's feature
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "Cases Per Million",
+    circleLegendTitle: "Total Cases",
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: true,
+	circleAreaFcn: function (feat, curDate) {
+		var todayCases = getValue(feat,curDate,'cases',false);
+		// for now, set radius as 1/10th of sqrt of cases
+		// or return zero for illustrations with no circles
+		return todayCases;
 	},
 	circleFill: '#45c',
 	circleStroke: '#459',
@@ -466,11 +453,57 @@ const themeWeeklyChangeDeaths = {
     legendmin: 0.2,
     legendmax: 1.8,
     updateDailyValueRange: false,
-	choroplethLegendTitle: "Increase in deaths vs. prior week",
-	datePrefix: "week ending",
-	circleRadiusFcn: 0,
-	circleFill: '#45c',
-	circleStroke: '#459',
+    
+	/**
+	 * The title to be used on the legend for this module's feature
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "Percent of tests with positive result.",
+
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
+
+	/**
+	 * The fill color of the circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
+	circleFill: '#f47',
+
+	/**
+	 * The border color of the circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
+	circleStroke: '#a04',
+	
+	/**
+	 * A function that gives the text to use for a given feature
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return A string to be used in the tooltip describing the given feature
+	 *         on the given date
+	 */
 	tooltipTextFcn: function (feat, date) {
 		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
 		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1])		
@@ -542,7 +575,24 @@ const themeWeeklyPositivityRate = {
     updateDailyValueRange: false,
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "week ending",
-	circleRadiusFcn: 0,
+
+/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
+
+	/**
+	 * The fill color of the circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -590,6 +640,134 @@ const themeWeeklyCaseMortality = {
 		}
 		return aggLbl;
 	},
+
+	/**
+	 * If true, the color scheme will be reversed.
+	 */
+	invertColorScale: true,
+
+	/**
+	 * The values to show colors for on the choropleth legend
+	 */
+	choroplethCells: [0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5],
+
+	/**
+	 * The corresponding labels on the choropleth legend
+	 * obviously this should be the same length as "cells"
+	 */
+	choroplethLabels: ["","~ 1%","","","","3%","","","","5%","","","","7%","","","","9% ~",""], 
+
+    /**
+    *Fixed Legend Value for each theme
+    */
+    legendmin: 0,
+    legendmax: 10,
+    
+    /**
+    *updateDailyValueRange will choose whether the legend will be automatically updated or not
+    *true - legend will be updated when user change the date
+    *false - legend will not be updated and have fixed value from above(legendmin & legendmax)
+    */
+    updateDailyValueRange: false,
+    /**
+	 * The title to be used on the legend for this module's feature
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "Deaths as a percent of cases",
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "total through",
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
+
+	/**
+	 * The fill color of the circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
+	circleFill: '#f47',
+
+	/**
+	 * The border color of the circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
+	circleStroke: '#a04',
+	
+	/**
+	 * A function that gives the text to use for a given feature
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return A string to be used in the tooltip describing the given feature
+	 *         on the given date
+	 */
+	tooltipTextFcn: function (feat, date) {
+		var state = feat.properties["ABBREV"];		
+		var cases = getValue(feat, date, 'cases',false);
+		var deaths = getValue(feat, date, 'deaths',false);
+		if (isNaN(cases)) {
+			cases = 0;
+		}
+		if (isNaN(deaths)) {
+			deaths = 0;
+		}
+		var ptr;
+		if(cases==0){ptr=0} else {ptr = 100*deaths/cases};
+		msg = "<p>Cases: " + withCommas(cases) + "</p>";
+		msg += "<p>Deaths: " + withCommas(deaths) + "</p>";
+		msg += "<p>Case Mortality: " + ptr.toFixed(1) + "%</p>";
+		return msg;
+	}
+	
+}
+
+const themeCaseMortality_7day = {
+	/**
+	 * The name under which this variable shows up in the variable selector
+	 *
+	 * type: string
+	 */
+	themeName: "Case Mortality (7-day)",
+
+	/**
+	 * A brief description, to show in the main window
+	 *
+	 * type: string
+	 */
+	
+	briefDescription: "The ratio of deaths to total confirmed cases 7 days earlier.",
+    
+	/**
+	 * A list of variables required to show this map theme
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases","deaths"],
+	
+	/**
+	 * A function that gives the value for a given feature
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return An appropriate number
+	 */
 	choroplethValueFcn: function (feat, date) {
 		var dateID = dataSource.dates.indexOf(date);
 		if(dateID < 7){
@@ -618,7 +796,24 @@ const themeWeeklyCaseMortality = {
     updateDailyValueRange: false,
 	choroplethLegendTitle: "Deaths as a percent of reported cases.",
 	datePrefix: "week ending",
-	circleRadiusFcn: 0,
+
+/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
+
+	/**
+	 * The fill color of the circle
+	 *
+	 * type: color (i.e., '#RGB' or '#RRGGBB') (though maybe a function of
+	 *       (feat, date) => color would work too, like it does everything else?)
+	 */
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -739,13 +934,34 @@ const themeCumulativeDeaths = {
     legendmin: 0,
     legendmax: 10000,
     updateDailyValueRange: true,
-	choroplethLegendTitle: "deaths Per Million (total deaths indicated by circle size)",
+	/**
+	 * The title to be used on the legend for this module's feature
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "deaths Per Million",
+    circleLegendTitle: "Total Death Cases",
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
 	datePrefix: "total through",
-	circleRadiusFcn: function (feat, curDate) {
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: true,
+	circleAreaFcn: function (feat, curDate) {
 		var todaydeaths = getValue(feat,curDate,'deaths',false);
 		// for now, set radius as 1/10th of sqrt of deaths
 		// or return zero for illustrations with no circles
-		return Math.sqrt(todaydeaths)/8;
+		return todaydeaths;
 	},
 	circleFill: '#45c',
 	circleStroke: '#459',
@@ -812,29 +1028,33 @@ const themeCumulativePositivityRate = {
     legendmin: 0,
     legendmax: 15,
     updateDailyValueRange: false,
-	choroplethLegendTitle: "Percent of tests with positive result.",
-	datePrefix: "total through",
-	circleRadiusFcn: 0,
-	circleFill: '#f47',
-	circleStroke: '#a04',
-	tooltipTextFcn: function (feat, date) {
-		var state = feat.properties["ABBREV"];		
-		var cases = getValue(feat, date, 'cases',false);
-		var tests = getValue(feat, date, 'tests',false);
-		if (isNaN(cases)) {
-			cases = 0;
-		}
-		if (isNaN(tests)) {
-			tests = 0;
-		}
-		var ptr;
-		if(tests==0){ptr="n/a";} else {ptr= (100*(cases/tests)).toFixed(1) + "%";}
-		msg = "<p>Tests: " + withCommas(tests) + "</p>";
-		msg += "<p>Positive: " + withCommas(cases) + "</p>";
-		msg += "<p>Positive Ratio: " + ptr + "</p>";
-		return msg;
-	}	
-}
+    
+
+	/**
+	 * The title to be used on the legend
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "Increase vs. previous week",
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 * May be a function or a constant value.
+	 * If using a function, it should have the following parameters:
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
 
 const themeCumulativeCaseMortality = {
 	themeName: "Cumulative Case Mortality",
@@ -937,7 +1157,23 @@ const themeWeeklyChangeCases = {
     legendmax: 1.8,
     updateDailyValueRange: false,
 	choroplethLegendTitle: "Increase vs. previous week",
-	circleRadiusFcn: 0,
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 *
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
+
+	/**
+	 * The fill color of the circle
+	 *
+	 * type: color value or function of (feat, date) => color
+	 */
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -966,3 +1202,192 @@ const themeWeeklyChangeCases = {
 }
 */
 
+
+	/**
+	 * A brief description, to show in the main window
+	 *
+	 * type: string
+	 */
+	
+	briefDescription: "The difference between new cases this week vs. the previous week.",
+    
+	/**
+	 * A list of variables required to show this map theme. 
+	 * Look in "data/data_dictionary.txt" for a list of available variable names.
+	 * Note that each data source might only provide certain variables. If a data source does 
+	 * not provide all of the variables required by your theme, your theme will not be 
+	 * available for that data source.
+	 *
+	 * type: array of strings
+	 */
+
+	requiredVariables: ["cases"],
+
+	/**
+	 * A function that gives the value used to determine a feature's color
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return An appropriate number
+	 */
+	choroplethValueFcn: function (feat, date) {
+		// Two helper functions are available to you:
+		
+		// (1) The ***getValue*** function can get the value of any variable for a given feature and date
+		// It is defined in index.html and has the following signature:
+		// 			getValue = function(feat, date, varName, perMillion=false, getIncrease = false)
+		// Example 1: Get the number of cases on the current date:
+		var currentCases = getValue(feat,date,'cases', false, false)
+		// Example 2: Get the number of cases per million people:
+		var currentCasesPerMillion = getValue(feat,date,'cases', true, false)
+		// Example 3: Get the increase in cases over the previous day (i.e. the number of NEW cases):
+		var increaseInCases = getValue(feat,date,'cases', false, true)
+		
+		// (2) The ***periodAverage*** function can get an average of any variable for any time period prior to each slider date
+		// It is defined in utils.js and has the following signature:
+		//     periodAverage=function(feat, date, valFunc, periodWts)
+		// You can use "getValue" for the value function, and a simple array of numbers for periodWts.
+		// Example 1: Get the 7-day average number of new cases/day:		
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
+		// Example 2: Get the 7-day average for the previous week
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		
+		// This theme uses the last two variables to determine the rate at which cases are increaseing or decreasing.
+		// The following code returns the calculated value
+		// First, handle special cases:
+		if(prior_week==0){
+			if(this_week==0){
+				return 1; // No data, so we want a neutral color. A ratio of 1 means no increase or decrease.
+			} else {
+				return 2; // Increase from zero to a non-zero value, so we want a dark color. An increase of 2x is pretty big.
+			}
+		} else {
+			return this_week/prior_week; // The usual case: just return the increase ratio.
+		}
+	},
+
+	/**
+	 * A color interpolators to determine the feature fill color associated with a given
+	 * value
+	 *
+	 * Choose from interpolators here: https://github.com/d3/d3-scale-chromatic
+	 * Or build your own.
+	 */
+	choroplethColorInterpolator: d3.interpolateRdBu,
+
+	/**
+	 * A function that takes possible values of the 
+	 * choropleth value function and transforms them to a linear
+	 * range (e.g. from 0 to 1) to match with a color range
+	 * For no transformation, just return the input value.
+	 *
+	 * @param value A single numeric value of our feature
+	 * @return A transformed value
+	 */
+	choroplethValueScale: function(d){return d;},
+
+	/**
+	 * If true, the color scheme will be reversed.
+	 */
+	invertColorScale: true,
+
+	/**
+	 * The values to show colors for on the choropleth legend
+	 */
+	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
+
+	/**
+	 * The corresponding labels on the choropleth legend.
+	 * This should be the same length as "cells"
+	 */
+	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
+
+    /**
+    *Fixed legend bounds, to be used when the legend is not automatically updated.
+    */
+    legendmin: 0.2,
+    legendmax: 1.8,
+    
+    /**
+    *updateDailyValueRange will choose whether the legend will be automatically updated or not
+    *true - legend will be updated when user changes the date, except during animated playback.
+    *false - legend will not be updated and will have fixed value bounds from above(legendmin & legendmax)
+    */
+    updateDailyValueRange: false,
+    
+
+	/**
+	 * The title to be used on the legend
+	 *
+	 * type: string
+	 */
+	choroplethLegendTitle: "Increase vs. previous week",
+
+	/**
+	 * A prefix to the date display for this theme, for example indicating the time period covered
+	 *
+	 * type: string
+	 */
+	datePrefix: "week ending",
+
+	/**
+	 * The size of the circle symbol (set to zero for no circles).
+	 * May be a function or a constant value.
+	 * If using a function, it should have the following parameters:
+	 * @param feat The feature whose circle size is desired
+	 * @param date The date for which the feature is being evaluated
+	 * @return a numerical value or function(feat, date) that computes a numerical value, 
+	 *         interpreted as the radius of the circle, in pixels
+	 */
+    circle: false,
+	circleAreaFcn: 0,
+
+	/**
+	 * The fill color of the circle
+	 *
+	 * type: color value or function of (feat, date) => color
+	 */
+	circleFill: '#45c',
+
+	/**
+	 * The border color of the circle
+	 *
+	 * type: color value or function of (feat, date) => color
+	 */
+	circleStroke: '#459',
+	
+		/**
+	 * A function that gives the text to use for a given feature
+	 *
+	 * @param feat The feature whose value is desired
+	 * @param date The date for which the feature's value is desired
+	 * @return A string to be used in the tooltip describing the given feature
+	 *         on the given date
+	 */
+	tooltipTextFcn: function (feat, date) {
+		// First make some calculations.
+		// You can use the same ***getValue*** and ***periodAverage*** functions as described above.
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])		
+		var increase;
+		if(prior_week==0){
+			var increase="Increase: n/a";
+		} else {
+			var increase = this_week/prior_week ;
+			if (increase <= 1){
+				increase = 100*(1-increase);
+				increase = "Decrease: " + increase.toFixed(1) + "%"
+			} else {
+				increase = 100*(increase-1);
+				increase = "Increase: " + increase.toFixed(1) + "%"
+			}
+			
+		}
+		// The message to show in the tooltip:
+		msg = "<p>Previous week: " + prior_week.toFixed(1) + " new cases/day</p>";
+		msg += "<p>This week: " + this_week.toFixed(1) + " new cases/day</p>";
+		msg += "<p>" + increase + "</p>";		
+		return msg;
+	}
+
+}
