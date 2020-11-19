@@ -37,6 +37,9 @@ function daysInMonth(monthID){
 }
 
 
+
+
+
 /**
  * Takes a date in YYYYMMDD format and returns the year, monthID and day as integers
  */
@@ -62,11 +65,89 @@ function previousDate(date, dates){
 	}
 }
 
+function nPreviousDate(date,dates,n){
+	var finalDate = date;
+	var nRemaining=n;
+	while (nRemaining < 0){
+		finalDate = previousDate(finalDate,dates);
+		nRemaining +=1;
+	}
+	return finalDate;
+}
+
+function dateRangeExpression(date1,date2,includeYear){
+	// parse year, month and day
+	var jsDate1 = new Date(date1);
+	var jsDate2 = new Date(date2);
+	var y1,m1,d1,y2,m2,d2;
+	y1=jsDate1.getFullYear();
+	m1 = jsDate1.getMonth();
+	d1 = jsDate1.getDate();
+	y2=jsDate2.getFullYear();
+	m2 = jsDate2.getMonth();
+	d2 = jsDate2.getDate();
+	
+	
+	console.log("DEBUGGING DATERANGEEXPRESSION");
+	console.log([date1,date2]);
+	console.log([y1,m1,d1,y2,m2,d2]);
+	
+	// handle case of different years
+	if(y1 != y2){
+		return date1 + " - " + date2
+	} else {		
+		var expr = monthString(m1+1) + " " + d1 + " - ";
+		if(m1==m2){
+			expr += d2;
+		} else if(y1==y2) {
+			expr += monthString(m2+1) + " " + d2;
+		}
+		if(includeYear){
+			expr += ", " + y1;
+		}
+		return expr;
+	}
+}
+
+/*
+ determines a date range string for a given base date and date range
+  baseDate: the current date, as a string
+  dateOffsets: array with 0, 2 or 4 relative offsets from baseDate
+*/
+function datePeriodExpression(baseDate, dateOffsets, allDates){
+	if(baseDate == undefined){
+		return "";
+	} else if(dateOffsets == undefined){
+		return baseDate;
+	} else if(dateOffsets.length==0) {
+		return baseDate;
+	} else if(dateOffsets.length==2) {
+		var date1 = nPreviousDate(baseDate,allDates,dateOffsets[0]);
+		var date2 = nPreviousDate(baseDate,allDates,dateOffsets[1]);
+		return dateRangeExpression(date1,date2,false);
+	} else if(dateOffsets.length==4) {
+		var date1 = nPreviousDate(baseDate,allDates,dateOffsets[0]);
+		var date2 = nPreviousDate(baseDate,allDates,dateOffsets[1]);
+		var date3 = nPreviousDate(baseDate,allDates,dateOffsets[2]);
+		var date4 = nPreviousDate(baseDate,allDates,dateOffsets[3]);
+		var expr1 = dateRangeExpression(date1,date2,false);
+		var expr2 = dateRangeExpression(date3,date4,false);
+		return "(" + expr1 + ") vs. (" + expr2 + ")";
+	}
+
+}
+
+
+
 /**
  * Adds commas to a number for display purposes
  */
 function withCommas(num) {
-	return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+	if(num == undefined){
+		return "";
+	} else {
+		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+	}
 }
 
 /**

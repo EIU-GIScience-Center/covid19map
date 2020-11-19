@@ -39,7 +39,8 @@ function dataJHU_USA_Counties(){return {
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho"};
+		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho", 
+							"IA":"Iowa", "LA":"Louisiana", "MS":"Mississippi", "NH":"New Hampshire"};
 		var stateIDs = Object.keys(cart_states);
 		var num_states = stateIDs.length;
 		var target_length = num_states*2+3;
@@ -165,7 +166,7 @@ function dataJHU_USA_Counties(){return {
 				// DEFINE AN ARRAY OF DATES IN TEMPORAL SEQUENCE																
 				var dateStrings = Object.keys(case_data[0]); // pull out keys from first row of data
 				dateStrings.splice(0,11); // dates are the keys starting from item 11
-				function dateFromString(dateString){
+				function JHUdateFromString(dateString){
 					var pieces = dateString
 									.split("/")
 									.map(function(piece){return parseInt(piece);});
@@ -174,9 +175,23 @@ function dataJHU_USA_Counties(){return {
 					var year = 2000 + pieces[2];
 					var this_date = new Date(year, month-1, day,0,0,0,0).toDateString();
 					return this_date;
-				}				
-				// here's the real date array				
-				dates = dateStrings.map(dateFromString);
+				}
+				function covizDateFromString(dateString){
+					var pieces = dateString
+									.split("/")
+									.map(function(piece){return parseInt(piece);});
+					var month = pieces[0];
+					var day = pieces[1];
+					var year = 2000 + pieces[2];
+					var this_date = new Date(year, month-1, day,0,0,0,0).toDateString();
+					return this_date.slice(4,-5) + "," + this_date.slice(-5);
+				}
+				
+				// array of dates used in the JHU file
+				var JHUdates = dateStrings.map(JHUdateFromString);
+				// array of dates to use in COViz
+				var CovizDates = dateStrings.map(covizDateFromString);
+				
 				
 				// DEFINE AN ARRAY OF DISTRICT IDs
 				var districtIDs = [];
@@ -206,12 +221,12 @@ function dataJHU_USA_Counties(){return {
 				// create dictionary of values for each date
 				// initializing each date value to an empty dictionary
 				var dateDistrictData = {};
-				for(let i=0; i < dates.length; i++){
-					dateDistrictData[dates[i]]={};
+				for(let i=0; i < CovizDates.length; i++){
+					dateDistrictData[CovizDates[i]]={};
 					}
 				// populate dateDistrictData with dummy values for each date/district
-				for(let i=0; i < dates.length; i++){
-					var cur_date = dates[i];
+				for(let i=0; i < CovizDates.length; i++){
+					var cur_date = CovizDates[i];
 					var cur_record = dateDistrictData[cur_date];
 					for(let j=0; j < districtIDs.length; j++){
 						cur_districtID = districtIDs[j];
@@ -219,20 +234,17 @@ function dataJHU_USA_Counties(){return {
 					}
 				}
 				// *********************************************
-
 			
 				// go through src.case_data object and transfer values into dateDistrictData object
 				for(let i=0; i < case_data.length; i++){ // loop through table rows
 					var cur_row = case_data[i]; // get data record
 					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
 						var cur_districtID = cur_row.Combined_Key; // get district id 
-						for(let j=0; j < dates.length; j++){ // loop through dates
-							var cur_date = dates[j];
-							var cur_dateString = dateStrings[j];
-							if(dateDistrictData[cur_date] != undefined){
-								if(dateDistrictData[cur_date][cur_districtID] != undefined){											
+						for(let j=0; j < CovizDates.length; j++){ // loop through dates
+							if(dateDistrictData[CovizDates[j]] != undefined){
+								if(dateDistrictData[CovizDates[j]][cur_districtID] != undefined){											
 									// transfer values to dateDistrictData object
-									dateDistrictData[cur_date][cur_districtID]['cases'] = parseInt(case_data[i][cur_dateString]);
+									dateDistrictData[CovizDates[j]][cur_districtID]['cases'] = parseInt(case_data[i][dateStrings[j]]);
 								}
 							}
 						}
@@ -244,13 +256,11 @@ function dataJHU_USA_Counties(){return {
 					var cur_row = death_data[i]; // get data record
 					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
 						var cur_districtID = cur_row.Combined_Key; // get district id 
-						for(let j=0; j < dates.length; j++){ // loop through dates
-							var cur_date = dates[j];
-							var cur_dateString = dateStrings[j];
-							if(dateDistrictData[cur_date] != undefined){
-								if(dateDistrictData[cur_date][cur_districtID] != undefined){											
+						for(let j=0; j < CovizDates.length; j++){ // loop through dates
+							if(dateDistrictData[CovizDates[j]] != undefined){
+								if(dateDistrictData[CovizDates[j]][cur_districtID] != undefined){											
 									// transfer values to dateDistrictData object
-									dateDistrictData[cur_date][cur_districtID]['deaths'] = parseInt(death_data[i][cur_dateString]);
+									dateDistrictData[CovizDates[j]][cur_districtID]['deaths'] = parseInt(death_data[i][dateStrings[j]]);
 								}
 							}
 						}
@@ -270,7 +280,6 @@ function dataJHU_USA_Counties(){return {
 						} else if (stateIDs.includes(filter)) {
 							return src[filter];
 						} else {
-							
 							var this_state = src.all_counties;
 							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
 							this_state.features = this_state.features.filter(feat => feat.properties.StateAbbre==filter);
@@ -293,13 +302,20 @@ function dataJHU_USA_Counties(){return {
 					defaultFilter: "GA",
 					dataChildName: null,
 					dataParentName: "USA",
-					dates: dates, 
+					dates: CovizDates, 
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
 					getID: function(feat){return feat.properties.JHU_key;}, 
 					getLabel: function(feat){return feat.properties.CensusName;}, 
 					getPopulation: function(feat){return feat.properties.pop2018;}, 
+					aggregateLabel: function(){
+						if(dataSourceFilter==null){
+							return "filter is null!!!";
+						} else {
+							return dataSourceFilter;
+						}
+					}		
 				}
 
 				resolve(the_data_object);

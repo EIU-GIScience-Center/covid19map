@@ -145,6 +145,7 @@ html, body, #fullheight {
 	vertical-align: middle
 	border-left: 2px solid powderblue;
 	overflow-y: auto;
+	padding-left: 5ex;
 	margin-left: 0ex;
 	margin-right: 0ex;
 	margin-top:0ex; 
@@ -492,6 +493,7 @@ input:checked + .slider:before {
   display: inline-block;
   transition: background-color 0.6s ease;
 }
+
 
 .active, #dot:hover {
   background-color: #004C97;

@@ -147,14 +147,15 @@ function dataCovidTracking_states(){ return {
 				// populate dateDistrictData with dummy values for each date/state
 				for(let i=0; i < dates.length; i++){
 					var cur_date = dates[i];
-					var cur_record = dateDistrictData[cur_date];
+					var cur_date_record = dateDistrictData[cur_date];
 					for(let j=0; j < districtIDs.length; j++){
 						cur_districtID = districtIDs[j];
-						cur_record[cur_districtID] = {};
+						cur_date_record[cur_districtID] = {};
+						var cur_district_record = cur_date_record[cur_districtID];
 						// set values to zero initially
-						dateDistrictData[cur_date][cur_districtID]['cases']=0;
-						dateDistrictData[cur_date][cur_districtID]['tests']=0;
-						dateDistrictData[cur_date][cur_districtID]['deaths']=0;
+						cur_district_record['cases']=0;
+						cur_district_record['tests']=0;
+						cur_district_record['deaths']=0;
 					}
 				}
 				// *********************************************
@@ -165,11 +166,13 @@ function dataCovidTracking_states(){ return {
 					var cur_date = parseDateString(src.tab_data[i]["date"]);
 					var cur_districtID = src.tab_data[i]["state"];										
 					if(dateDistrictData[cur_date] != undefined){
-						if(dateDistrictData[cur_date][cur_districtID] != undefined){											
+						if(dateDistrictData[cur_date][cur_districtID] != undefined){	
+							var base_row = dateDistrictData[cur_date][cur_districtID];
+							var src_item = src.tab_data[i];
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['cases'] = src.tab_data[i]["positive"];
-							dateDistrictData[cur_date][cur_districtID]['tests'] = src.tab_data[i]["positive"] + src.tab_data[i]["negative"];
-							dateDistrictData[cur_date][cur_districtID]['deaths'] = src.tab_data[i]["death"];
+							base_row['cases'] = src_item["positive"];
+							base_row['tests'] = src_item["positive"] + src_item["negative"];
+							base_row['deaths'] = src_item["death"];
 						}
 					}
 				}
@@ -204,6 +207,7 @@ function dataCovidTracking_states(){ return {
 					getID: function(feat){return feat.properties.ABBREV;}, 
 					getLabel: function(feat){return feat.properties.STATE_NAME;}, 
 					getPopulation: function(feat){return feat.properties.POP_2010;}, 
+					aggregateLabel: function(){return "USA";}
 				}
 				resolve(the_data_object);
 

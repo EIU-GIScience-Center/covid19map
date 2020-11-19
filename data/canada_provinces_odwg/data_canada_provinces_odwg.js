@@ -300,6 +300,7 @@ function dataODWG_Canada_Provinces(){return {
 					getID: function(feat){return feat.properties.Cov19ID;},
 					getLabel: function(feat){return feat.properties.name;},
 					getPopulation: function(feat){return feat.properties.Pop2020q1;},
+					aggregateLabel: function(){return "Canada";}
 				}
 				resolve(the_data_object);
 
