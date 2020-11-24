@@ -1118,7 +1118,10 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				// reload legend
 				console.log("loading legend from updateMap");
 				loadLegend();
-                loadCircleLegend();
+				if(moving==false){
+                    console.log("Load circle legend from updateMap");
+                    loadCircleLegend();
+				};
 				// update map title
 				updateMapTitle();
 				// show info tooltip
