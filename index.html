@@ -1169,7 +1169,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		  .call(legendChoropleth);
 		do_resize=true;
 	}
-    
+    // Circle Legend --------------------------------------------------------------
+    // the daily minimum and maximum value
 	function dailymaxCirValue(date, valuefunction){
 		var baseFeat = baseFeatures;
 		if(baseFeat, date == undefined){
@@ -1185,7 +1186,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			return dailyCirmax;
 		}
 	}
-
 	function dailyminCirValue(date, valuefunction){
 		var baseFeat = baseFeatures;
 		if(baseFeat, date == undefined){
@@ -1202,7 +1202,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		}
 	}
     
-    // The minimum value across all features on all dates
+    // the minimum and maximum value across all features on all dates
 	function minCirValue(valuefunction){
 		if(baseFeatures == undefined){
 			return "undefined";
@@ -1217,14 +1217,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			return globalmin;
 		}
 	}
-
-	// The maximum value across all features on all dates
 	function maxCirValue(valuefunction){
 		if(baseFeatures == undefined){
 			return "undefined";
 		} else {
 			var globalmax =dailymaxCirValue(dataSource.dates[0],valuefunction);
-            console.log(dailymaxCirValue(dataSource.dates[0],valuefunction));
 			for(let i=0; i < dataSource.dates.length; i++){
 				var currentValue = dailymaxCirValue(dataSource.dates[i],valuefunction);
 				if (currentValue > globalmax){
@@ -1235,6 +1232,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		}
 	}
     
+    //Load circle legend
     function loadCircleLegend() {
             console.log("Loading Circle Legend...");
             var legwidth = 0.4*(document.getElementById("mapbottom").offsetWidth);
@@ -1243,12 +1241,19 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             // remove any existing legend
         d3.select("#circleLegend").selectAll('svg').remove();
             // create svg for circle legend
-            var globalCirRadmax = maxCirValue(theme.circleAreaFcn);
-            var globalCirRadmin = minCirValue(theme.circleAreaFcn);
-            var dailyCirmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
-            var dailyCirmin = dailyminCirValue(curDate, theme.circleAreaFcn);
+            // choose cirRadmax/min based on whether animation is playing or not
+            if (theme.updateDailyValueRange && moving==false){
+                //daily maximum and minimum value
+                  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
+                  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
+            } else {
+                //global maximum and minimum value
+                  var cirRadmax = maxCirValue(theme.circleAreaFcn);
+                  var cirRadmin = minCirValue(theme.circleAreaFcn);
+            }   
+            // find minmum and maximum circle radius
             var maxCircleRadius=function(d){
-                var cRadius = Math.sqrt(radScaleFac * globalCirRadmax/Math.PI);
+                var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
                 if (cRadius >= 43){
                     return 43
                 } else {
@@ -1256,48 +1261,54 @@ function areaScaleFac(features, maxOccupancy = 0.35){
                 }
             };
             var minCircleRadius=function(d){
-                var cRadius = Math.sqrt(radScaleFac * globalCirRadmin/Math.PI);
+                var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
                 if (cRadius <= 5){
                     return 5
                 } else {
                 return cRadius;
                 }
             };
-        var linearSize = d3.scaleLinear().domain([globalCirRadmin, globalCirRadmax]).range([minCircleRadius(globalCirRadmin),maxCircleRadius(globalCirRadmax)]);
+        //domain = value
+        //range = disply pixel size = circle radius
+        var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
             var legendsvg = d3.select("#circleLegend")
                 .attr('align','left')
                 .append('svg')
                 .attr('width',legwidth)
                 .attr('height',120);
-        
+        // make circle transparent when there is no circle symbol on the map
         if (theme.circle == false){
             legendsvg.append("g")
               .attr("class", "legendSize")
               .attr("transform", "translate(20,40)")
               .style("fill", "rgba(0, 0, 0, 0)")
         } else {
+        // show circle legend with color match with the symbol from the map
             legendsvg.append("g")
               .attr("class", "legendSize")
               .attr("transform", "translate(20,40)")
               .style("fill", "rgba(0, 215, 215, 1)")
         }
-        
+        // legend title
             legendsvg.append("text")
               .attr("x", 15)
               .attr("y", 15)
               .attr("dy", ".35em")
               .style("text-align", "left")
               .text(theme.circleLegendTitle)
-
+        // legend size and label
             var legendSize = d3.legendSize()
               .scale(linearSize)
               .shape('circle')
               .shapePadding(40)
               .labelOffset(15)
               .orient('horizontal')
-              .labels([dailyCirmin,
-                       Math.trunc(((dailyCirmax-dailyCirmin)/10)*2.5), Math.trunc(((dailyCirmax-dailyCirmin)/10)*5), Math.trunc(((dailyCirmax-dailyCirmin)/10)*7.5), 
-                       dailyCirmax]);
+            // truncate to only show integer, added comma in every three digits
+            // label = calculate the values between minimum and maximum values
+            // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
+              .labels([Math.trunc(cirRadmin).toLocaleString(),
+                       Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin).toLocaleString(), Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin).toLocaleString(), Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin).toLocaleString(), 
+                       Math.trunc(cirRadmax).toLocaleString()]);
         
         
             // call function to draw legend in svg
@@ -1689,7 +1700,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		  fixedValueRange();
 		  console.log("loading legend from handlePlayButtonClick");
 		  loadLegend();
-          loadCircleLegend();
 		  //delay = 0;
 		  timer = setInterval(step, delay);
 		  playButton.text("∥"); 
