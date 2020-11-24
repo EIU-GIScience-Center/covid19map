@@ -568,10 +568,14 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				circleArea += thisCircleArea;
 				featArea += thisFeatArea;
 			}
-			var areaRatio = circleArea/featArea;
+			if (circleArea == 0){
+                return 0;
+            } else {
+            var areaRatio = circleArea/featArea;
 			// calculate radius scale factor needed to make the maxRatio equal to maxOccupancy
 			var scaleFac = maxOccupancy/areaRatio;
 			return scaleFac;
+            }
 		}
     }
 
@@ -1068,7 +1072,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				} else {
 					// symbology for a cartogram
 					todata=cartogramFeatures;
-					if(theme.circleAreaFcn==0){
+					if(theme.circle == false){
 						localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 						localFeatureStroke = '#DDD';
 						localCircleStroke = localCircleFill;
@@ -1700,6 +1704,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		  }
 		  playStart = currentIndex;
 		  moving = true;
+          loadCircleLegend();
 		  fixedValueRange();
 		  console.log("loading legend from handlePlayButtonClick");
 		  loadLegend();

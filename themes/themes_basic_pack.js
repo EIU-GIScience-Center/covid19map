@@ -76,7 +76,8 @@ const themeDailyCases = {
 	datePrefix: "",
 
 	// function of (feature, date) or fixed number representing the base radius of the circle symbol (set to zero for no circles).
-	circleAreaFcn: function (feat, curDate) {
+	circle: true,
+    circleAreaFcn: function (feat, curDate) {
 		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases',false, true);}, [1]);
 				if(todayCases > 0){
 					return todayCases;
@@ -170,7 +171,8 @@ const themeDailyDeaths = {
 	datePrefix: "",
 
 	// function of (feature, date) or fixed number representing the base radius of the circle symbol (set to zero for no circles).
-	circleAreaFcn: function (feat, curDate) {
+	circle: true,
+    circleAreaFcn: function (feat, curDate) {
 		var todaydeaths = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'deaths',false, true);}, [1]);
         if(isNaN(todaydeaths)){return 0;};
         if(todaydeaths > 0){
@@ -236,7 +238,8 @@ const themeWeeklyCases = {
 	choroplethLegendTitle: "New Cases Per Million",
     circleLegendTitle: "New Cases Per Week",
 	datePrefix: "week ending",
-	circleAreaFcn: function (feat, curDate) {
+	circle: true,
+    circleAreaFcn: function (feat, curDate) {
 		var weeklyCases = parseInt(7*periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]))
 				if(weeklyCases > 0){
 					return weeklyCases;
@@ -296,6 +299,7 @@ const themeWeeklyDeaths = {
 	choroplethLegendTitle: "New Deaths Per Million",
     circleLegendTitle: "New Deaths Per Week",
 	datePrefix: "week ending",
+    circle: true,
     circleAreaFcn: function (feat, curDate) {
 		var weeklyDeaths = parseInt(7*periodAverage(feat, curDate, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]))
 				if(weeklyDeaths > 0){
@@ -703,7 +707,8 @@ const themeCumulativeCases = {
 	choroplethLegendTitle: "Cases Per Million",
     circleLegendTitle: "Total Cases",
 	datePrefix: "total through",
-	circleAreaFcn: function (feat, curDate) {
+	circle: true,
+    circleAreaFcn: function (feat, curDate) {
 		var totalCases = getValue(feat,curDate,'cases',false);
 		// for now, set radius as 1/10th of sqrt of cases
 		// or return zero for illustrations with no circles
@@ -766,7 +771,8 @@ const themeCumulativeDeaths = {
 	choroplethLegendTitle: "deaths Per Million",
     circleLegendTitle: "Total deaths",
 	datePrefix: "total through",
-	circleAreaFcn: function (feat, curDate) {
+	circle: true,
+    circleAreaFcn: function (feat, curDate) {
 		var totaldeaths = getValue(feat,curDate,'cases',false);
 		// for now, set radius as 1/10th of sqrt of cases
 		// or return zero for illustrations with no circles
