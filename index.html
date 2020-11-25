@@ -76,7 +76,8 @@
 			</div>
 			<div id="map"></div>
 			<div id="mapbottom">
-				<div id="legend" style="align: center; float: left; width: 45%;"></div>
+				<div id="legend" style="float: left; width: 60%; display: block;"></div>
+                <div id="circleLegend" style="float: left; width: 40%; display: block;"></div>
 			</div>
 		</div>
 		<div id="options_panel">
@@ -311,8 +312,8 @@
 	var highValColor = null;
 	var lowVal;
 	var highVal;
-	var dailymin;
-	var dailymax;
+	var dailyChomin;
+	var dailyChomax;
 	var radScaleFac = 0;
     var timer;
 	var do_resize = true; // if true, map will reload on change in page size
@@ -423,29 +424,22 @@
 
 
 	// Auto-Update the legend Values
-	function myValueFunction(base, dates){
-		maxmax = theme.choroplethValueFcn(base, dates);
-		return maxmax
-	}
-
-
-
-
 	function dailymaxChoroplethValue(date, valuefunction){
 		var baseFeat = baseFeatures;
 		if(baseFeat, date == undefined){
 			return "undefined";
 		} else {
-			var dailymax = valuefunction(baseFeat.features[0], date);
+			var dailyChomax = valuefunction(baseFeat.features[0], date);
 			for (let i = 0; i < baseFeat.features.length; i++){
 				var currentValue = valuefunction(baseFeat.features[i], date);
-				if (currentValue > dailymax){
-					dailymax = currentValue;
+				if (currentValue > dailyChomax){
+					dailyChomax = currentValue;
 				}
 			}
-			return dailymax;
+			return dailyChomax;
 		}
 	}
+
 
 	// The minimum value across all features on a given date
 	function dailyminChoroplethValue(date, valuefunction){
@@ -453,17 +447,17 @@
 		if(baseFeat, date == undefined){
 			return "undefined";
 		} else {   
-			var dailymin = valuefunction(baseFeat.features[0], date);
+			var dailyChomin = valuefunction(baseFeat.features[0], date);
 			for (let i = 0; i < baseFeat.features.length; i++){
 				var currentValue = valuefunction(baseFeat.features[i], date);
-				if (currentValue < dailymin){
-					dailymin = currentValue;
+				if (currentValue < dailyChomin){
+					dailyChomin = currentValue;
 				}
 			}
-			return dailymin;
+			return dailyChomin;
 		}
 	}
-
+    
 	// The minimum value across all features on all dates
 	function minChoroplethValue(valuefunction){
 		if(baseFeatures == undefined){
@@ -495,17 +489,17 @@
 			return globalmax;
 		}
 	}
-
+    
 	function updateValueRange(date){
-		dailymin = dailyminChoroplethValue(date, myValueFunction);             
-		dailymax = dailymaxChoroplethValue(date, myValueFunction);
+		dailyChomin = dailyminChoroplethValue(date, theme.choroplethValueFcn);             
+		dailyChomax = dailymaxChoroplethValue(date, theme.choroplethValueFcn);
 		// determine legend span, and expand range to include legend span
-		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
-		dailymin = truncatedCells[0];
-		dailymax = truncatedCells[truncatedCells.length-1];
+		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailyChomin, dailyChomax);
+		dailyChomin = truncatedCells[0];
+		dailyChomax = truncatedCells[truncatedCells.length-1];
 		// truncate legend cells and labels to low and high values
 		var unitIntervalScale = d3.scaleLinear()
-		.domain([theme.choroplethValueScale(dailymin), theme.choroplethValueScale(dailymax)]);
+		.domain([theme.choroplethValueScale(dailyChomin), theme.choroplethValueScale(dailyChomax)]);
 		if(theme.invertColorScale){
 			choroplethColorScale =d3.scaleSequential(function(d){
 				return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
@@ -534,10 +528,9 @@
 
 	// calculates the radius scale factor that will result in the largest circle
 	// occupying the given proportion of the feature area
-	function radiusScaleFac(features, maxOccupancy = 0.35){
+function areaScaleFac(features, maxOccupancy = 0.35){
 		// determine the largest ratio of value/screenarea
-		
-		if(features == undefined || theme == undefined || $.isNumeric(theme.circleRadiusFcn) == true) {
+		if(features == undefined || theme == undefined || $.isNumeric(theme.circleAreaFcn) == true) {
 			return "undefined";
 		} else {
 			// determine the screen factor (ratio of screen coords to geometry coords)
@@ -553,13 +546,13 @@
 			*/
 			// shortcut variables
 			var feats = features.features;
-			var f = theme.circleRadiusFcn;
+			var f = theme.circleAreaFcn;
 			// find the date with the largest sum of values
 			var maxValSum = 0;
 			var maxDate = null;
 			for(i=0;i<dataSource.dates.length;i++){
 				var thisDate = dataSource.dates[i];
-				var curValSum = d3.sum(feats, x => Math.pow(f(x,thisDate),2));
+				var curValSum = d3.sum(feats, x => f(x,thisDate));
 				if (curValSum > maxValSum){
 					maxValSum = curValSum;
 					maxDate = thisDate;
@@ -570,17 +563,21 @@
 			var featArea = 0;
 			// check remaining features and update if larger
 			for (let i = 0; i < feats.length; i++){
-				var thisCircleArea = Math.pow(f(feats[i], maxDate),2)*Math.PI;
+				var thisCircleArea = (f(feats[i], maxDate));
 				var thisFeatArea = curZoomFunc.area(feats[i]);
 				circleArea += thisCircleArea;
 				featArea += thisFeatArea;
 			}
-			var areaRatio = circleArea/featArea;
+			if (circleArea == 0){
+                return 0;
+            } else {
+            var areaRatio = circleArea/featArea;
 			// calculate radius scale factor needed to make the maxRatio equal to maxOccupancy
-			var scaleFac = Math.sqrt(maxOccupancy/areaRatio);
+			var scaleFac = maxOccupancy/areaRatio;
 			return scaleFac;
+            }
 		}
-	}
+    }
 
     function loadTheme() {
 		// determine the new map theme
@@ -602,13 +599,13 @@
 				}	
 				
 				// get legend minimum and maximum
-				if (theme.legendmin == null){theme.legendmin = minChoroplethValue(myValueFunction)};
-				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(myValueFunction)};
+				if (theme.legendmin == null){theme.legendmin = minChoroplethValue(theme.choroplethValueFcn)};
+				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(theme.choroplethValueFcn)};
 				// calculate radius scale factor
 				if(oncartogram){
-					radScaleFac = radiusScaleFac(cartogramFeatures);
+					radScaleFac = areaScaleFac(cartogramFeatures);
 				} else {
-					radScaleFac = radiusScaleFac(baseFeatures);
+					radScaleFac = areaScaleFac(baseFeatures);
 				}
 				// update the map and legend
 				if (theme.updateDailyValueRange && moving==false){
@@ -697,9 +694,9 @@
 					}
 					// get scale factor for circle symbols
 					if(oncartogram){
-						radScaleFac = radiusScaleFac(cartogramFeatures);
+						radScaleFac = areaScaleFac(cartogramFeatures);
 					} else {
-						radScaleFac = radiusScaleFac(baseFeatures);
+						radScaleFac = areaScaleFac(baseFeatures);
 					}
 					resolve();
 				});
@@ -785,10 +782,10 @@
 					
 					// calculate radius scale factor
 					if(oncartogram){
-						radScaleFac = radiusScaleFac(cartogramFeatures);
-					} else {
-						radScaleFac = radiusScaleFac(baseFeatures);
-					}
+					   radScaleFac = areaScaleFac(cartogramFeatures);
+                    } else {
+                        radScaleFac = areaScaleFac(baseFeatures);
+                    }
 					console.log("Radius factor: " + radScaleFac);
 					console.log("updating map from resize");
 					updateMap();
@@ -909,7 +906,7 @@
 		// create new group for district paths
 		districtPaths = mapsvg.append('g');
 		// calculate radius scale 
-		radScaleFac = radiusScaleFac(featdata);
+		radScaleFac = areaScaleFac(featdata);
 		console.log("radScaleFac: " + radScaleFac);
 		// remove and re-create paths in SVG
 		curZoomFunc = divPathFunc("mapdiv", featdata, 30);
@@ -1054,17 +1051,14 @@
 				var localFeatureStroke;
 				var localCircleStroke;
 
-				if(theme.circleRadiusFcn==0){
+				if(theme.circleAreaFcn==0){
 					localCircleRadius=0;
 				} else {
 					localCircleRadius=function(d){
-						var cRad = radScaleFac * theme.circleRadiusFcn(d,curDate);
-						if(isNaN(cRad)){
-							console.log("Not a Number in localCircleRadius!!!");
-							console.log(radScaleFac);
-							console.log(theme.circleRadiusFcn(d,curDate));
-						}
-						return radScaleFac * theme.circleRadiusFcn(d,curDate);
+						var cRadius = 
+                            Math.sqrt
+                            (radScaleFac * theme.circleAreaFcn(d,curDate)/Math.PI);
+						return cRadius;
 					};
 				}
 				// adjust symbology depending on whether we're using a regular map or polygon
@@ -1078,7 +1072,7 @@
 				} else {
 					// symbology for a cartogram
 					todata=cartogramFeatures;
-					if(theme.circleRadiusFcn==0){
+					if(theme.circle == false){
 						localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 						localFeatureStroke = '#DDD';
 						localCircleStroke = localCircleFill;
@@ -1128,10 +1122,16 @@
 				// reload legend
 				console.log("loading legend from updateMap");
 				loadLegend();
+				if(moving==false){
+                    console.log("Load circle legend from updateMap");
+                    loadCircleLegend();
+				};
 				// update map title
 				updateMapTitle();
 				// show info tooltip
-				if(active_feature != null){showFeatureInfo(active_feature, true);}
+				if(active_feature != null){
+                    showFeatureInfo(active_feature, true);
+                }
 			} // end if date is not null
 		} // end if mapsvg is not null
 	}
@@ -1139,9 +1139,8 @@
 	function loadLegend(){
 		do_resize=false; // prevent repeated resizing
 		console.log("Loading Legend...");
-		var legwidth = 0.45*(document.getElementById("mapbottom").offsetWidth);
-		legwidth = $("#map_panel").width();
-		if(legwidth < 100){legwidth=100;};	
+		var legwidth = 0.6*(document.getElementById("mapbottom").offsetWidth);
+            if(legwidth < 100){legwidth=100;}
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
 		// create svg for new legend
@@ -1157,7 +1156,7 @@
 		var truncatedCells
         var truncatedLabels
         if (theme.updateDailyValueRange && moving==false){
-             [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailymin, dailymax);
+             [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailyChomin, dailyChomax);
         } else {
 			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
         }        
@@ -1177,7 +1176,154 @@
 		  .call(legendChoropleth);
 		do_resize=true;
 	}
-
+    // Circle Legend --------------------------------------------------------------
+    // the daily minimum and maximum value
+	function dailymaxCirValue(date, valuefunction){
+		var baseFeat = baseFeatures;
+		if(baseFeat, date == undefined){
+			return "undefined";
+		} else {
+			var dailyCirmax = valuefunction(baseFeat.features[0], date);
+			for (let i = 0; i < baseFeat.features.length; i++){
+				var currentValue = valuefunction(baseFeat.features[i], date);
+				if (currentValue > dailyCirmax){
+					dailyCirmax = currentValue;
+				}
+			}
+			return dailyCirmax;
+		}
+	}
+	function dailyminCirValue(date, valuefunction){
+		var baseFeat = baseFeatures;
+		if(baseFeat, date == undefined){
+			return "undefined";
+		} else {   
+			var dailyCirmin = valuefunction(baseFeat.features[0], date);
+			for (let i = 0; i < baseFeat.features.length; i++){
+				var currentValue = valuefunction(baseFeat.features[i], date);
+				if (currentValue < dailyCirmin){
+					dailyCirmin = currentValue;
+				}
+			}
+			return dailyCirmin;
+		}
+	}
+    
+    // the minimum and maximum value across all features on all dates
+	function minCirValue(valuefunction){
+		if(baseFeatures == undefined){
+			return "undefined";
+		} else {
+			var globalmin =dailyminCirValue(dataSource.dates[0],valuefunction);
+			for(let i=1; i < dataSource.dates.length; i++){
+				var currentValue = dailyminCirValue(dataSource.dates[i],valuefunction);
+				if (currentValue < globalmin){
+					globalmin = currentValue;
+				}	
+			}
+			return globalmin;
+		}
+	}
+	function maxCirValue(valuefunction){
+		if(baseFeatures == undefined){
+			return "undefined";
+		} else {
+			var globalmax =dailymaxCirValue(dataSource.dates[0],valuefunction);
+			for(let i=0; i < dataSource.dates.length; i++){
+				var currentValue = dailymaxCirValue(dataSource.dates[i],valuefunction);
+				if (currentValue > globalmax){
+					globalmax = currentValue;
+				}
+			}
+			return globalmax;
+		}
+	}
+    
+    //Load circle legend
+    function loadCircleLegend() {
+            console.log("Loading Circle Legend...");
+            var legwidth = 0.4*(document.getElementById("mapbottom").offsetWidth);
+            legwidth = $("#map_panel").width();
+            if(legwidth < 100){legwidth=100;};
+            // remove any existing legend
+        d3.select("#circleLegend").selectAll('svg').remove();
+            // create svg for circle legend
+            // choose cirRadmax/min based on whether animation is playing or not
+            if (theme.updateDailyValueRange && moving==false){
+                //daily maximum and minimum value
+                  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
+                  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
+            } else {
+                //global maximum and minimum value
+                  var cirRadmax = maxCirValue(theme.circleAreaFcn);
+                  var cirRadmin = minCirValue(theme.circleAreaFcn);
+            }   
+            // find minmum and maximum circle radius
+            var maxCircleRadius=function(d){
+                var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
+                if (cRadius >= 43){
+                    return 43
+                } else {
+                return cRadius;
+                }
+            };
+            var minCircleRadius=function(d){
+                var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
+                if (cRadius <= 5){
+                    return 5
+                } else {
+                return cRadius;
+                }
+            };
+        //domain = value
+        //range = disply pixel size = circle radius
+        var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
+            var legendsvg = d3.select("#circleLegend")
+                .attr('align','left')
+                .append('svg')
+                .attr('width',legwidth)
+                .attr('height',120);
+        // make circle transparent when there is no circle symbol on the map
+        if (theme.circle == false){
+            legendsvg.append("g")
+              .attr("class", "legendSize")
+              .attr("transform", "translate(20,40)")
+              .style("fill", "rgba(0, 0, 0, 0)")
+        } else {
+        // show circle legend with color match with the symbol from the map
+            legendsvg.append("g")
+              .attr("class", "legendSize")
+              .attr("transform", "translate(20,40)")
+              .style("fill", "rgba(0, 215, 215, 1)")
+        }
+        // legend title
+            legendsvg.append("text")
+              .attr("x", 15)
+              .attr("y", 15)
+              .attr("dy", ".35em")
+              .style("text-align", "left")
+              .text(theme.circleLegendTitle)
+        // legend size and label
+            var legendSize = d3.legendSize()
+              .scale(linearSize)
+              .shape('circle')
+              .shapePadding(40)
+              .labelOffset(15)
+              .orient('horizontal')
+            // truncate to only show integer, added comma in every three digits
+            // label = calculate the values between minimum and maximum values
+            // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
+              .labels([Math.trunc(cirRadmin).toLocaleString(),
+                       Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin).toLocaleString(), Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin).toLocaleString(), Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin).toLocaleString(), 
+                       Math.trunc(cirRadmax).toLocaleString()]);
+        
+        
+            // call function to draw legend in svg
+            legendsvg.select(".legendSize")
+                .call(legendSize);
+            do_resize=true;
+        }
+    
 	// smooth zoom
 	function smoothZoom(toDataSource){
 		toDataSource.dataFunc.then(function(the_data_obj){
@@ -1207,7 +1353,7 @@
 			});
 		}
 	})};
-
+    
 	// zoom to child 
     function zoomToChild(feat){
 		touring=false;
@@ -1558,6 +1704,7 @@
 		  }
 		  playStart = currentIndex;
 		  moving = true;
+          loadCircleLegend();
 		  fixedValueRange();
 		  console.log("loading legend from handlePlayButtonClick");
 		  loadLegend();

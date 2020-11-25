@@ -90,15 +90,12 @@ html, body, #fullheight {
 #mapbottom{
 	flex-grow: 0;	
 	align: center;
-	height: 55px;
+	height: 150px;
 	min-height: 75px;
-	max-height: 75px;
-	margin-left: 0ex;
-	margin-right: 0ex;
-	margin-top:0ex; 
-	margin-bottom: 0ex;
+	max-height: 150px;
+	margin:auto;
 	overflow-y: hidden;
-	overflow-x: auto;
+	overflow-x: hidden;
 }
 
 #options_panel{
@@ -391,7 +388,6 @@ input:checked + .slider:before {
       border-radius: 50%;
       box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
     }
-
 #play-button {
       font-family: 'Montserrat';
       font-size: 25px;
