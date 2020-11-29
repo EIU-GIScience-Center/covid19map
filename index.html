@@ -36,7 +36,10 @@
   <script src="data/counties_jhu/data_counties_JHU.js"></script>
   <script>console.log("loading canada...");</script>
   <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
+  <script>console.log("loading Europe...");</script>
+  <script src="data/Europe_jhu/data_Europe_JHU.js">
   <script>console.log("loading slider...");</script>
+  
   <script src="d3-simple-slider.min.js"></script>
   <script>console.log("loading resize sensor...");</script>
   <script src="ResizeSensor.js"></script>
@@ -1876,7 +1879,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		
 		var newDataSources = [
 			dataODWG_Canada_Provinces(),
-			dataJHU_USA_Counties()
+			dataJHU_USA_Counties(),
+			dataJHU_Europe()
 		];
 		
 		dataSources=dataSources.concat(newDataSources);
