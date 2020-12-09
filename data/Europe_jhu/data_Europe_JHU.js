@@ -268,6 +268,7 @@ function dataJHU_Europe(){return {
 					getID: function(feat){return feat.properties.sovereignt;}, 
 					getLabel: function(feat){return feat.properties.sovereignt;}, 
 					getPopulation: function(feat){return feat.properties.SUM_pop_es;}, 
+					districtClassLabel: "country",
 					aggregateLabel: function(){return "Europe";}
 				}
 

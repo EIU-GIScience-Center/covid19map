@@ -309,6 +309,7 @@ function dataJHU_USA_Counties(){return {
 					getID: function(feat){return feat.properties.JHU_key;}, 
 					getLabel: function(feat){return feat.properties.CensusName;}, 
 					getPopulation: function(feat){return feat.properties.pop2018;}, 
+					districtClassLabel: "county",
 					aggregateLabel: function(){
 						if(dataSourceFilter==null){
 							return "filter is null!!!";
