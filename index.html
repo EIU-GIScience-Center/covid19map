@@ -1022,10 +1022,31 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		// transitions the map features and symbology based on current theme, map type and data source
 		// change the text describing the map type
 		var mapTypeDescription;
+		var tName = theme.themeName.toLowerCase();
+		var tUnit = tName.split(" ");
+		var dcLabel = dataSource.districtClassLabel;
+		var upperdcLabel = dcLabel.slice(0,1).toUpperCase() + dcLabel.slice(1);
+		if(Array.isArray(tUnit)){
+			tUnit=tUnit[tUnit.length-1];
+			tUnit = tUnit.slice(0,-1);
+		}
+		
 		if (oncartogram){
-			mapTypeDescription = "The size of each state represents its <span style='color: #B37; font-weight: 700'>population</span>.";
+			mapTypeDescription = "The size of each " + dcLabel + " represents its <span style='color: #B37; font-weight: 700'>population</span>.<p><ul>";
+			if(theme.circle){
+				mapTypeDescription += "<li>Circle sizes represent <span style='color: #B37; font-weight: 700'>" + tUnit + " counts</span>";
+				mapTypeDescription += "<li><u>Circle</u> colors  represent <span style='color: #B37; font-weight: 700'>" + tUnit + " rates</span>";
+				mapTypeDescription += "<li> Denser circles indicate <span style='color: #B37; font-weight: 700'> higher rates</span>";
+			} 
+			mapTypeDescription += "</ul></p>";
 		} else {
-			mapTypeDescription = "The size of each state represents its <span style='color: #B37; font-weight: 700'>land area</span>.";
+			mapTypeDescription = "The size of each " + dcLabel + " represents its <span style='color: #B37; font-weight: 700'>land area</span>.<p><ul>";
+			if(theme.circle){
+				mapTypeDescription += "<li>Circle sizes represent <span style='color: #B37; font-weight: 700'>" + tUnit + " counts</span>";
+				mapTypeDescription += "<li>" + upperdcLabel + " colors represent <span style='color: #B37; font-weight: 700'>" + tUnit + " rates</span>";
+				mapTypeDescription += "<li> Circle density is  not meaningful";
+			} 
+			mapTypeDescription += "</ul></p>";
 		}
 		document.getElementById("map_type_description").innerHTML ="<i>" + mapTypeDescription + "</i>";
 		divid='map';
