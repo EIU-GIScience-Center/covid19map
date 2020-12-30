@@ -31,60 +31,42 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-function dataJHU_USA_Counties(){return {
-	dataSourceName: "USA Counties", // THIS NAME WILL BE USED FOR IDENTIFICATION, AND APPEAR IN THE DROP-DOWN SELECTOR
+function dataJHU_Europe(){return {
+	dataSourceName: "Europe", // THIS NAME WILL BE USED FOR IDENTIFICATION, AND APPEAR IN THE DROP-DOWN SELECTOR
 	                       // IF THE NEXT PROPERTY IS TRUE
-	showInSelector: false, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
+	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho", 
-							"IA":"Iowa", "LA":"Louisiana", "MS":"Mississippi", "NH":"New Hampshire"};
-		var stateIDs = Object.keys(cart_states);
-		var num_states = stateIDs.length;
-		var target_length = num_states*2+3;
-		
-		// get geoJSONs one after the other so that the variables don't update in between
-		function getGeoJsons(id){
-			console.log("Getting geojsons #" + id);
-			if(id<num_states){
-				var stateID = stateIDs[id];
-				var stateName = cart_states[stateID];
-				 
-				$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties.geojson", function(src_data) {
-					console.log("got " + stateName + " counties...")
-					src[stateID] = src_data; // add to src object
-					$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties_cartogram.geojson", function(src_data) {
-						console.log("got " + stateName + " cartogram...")
-						src[stateID + "_cartogram"] = src_data; // add to src object
-						getGeoJsons(id+1);
-						process_data(); // attempt to process all datasets
-					});	
-				});
-			}
-		}
+		var target_length = 4;
 
-		getGeoJsons(0);
-
-
-		// GET SOURCE DATASET (all polygons)
+		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder
-		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
-			console.log("got map polygons...")
-			src.all_counties = src_data; // add to src object
+		$.getJSON("data/Europe_JHU/geojson/Europe.geojson", function(src_data) {
+			console.log("got Europe map...")
+			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
+
+		// GET SOURCE DATASET (map polygons)
+		// Typically this will be a geojson file placed in the same folder
+		$.getJSON("data/Europe_JHU/geojson/Europe_cartogram.geojson", function(src_data) {
+			console.log("got Europe cartogram...")
+			src.cartogram_polys = src_data; // add to src object
+			process_data(); // attempt to process all datasets
+		});
+
 
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
 		$.ajax({
 			type: "GET",
-			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv',
+			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got JHU county case data...");
+				console.log("got Europe case data...");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -96,10 +78,10 @@ function dataJHU_USA_Counties(){return {
 		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
 		$.ajax({
 			type: "GET",
-			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv',
+			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got JHU county death data...");
+				console.log("got Europe death data...");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -197,9 +179,9 @@ function dataJHU_USA_Counties(){return {
 				var districtIDs = [];
 				for(let i=0; i < case_data.length; i++){
 					var cur_row = case_data[i];
-					//if(cur_row.Province_State == "Georgia"){
-							districtIDs.push(cur_row.Combined_Key);
-					//}
+						if(cur_row["Province/State"] == ""){
+							districtIDs.push(cur_row["Country/Region"]);
+						}
 				}
 				
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
@@ -238,8 +220,8 @@ function dataJHU_USA_Counties(){return {
 				// go through src.case_data object and transfer values into dateDistrictData object
 				for(let i=0; i < case_data.length; i++){ // loop through table rows
 					var cur_row = case_data[i]; // get data record
-					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
-						var cur_districtID = cur_row.Combined_Key; // get district id 
+					if(cur_row["Province/State"] == ""){ // check that it is the main row for the country
+						var cur_districtID = cur_row["Country/Region"]; // get district id 
 						for(let j=0; j < CovizDates.length; j++){ // loop through dates
 							if(dateDistrictData[CovizDates[j]] != undefined){
 								if(dateDistrictData[CovizDates[j]][cur_districtID] != undefined){											
@@ -248,14 +230,14 @@ function dataJHU_USA_Counties(){return {
 								}
 							}
 						}
-					//}
+					}
 				}
 
 				// go through src.death_data object and transfer values into dateDistrictCata object
 				for(let i=0; i < death_data.length; i++){ // loop through table rows
 					var cur_row = death_data[i]; // get data record
-					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
-						var cur_districtID = cur_row.Combined_Key; // get district id 
+					if(cur_row["Province/State"] == ""){ // check that it is the main row for the country
+						var cur_districtID = cur_row["Country/Region"]; // get district id 
 						for(let j=0; j < CovizDates.length; j++){ // loop through dates
 							if(dateDistrictData[CovizDates[j]] != undefined){
 								if(dateDistrictData[CovizDates[j]][cur_districtID] != undefined){											
@@ -264,59 +246,30 @@ function dataJHU_USA_Counties(){return {
 								}
 							}
 						}
-					//}
+					}
 				}			
 				
 				// THE DATA OBJECT
 				the_data_object = {
 					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
 					baseFeatures: function(filter=null){
-						if(filter==null){
-							return src.all_counties;
-						/*} else if (filter=="GA") {
-							return src.Georgia_counties;
-						} else if (filter=="FL") {
-							return src.florida_counties;*/
-						} else if (stateIDs.includes(filter)) {
-							return src[filter];
-						} else {
-							var this_state = src.all_counties;
-							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
-							this_state.features = this_state.features.filter(feat => feat.properties.StateAbbre==filter);
-							return this_state;
-						}
+						return src.map_polys;
 					},
 					cartogramFeatures: function(filter=null){
-						if(filter==null){
-							return null;						
-						/*} else if (filter=="GA") {
-							return src.Georgia_cartogram;
-						} else if (filter=="FL") {
-							return src.florida_cartogram;*/
-						} else if (stateIDs.includes(filter)) {
-							return src[filter + "_cartogram"];
-						} else {
-							return null;
-						}
+						return src.cartogram_polys;
 					},
-					defaultFilter: "GA",
+					defaultFilter: null,
 					dataChildName: null,
-					dataParentName: "USA",
+					dataParentName: null,
 					dates: CovizDates, 
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
-					getID: function(feat){return feat.properties.JHU_key;}, 
-					getLabel: function(feat){return feat.properties.CensusName;}, 
-					getPopulation: function(feat){return feat.properties.pop2018;}, 
-					districtClassLabel: "county",
-					aggregateLabel: function(){
-						if(dataSourceFilter==null){
-							return "filter is null!!!";
-						} else {
-							return dataSourceFilter;
-						}
-					}		
+					getID: function(feat){return feat.properties.sovereignt;}, 
+					getLabel: function(feat){return feat.properties.sovereignt;}, 
+					getPopulation: function(feat){return feat.properties.SUM_pop_es;}, 
+					districtClassLabel: "country",
+					aggregateLabel: function(){return "Europe";}
 				}
 
 				resolve(the_data_object);
