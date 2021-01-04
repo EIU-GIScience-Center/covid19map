@@ -37,7 +37,7 @@
   <script>console.log("loading canada...");</script>
   <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
   <script>console.log("loading Europe...");</script>
-  <script src="data/Europe_jhu/data_Europe_JHU.js">
+  <script src="data/Europe_jhu/data_Europe_JHU.js"></script>
   <script>console.log("loading slider...");</script>
   
   <script src="d3-simple-slider.min.js"></script>
@@ -53,13 +53,12 @@
 
 <body>
 	<div id="opening_screen">
-		<div id="ribbon" style="text-align: center;margin-top:0ex; margin-bottom: 0ex;" >	
+		<div id="ribbon">	
 			<div id="logo" style="float:left; margin-left: 0.5ex; height: 90%;">
 				<img src="images/EIUSquareWhite.png" style="height: 100%;">
 			</div>
-			<div id="pagetitle" style="float:left">
-					<h3  style="margin-top:0ex; margin-bottom: 0ex; margin-left: 1.5ex; color: #FFFFFF;">
-					COViz: The Covid-19 Open Visualization Project </h3>
+			<div id="pagetitle">
+					COViz: The Covid-19 Open Visualization Project 
 			</div>
 			<div id="about-link" class="menu">
 			<a href="#contributors" style="color: #FFFFFF; font-style: italic;" tabindex=2>contributors</a>
@@ -71,22 +70,22 @@
 		</div>
 		<div id="map_panel">
 			<div id="map_top">
-				<div id="map_title_left" style="float: left; margin: 3 auto;"></div>
-				<div id="map_title_center" style="float: left; margin: 3 10; padding-left: 3ex; text-align: center;"></div>
-				<div id="map_title_right" style="float: right; margin: 3 auto; "></div>
+				<div id="map_title_left"></div>
+				<div id="map_title_center"></div>
+				<div id="map_title_right"></div>
 				<!-- font-family: 'B612+Mono', sans-serif; -->
 				
 			</div>
 			<div id="map"></div>
 			<div id="mapbottom">
-				<div id="legend" style="float: left; width: 60%; display: block;"></div>
-                <div id="circleLegend" style="float: left; width: 40%; display: block;"></div>
+				<div id="legend"></div>
+                <div id="circleLegend"></div>
 			</div>
 		</div>
 		<div id="options_panel">
 			<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
-				<div style="display: table-cell; vertical-align: middle;"  -->
-					<table style="border:5px; width: 90%; border-spacing: 15px;">
+				<div id="vertical_center">
+					<table id="table_setting">
 						<tr>
 							<td>
 								<b>Region:</b>
@@ -1163,16 +1162,15 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function loadLegend(){
 		do_resize=false; // prevent repeated resizing
 		console.log("Loading Legend...");
-		var legwidth = 0.6*(document.getElementById("mapbottom").offsetWidth);
+		var legwidth =(document.getElementById("legend").offsetWidth);
             if(legwidth < 100){legwidth=100;}
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
 		// create svg for new legend
 		var legendsvg = d3.select("#legend")
-			.attr('align','center')
 			.append('svg')
 			.attr('width',legwidth)
-			.attr('height',60);		
+            .attr("height", 60)
 		legendsvg.append("g")
 		  .attr("class", "legendChoropleth")
 		  .attr("transform", "translate(20,20)");
@@ -1266,7 +1264,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
     //Load circle legend
     function loadCircleLegend() {
             console.log("Loading Circle Legend...");
-            var legwidth = 0.4*(document.getElementById("mapbottom").offsetWidth);
+            var legwidth = (document.getElementById("circleLegend").offsetWidth);
             legwidth = $("#map_panel").width();
             if(legwidth < 100){legwidth=100;};
             // remove any existing legend
@@ -1303,10 +1301,9 @@ function areaScaleFac(features, maxOccupancy = 0.35){
         //range = disply pixel size = circle radius
         var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
             var legendsvg = d3.select("#circleLegend")
-                .attr('align','left')
                 .append('svg')
                 .attr('width',legwidth)
-                .attr('height',120);
+                .attr("height", 125)
         // make circle transparent when there is no circle symbol on the map
         if (theme.circle == false){
             legendsvg.append("g")
@@ -1317,7 +1314,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
         // show circle legend with color match with the symbol from the map
             legendsvg.append("g")
               .attr("class", "legendSize")
-              .attr("transform", "translate(20,40)")
+              .attr("transform", "translate(20,37)")
               .style("fill", "rgba(0, 215, 215, 1)")
         }
         // legend title
@@ -1332,7 +1329,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
               .scale(linearSize)
               .shape('circle')
               .shapePadding(40)
-              .labelOffset(15)
+              .labelOffset(13)
               .orient('horizontal')
             // truncate to only show integer, added comma in every three digits
             // label = calculate the values between minimum and maximum values
