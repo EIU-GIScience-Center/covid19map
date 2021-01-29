@@ -131,12 +131,12 @@
 									<input id="carttoggle" type="checkbox">
 									<span class="slider round"></span>
 									</label>
-									<a id="cartOptLbl"> Cartogram</a>
+									<a id="cartOptLbl" > Cartogram</a>
 								</span>					
 							</td>
 						</tr>
 						<tr>
-							<td colspan=2 id="map_type_description">
+							<td colspan=2 id="map_type_description" class="map_type_description">
 						</td>
 						</tr>
 					</table>		  
@@ -1266,7 +1266,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             console.log("Loading Circle Legend...");
             var legwidth = (document.getElementById("circleLegend").offsetWidth);
             legwidth = $("#map_panel").width();
-            if(legwidth < 100){legwidth=100;};
+            legheight = $("#circleLegend").height();
             // remove any existing legend
         d3.select("#circleLegend").selectAll('svg').remove();
             // create svg for circle legend
@@ -1303,7 +1303,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             var legendsvg = d3.select("#circleLegend")
                 .append('svg')
                 .attr('width',legwidth)
-                .attr("height", 125)
+                .attr("height", legheight)
         // make circle transparent when there is no circle symbol on the map
         if (theme.circle == false){
             legendsvg.append("g")
@@ -1318,6 +1318,29 @@ function areaScaleFac(features, maxOccupancy = 0.35){
               .style("fill", "rgba(0, 215, 215, 1)")
         }
         // legend title
+            var crmin = cirRadmin
+            var crmax = cirRadmax
+            var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
+            var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
+            var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
+            if (crmin >= 1000){
+                crmin = crmin.toString().slice(0,-3) + 'K';
+            } else {
+                crmin = '~1K'
+            }
+            if (crmax >= 1000){
+                crmax = crmax.toString().slice(0,-3) + 'K';
+            }
+            if (cr1 >= 1000){
+                cr1 = cr1.toString().slice(0,-3) + 'K';
+            }
+            if (cr2 >= 1000){
+                cr2 = cr2.toString().slice(0,-3) + 'K';
+            }
+            if (cr3 >= 1000){
+                cr3 = cr3.toString().slice(0,-3) + 'K';
+            }
+
             legendsvg.append("text")
               .attr("x", 15)
               .attr("y", 15)
@@ -1328,15 +1351,13 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             var legendSize = d3.legendSize()
               .scale(linearSize)
               .shape('circle')
-              .shapePadding(40)
-              .labelOffset(13)
+              .shapePadding(20)
+              .labelOffset(15)
               .orient('horizontal')
             // truncate to only show integer, added comma in every three digits
             // label = calculate the values between minimum and maximum values
             // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
-              .labels([Math.trunc(cirRadmin).toLocaleString(),
-                       Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin).toLocaleString(), Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin).toLocaleString(), Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin).toLocaleString(), 
-                       Math.trunc(cirRadmax).toLocaleString()]);
+              .labels([crmin, cr1, cr2, cr3, crmax]);
         
         
             // call function to draw legend in svg
