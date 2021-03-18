@@ -75,7 +75,7 @@ function nPreviousDate(date,dates,n){
 	return finalDate;
 }
 
-function dateRangeExpression(date1,date2,includeYear){
+function dateRangeExpression(date1,date2,includeYear, abbreviatedMonth=false){
 	// parse year, month and day
 	var jsDate1 = new Date(date1);
 	var jsDate2 = new Date(date2);
@@ -93,17 +93,22 @@ function dateRangeExpression(date1,date2,includeYear){
 	console.log([y1,m1,d1,y2,m2,d2]);
 	
 	// handle case of different years
-	if(y1 != y2){
+	if(includeYear && y1 != y2){
 		return date1 + " - " + date2
 	} else {		
 		var expr = monthString(m1+1) + " " + d1 + " - ";
+		if(abbreviatedMonth){expr = (m1+1) + "/" + d1 + "-";}
 		if(m1==m2){
 			expr += d2;
-		} else if(y1==y2) {
-			expr += monthString(m2+1) + " " + d2;
+		} else {
+			var expr2 = monthString(m2+1) + " " + d2;
+			if(abbreviatedMonth){expr = (m2+1) + "/" + d1;}
+			expr += expr2;
 		}
 		if(includeYear){
-			expr += ", " + y1;
+			var expr3 = ", " + y1
+			if(abbreviatedMonth){expr3 = "/" + y1;}
+			expr += expr3;
 		}
 		return expr;
 	}
@@ -124,14 +129,14 @@ function datePeriodExpression(baseDate, dateOffsets, allDates){
 	} else if(dateOffsets.length==2) {
 		var date1 = nPreviousDate(baseDate,allDates,dateOffsets[0]);
 		var date2 = nPreviousDate(baseDate,allDates,dateOffsets[1]);
-		return dateRangeExpression(date1,date2,false);
+		return dateRangeExpression(date1,date2,false,true);
 	} else if(dateOffsets.length==4) {
 		var date1 = nPreviousDate(baseDate,allDates,dateOffsets[0]);
 		var date2 = nPreviousDate(baseDate,allDates,dateOffsets[1]);
 		var date3 = nPreviousDate(baseDate,allDates,dateOffsets[2]);
 		var date4 = nPreviousDate(baseDate,allDates,dateOffsets[3]);
-		var expr1 = dateRangeExpression(date1,date2,false);
-		var expr2 = dateRangeExpression(date3,date4,false);
+		var expr1 = dateRangeExpression(date1,date2,false,true);
+		var expr2 = dateRangeExpression(date3,date4,false,true);
 		return "(" + expr1 + ") vs. (" + expr2 + ")";
 	}
 
@@ -273,3 +278,4 @@ function nearestDate(date,dates){
 		
 	}
 }
+
