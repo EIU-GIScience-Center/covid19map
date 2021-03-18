@@ -30,6 +30,9 @@
   <script src="d3.v5.js" charset="utf-8"></script>
   <script>console.log("loading utils...");</script>
   <script src="utils.js"></script>  
+  <script>console.log("loading data from CDC...");</script>
+  <script src="data/cdc/data_cdc.js"></script>
+
   <script>console.log("loading covidtracking...");</script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
   <script>console.log("loading jhu...");</script>
@@ -334,6 +337,7 @@
 		themeWeeklyPositivityRate,
 		themeWeeklyCaseMortality,
 		themeDailyCases,
+		themeDailyChangeCases,
 		themeDailyDeaths,
         themeCumulativeCases,
 		themeCumulativeDeaths,
@@ -344,7 +348,7 @@
 	// array of data sources
 	// each data source should be defined in a separate file; see data_covidtracking_states.js for a template
 	var dataSources = [
-		dataCovidTracking_states()]
+		data_cdc()]
 		/*,
 		dataODWG_Canada_Provinces(),
 		dataJHU_USA_Counties()
@@ -955,9 +959,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 
 	function loadMap(featdata,categories, category, transition=false){return new Promise(function(resolve,reject){
 		console.log("loading map...");
-		console.log("Transition: " + transition);
-		console.log(categories);
-		console.log(category);
 		// make sure we have a data source
 		if(dataSource !== undefined){		
 			divid='map';
@@ -968,8 +969,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			
 			// d3.select(divid).selectAll('svg').remove();		
 			// create svg object inside map div
-			console.log("Debugging - loadMap");
-			console.log(mapsvg);
+			
 			if(mapsvg == undefined){
 				mapsvg = d3.select(divid)
 						.append('svg')
@@ -977,21 +977,16 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 						.attr('height',height)
 						.on('click',reset);		
 			}
-			console.log("In loadMap function...");
-			console.log("Transition: " + transition);
 			if(transition){
 				transitionMapData(featdata,categories,category).then(function(){
-					console.log("resolving loadMap after transition");
 					resolve();
 				});
 			} else {
 				replaceMapData(featdata,categories,category);
-				console.log("resolving loadMap after replace");
 				resolve();
 			}
 			// end if dataSource is not undefined
 		}  else {
-			console.log("resolving loadMap after data undefined");
 			resolve();
 		}
 	});}
@@ -1000,7 +995,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function toggle_map(milliseconds=1500, callback){
 		oncartogram = !oncartogram;
 		document.getElementById("carttoggle").checked=oncartogram;
-		console.log("updating map from toggle_map");
 		updateMap(milliseconds, callback);
 	}
 
@@ -1008,7 +1002,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function updateMapTitle(){
 		var newtitle= "<b>" + theme.themeName + "</b>";
 		document.getElementById("map_title_left").innerHTML=newtitle;
-		document.getElementById("map_title_center").innerHTML=datePeriodExpression(curDate, theme.dateRange, dataSource.dates);
+		document.getElementById("map_title_center").innerHTML=datePeriodExpression(curDate, [], dataSource.dates); //theme.dateRange
 		if(theme.aggregateLabelFcn == undefined){
 			document.getElementById("map_title_right").innerHTML="";
 		} else {
@@ -1065,8 +1059,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				} else {
 					todata=cartogramFeatures;
 				};
-				console.log("Features in updateMap:");
-				console.log(todata);
 				// get data and choropleth/symbol functions depending on if we're showing a map or cartogram
 				var localChoroplethColor;
 				var localCircleRadius;
@@ -1091,7 +1083,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 					localFeatureStroke = '#DDD';
 					localCircleStroke = "rgba(0, 255, 255,0.35)";
-					localCircleFill="rgba(0, 255, 255,0.35)";
+					localCircleFill="rgba(0, 255, 255,0.05)";
 				} else {
 					// symbology for a cartogram
 					todata=cartogramFeatures;
@@ -1117,12 +1109,15 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					.duration(milliseconds)
 					.attr("fill",localChoroplethColor)
 					.style('opacity',1)
-					.end()
+					.end();
+					/*
+					FOLLOWING IS CALLING ERRORS - DO WE NEED CALLBACK?
 					.then(() => {
 						if(callback != undefined){
 							callback();
 						};
 					});
+					*/
 					//.on("end",callback);	
 
 				// transition circle symbols
@@ -1143,10 +1138,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					.style('stroke',localCircleStroke)
 					.duration(milliseconds);
 				// reload legend
-				console.log("loading legend from updateMap");
 				loadLegend();
 				if(moving==false){
-                    console.log("Load circle legend from updateMap");
                     loadCircleLegend();
 				};
 				// update map title
@@ -1263,40 +1256,40 @@ function areaScaleFac(features, maxOccupancy = 0.35){
     
     //Load circle legend
     function loadCircleLegend() {
-            console.log("Loading Circle Legend...");
-            var legwidth = (document.getElementById("circleLegend").offsetWidth);
-            legwidth = $("#map_panel").width();
-            legheight = $("#circleLegend").height();
-            // remove any existing legend
+		console.log("Loading Circle Legend...");
+		var legwidth = (document.getElementById("circleLegend").offsetWidth);
+		legwidth = $("#map_panel").width();
+		legheight = $("#circleLegend").height();
+		// remove any existing legend
         d3.select("#circleLegend").selectAll('svg').remove();
-            // create svg for circle legend
-            // choose cirRadmax/min based on whether animation is playing or not
-            if (theme.updateDailyValueRange && moving==false){
-                //daily maximum and minimum value
-                  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
-                  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
-            } else {
-                //global maximum and minimum value
-                  var cirRadmax = maxCirValue(theme.circleAreaFcn);
-                  var cirRadmin = minCirValue(theme.circleAreaFcn);
-            }   
-            // find minmum and maximum circle radius
-            var maxCircleRadius=function(d){
-                var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
-                if (cRadius >= 43){
-                    return 43
-                } else {
-                return cRadius;
-                }
-            };
-            var minCircleRadius=function(d){
-                var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
-                if (cRadius <= 5){
-                    return 5
-                } else {
-                return cRadius;
-                }
-            };
+		// create svg for circle legend
+		// choose cirRadmax/min based on whether animation is playing or not
+		if (theme.updateDailyValueRange && moving==false){
+			//daily maximum and minimum value
+			  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
+			  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
+		} else {
+			//global maximum and minimum value
+			  var cirRadmax = maxCirValue(theme.circleAreaFcn);
+			  var cirRadmin = minCirValue(theme.circleAreaFcn);
+		}   
+		// find minimum and maximum circle radius
+		var maxCircleRadius=function(d){
+			var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
+			if (cRadius >= 43){
+				return 43
+			} else {
+			return cRadius;
+			}
+		};
+		var minCircleRadius=function(d){
+			var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
+			if (cRadius <= 5){
+				return 5
+			} else {
+			return cRadius;
+			}
+		};
         //domain = value
         //range = disply pixel size = circle radius
         var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
@@ -1318,52 +1311,52 @@ function areaScaleFac(features, maxOccupancy = 0.35){
               .style("fill", "rgba(0, 215, 215, 1)")
         }
         // legend title
-            var crmin = cirRadmin
-            var crmax = cirRadmax
-            var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
-            var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
-            var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
-            if (crmin >= 1000){
-                crmin = crmin.toString().slice(0,-3) + 'K';
-            } else {
-                crmin = '~1K'
-            }
-            if (crmax >= 1000){
-                crmax = crmax.toString().slice(0,-3) + 'K';
-            }
-            if (cr1 >= 1000){
-                cr1 = cr1.toString().slice(0,-3) + 'K';
-            }
-            if (cr2 >= 1000){
-                cr2 = cr2.toString().slice(0,-3) + 'K';
-            }
-            if (cr3 >= 1000){
-                cr3 = cr3.toString().slice(0,-3) + 'K';
-            }
+		var crmin = cirRadmin
+		var crmax = cirRadmax
+		var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
+		var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
+		var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
+		if (crmin >= 1000){
+			crmin = crmin.toString().slice(0,-3) + 'K';
+		} else {
+			crmin = '~1K'
+		}
+		if (crmax >= 1000){
+			crmax = crmax.toString().slice(0,-3) + 'K';
+		}
+		if (cr1 >= 1000){
+			cr1 = cr1.toString().slice(0,-3) + 'K';
+		}
+		if (cr2 >= 1000){
+			cr2 = cr2.toString().slice(0,-3) + 'K';
+		}
+		if (cr3 >= 1000){
+			cr3 = cr3.toString().slice(0,-3) + 'K';
+		}
 
-            legendsvg.append("text")
-              .attr("x", 15)
-              .attr("y", 15)
-              .attr("dy", ".35em")
-              .style("text-align", "left")
-              .text(theme.circleLegendTitle)
-        // legend size and label
-            var legendSize = d3.legendSize()
-              .scale(linearSize)
-              .shape('circle')
-              .shapePadding(20)
-              .labelOffset(15)
-              .orient('horizontal')
-            // truncate to only show integer, added comma in every three digits
-            // label = calculate the values between minimum and maximum values
-            // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
-              .labels([crmin, cr1, cr2, cr3, crmax]);
-        
-        
-            // call function to draw legend in svg
-            legendsvg.select(".legendSize")
-                .call(legendSize);
-            do_resize=true;
+		legendsvg.append("text")
+		  .attr("x", 15)
+		  .attr("y", 15)
+		  .attr("dy", ".35em")
+		  .style("text-align", "left")
+		  .text(theme.circleLegendTitle)
+		// legend size and label
+			var legendSize = d3.legendSize()
+			  .scale(linearSize)
+			  .shape('circle')
+			  .shapePadding(20)
+			  .labelOffset(15)
+			  .orient('horizontal')
+			// truncate to only show integer, added comma in every three digits
+			// label = calculate the values between minimum and maximum values
+			// formular = (((Maximum - Minimum)/10)*7.5) + Minimum
+			  .labels([crmin, cr1, cr2, cr3, crmax]);
+		
+		
+			// call function to draw legend in svg
+			legendsvg.select(".legendSize")
+				.call(legendSize);
+			do_resize=true;
         }
     
 	// smooth zoom
@@ -1373,7 +1366,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		if(oncartogram){
 			busy = true;
 			toggle_map(750,function(){
-				console.log("loading data from Zoom to Child toggle...");
 				loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
 					handleDataLoaded(transition=true).then(function(){
 						document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
@@ -1387,7 +1379,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				});
 			});
 		} else {
-			console.log("loading data from Zoom to Child...");
 			loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){
 				handleDataLoaded(transition=true).then(function(){
 					document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
@@ -1574,7 +1565,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 
   	var loadSlider=function(){return new Promise(function(resolve, reject){
 		console.log("loading slider...");
-		console.log(curDate);
 		// remove existing slider
 		if (slider_svg != null){
 			slider_svg.remove();
@@ -1628,7 +1618,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					// console.log("loading legend from slider change");
 					// loadLegend();
 				};
-				console.log("updating map from slider change");
 				updateMap(slider_update_duration);
 			});
 		slider_svg
@@ -1639,15 +1628,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			.attr('transform', 'translate(30,30)')
 			.call(slider);
 		// report that function worked
-		console.log("slider initial date:");
-		console.log(dataSource.dates[slider.value()]);
 		var nearestDate = dataSource.dates.reduce((a,b) => {
 					return Math.abs(Date.parse(b)-Date.parse(curDate)) , Math.abs(Date.parse(a)-Date.parse(curDate)) ? b : a;
 				});
 				curDate = nearestDate
 		// slider.value(dataSource.dates.indexOf(curDate));
-		console.log("best date:");
-		console.log(curDate);
 		resolve();
 	})}
 
@@ -1655,7 +1640,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		// loads new data into the map and updates the slider
 		// update the slider
 		console.log("HANDLING DATA LOADED...");
-		console.log("Transition: " + transition);
 		// report current dataset
 		if(dataSource.dataParentName==null){
 			document.getElementById("zoomrow").style.display="none";
@@ -1678,10 +1662,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				curDate=dataSource.dates[0];
 			}
 			// load the map!
-			console.log("loading map from handleDataLoaded...");
 			loadMap(baseFeatures,undefined, undefined, transition).then(function(){
 				//load the Theme
-				console.log("loading Theme from handleDataLoaded");
 				loadTheme();
 				// resize everything
 				resize();
@@ -1748,13 +1730,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		  moving = true;
           loadCircleLegend();
 		  fixedValueRange();
-		  console.log("loading legend from handlePlayButtonClick");
 		  loadLegend();
 		  //delay = 0;
 		  timer = setInterval(step, delay);
 		  playButton.text("∥"); 
 		}
-		console.log("Slider moving: " + moving);
 	}
 	
     playButton
@@ -1764,7 +1744,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
         var targetIndex = dataSource.dates.length-1;
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
-		console.log("Slider moving: " + moving);
 		if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
@@ -1924,6 +1903,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		
 		dataSources=dataSources.concat(newDataSources);
 		addDataSourcesToSelector(newDataSources);
+		
 		handleDataLoaded().then(function(){
 			defaultPlayStart = dataSource.dates.length-56; // by default play the last 8 weeks
 			if(defaultPlayStart < 0){defaultPlayStart = 0;};
@@ -1937,7 +1917,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			);
 			console.log("DATA LOADED AND READY");
 			// Start default animation tour!
-			playTour();
+			//playTour();
 		});
 	});
 

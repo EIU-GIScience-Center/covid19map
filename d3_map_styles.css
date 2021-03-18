@@ -75,7 +75,6 @@ html, body, #fullheight {
 
 #map_top{
 	flex-grow: 0;
-	font-size: 150%;
 	text-align: left;
 	color: #004C97;
 	width: 100%;
@@ -83,20 +82,35 @@ html, body, #fullheight {
 	margin-right: 0ex;
 	margin-top:0px; 
 	margin-bottom: 0ex;
+	display: inline-block;
+	white-space: nowrap;
 }
 #map_title_left{
+	font-size: 100%;
     float: left;
     margin: 3 auto;
+	max-width: 30%;
+	display: inline-block;
+    overflow: hidden;
 }
 #map_title_center{
-    float: left;
+    font-size: 100%;
+	float: left;
     margin: 3 10;
     padding-left: 3ex;
     text-align: center;
+	max-width: 20%;
+	display: inline-block;
+    overflow: hidden;
 }
 #map_title_right{
+	font-size: 100%;
     float: right;
     margin: 3 auto;
+	max-width: 40%;
+	display: inline-block;
+    overflow: hidden;
+	
 }
 
 #map{
