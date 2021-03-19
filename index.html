@@ -86,76 +86,68 @@
 			</div>
 		</div>
 		<div id="options_panel">
-			<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
+			<div id="options">
+				<div id="vertical_center_wrapper">
 				<div id="vertical_center">
-					<table id="table_setting">
-						<tr>
-							<td>
-								<b>Region:</b>
-							</td>
-							<td>
-								<select class="select-css" id="dataSourceSelector">
-								</select>			
-							</td>
-						</tr>
-						<tr id="zoomrow" style="display: none">
-							<td>
-								<b><button id="zoomUp" data-tooltip-position="bottom" data-tooltip="ZoomOut"><img src="images/minus.png" alt="zoomUp" width="16.7" height="25"></button></b>
-							</td>
-							<td id="zoomtarget">
-										
-							</td>
-						</tr>
-						<tr>
-							<td colspan=2 id="data_source_brief_description">
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<b>Map Theme:</b>
-							</td>
-							<td>
-								<select class="select-css" id="themeSelector">
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td colspan=2 id="theme_brief_description">
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<b>Map Type:</b>
-							</td>
-							<td>
-								<span>
-									Map
-									<label class = "switch">
-									<input id="carttoggle" type="checkbox">
-									<span class="slider round"></span>
-									</label>
-									<a id="cartOptLbl" > Cartogram</a>
-								</span>					
-							</td>
-						</tr>
-						<tr>
-							<td colspan=2 id="map_type_description" class="map_type_description">
-						</td>
-						</tr>
-					</table>		  
+					<div id="selection_area">
+						<div id="regionlabel">
+							<b>Region:</b>
+						</div>
+						<div id="regioncontrol">
+							<select class="select-css" id="dataSourceSelector">
+							</select>		
+						</div>
+						<div id="regiondescription">
+						</div>
+						
+						<div id="zoomlabel">
+						</div>
+						<div id="zoomcontrol">
+							<b><button id="zoomUp" data-tooltip-position="bottom" data-tooltip="ZoomOut"><img src="images/minus.png" alt="zoomUp" width="16.7" height="25"></button></b>
+						</div>
+						
+						<div id="themelabel">
+							<b>Map Theme:</b>
+						</div>
+						<div id="themecontrol">
+							<select class="select-css" id="themeSelector">
+							</select>
+						</div>
+						<div id="themedescription">
+						</div>
+						
+						<div id="maptypelabel">
+							<b>Map Type:</b>
+						</div>
+						<div id="maptypecontrol">
+							<span>
+								Map
+								<label class = "switch">
+								<input id="carttoggle" type="checkbox">
+								<span class="slider round"></span>
+								</label>
+								<a id="cartOptLbl" > Cartogram</a>
+							</span>				
+						</div>
+						<div id="maptypedescription">
+						</div>
+					</div>
+				</div>
 				</div>
 			</div>
 			<div id="time_controls">
 			
-				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play/Pause">►</button>
-				<span class="dot" id="Slowest" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(0)"></span> 
-				<span class="dot" id="Slower" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(1)"></span> 
-				<span class="dot" id="Normal Speed" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(2)"></span>
-				<span class="dot" id="Faster" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(3)"></span> 
-				<span class="dot" id="Fastest" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(4)"></span>  
-				<button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease Speed">◀◀</button>
-				<button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase Speed">▶▶</button> 
-				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
+				<button class="big_button" id="play-button" data-tooltip-position="bottom" data-tooltip="Play/Pause">►</button>
+				
+					<span class="dot" id="Slowest" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(0)"></span> 
+					<span class="dot" id="Slower" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(1)"></span> 
+					<span class="dot" id="Normal Speed" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(2)"></span>
+					<span class="dot" id="Faster" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(3)"></span> 
+					<span class="dot" id="Fastest" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(4)"></span>  
+				
+				<button class="big_button" id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease Speed">◀◀</button>
+				<button class="big_button" id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase Speed">▶▶</button> 
+				<button class="big_button" id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
 			</div>
 			<div id="slider"></div>
 			</div>
@@ -594,7 +586,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			if (match) {
 				theme = match;
 				// show the description of the theme
-				document.getElementById("theme_brief_description").innerHTML ="<i>" + theme.briefDescription + "</i>";
+				document.getElementById("themedescription").innerHTML ="<i>" + theme.briefDescription + "</i>";
 				// calculate true legend/color/size scales based on theme parameters
 				if(theme.invertColorScale){
 					lowValColor = theme.choroplethColorInterpolator(1);
@@ -647,7 +639,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					active_feature = null;
 					feature_mouseout(null,null);
 					// show the description of the data source
-					document.getElementById("data_source_brief_description").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
+					document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 					addThemesToSelector(dataSource); // determine which themes are valid for this data source
 					// create a getValue function that can be used in themes
 					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
@@ -1041,7 +1033,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			} 
 			mapTypeDescription += "</ul></p>";
 		}
-		document.getElementById("map_type_description").innerHTML ="<i>" + mapTypeDescription + "</i>";
+		document.getElementById("maptypedescription").innerHTML ="<i>" + mapTypeDescription + "</i>";
 		divid='map';
 			mapdiv = document.getElementById(divid); // Do not use #
 			var width = mapdiv.offsetWidth;
@@ -1155,18 +1147,21 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function loadLegend(){
 		do_resize=false; // prevent repeated resizing
 		console.log("Loading Legend...");
-		var legwidth =(document.getElementById("legend").offsetWidth);
-            if(legwidth < 100){legwidth=100;}
+		// get width
+		var legwidth =(document.getElementById("mapbottom").offsetWidth);
+            
+		if (theme.circle == true){legwidth = legwidth/2}		
+		if(legwidth < 100){legwidth=100;}
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
 		// create svg for new legend
 		var legendsvg = d3.select("#legend")
 			.append('svg')
 			.attr('width',legwidth)
-            .attr("height", 60)
+            .attr("height", 90)
 		legendsvg.append("g")
 		  .attr("class", "legendChoropleth")
-		  .attr("transform", "translate(20,20)");
+		  .attr("transform", "translate(30,30)");
 		// create legend
 		var truncatedCells
         var truncatedLabels
@@ -1185,7 +1180,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			.scale(choroplethColorScale)
 			.shapePadding(-1)
 			.shapeHeight(15)
-			.labelOffset(6); 
+			.labelOffset(16); 
 		// call function to draw legend in svg
 		legendsvg.select(".legendChoropleth")
 		  .call(legendChoropleth);
@@ -1344,8 +1339,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			var legendSize = d3.legendSize()
 			  .scale(linearSize)
 			  .shape('circle')
-			  .shapePadding(20)
-			  .labelOffset(15)
+			  .shapePadding(30)
+			  .labelOffset(21)
 			  .orient('horizontal')
 			// truncate to only show integer, added comma in every three digits
 			// label = calculate the values between minimum and maximum values
@@ -1368,7 +1363,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			toggle_map(750,function(){
 				loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
 					handleDataLoaded(transition=true).then(function(){
-						document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+						document.getElementById("zoomcontrol").style.display='block';// show option to zoom back to parent features
+						document.getElementById("zoomlabel").style.display='block';// show option to zoom back to parent features
 						if(cartogramFeatures != null){
 							toggle_map(750);
 							busy = false;
@@ -1381,7 +1377,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		} else {
 			loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){
 				handleDataLoaded(transition=true).then(function(){
-					document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+					document.getElementById("zoomcontrol").style.display='block';// show option to zoom back to parent features
+					document.getElementById("zoomlabel").style.display='block';// show option to zoom back to parent features
 				});
 			});
 		}
@@ -1570,10 +1567,10 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			slider_svg.remove();
 		}
 		// get available width
-		var viewportwidth = $(window).width();
-		// var slider_width = 0.45*(viewportwidth);
-		var slider_width = $("#options_panel").width();
+
+		var slider_width = $("#options_panel").width()-60;
 		if(slider_width < 100){slider_width=100;};
+		console.log("SLIDER WIDTH: " + slider_width);
 		var secretCode="Yes please show month!";
 		function dateString(sliderID, showMonthParam){
 			sliderID = parseInt(sliderID);
@@ -1594,14 +1591,17 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		textData=[0];
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
+		console.log("SLIDER WIDTH: " + slider_width);
 		slider = d3
 			.sliderHorizontal()
 			.min(0)
 			.max(dataSource.dates.length-1)
 			.ticks(10)
-			.width(slider_width-60) // slider should be smaller than the svg
+			.width(slider_width - 50) // slider should be smaller than the svg
 			.fill('#CA6')
-			.handle(circlepath)
+			.handle(d3.symbol()
+			  .type(d3.symbolCircle)
+			  .size(500))
 			.tickFormat(dateString)		
 			.displayValue(true)
 			.on('onchange', function(val) {
@@ -1620,6 +1620,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				};
 				updateMap(slider_update_duration);
 			});
+		console.log("SLIDER WIDTH: " + slider_width);
 		slider_svg
 			.attr('width', slider_width)
 			.attr('height', 75)
@@ -1642,10 +1643,12 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		console.log("HANDLING DATA LOADED...");
 		// report current dataset
 		if(dataSource.dataParentName==null){
-			document.getElementById("zoomrow").style.display="none";
+			document.getElementById("zoomlabel").style.display="none";
+			document.getElementById("zoomcontrol").style.display="none";
 		} else {
-			document.getElementById("zoomrow").style.display='';
-			document.getElementById("zoomtarget").innerHTML="zoomed to: " + dataSourceFilter;
+			document.getElementById("zoomlabel").style.display='block';
+			document.getElementById("zoomlabel").innerHTML="zoomed to: " + dataSourceFilter;
+			document.getElementById("zoomcontrol").style.display="block";
 		};
 		loadSlider().then(function(){
 			console.log("slider loaded:");
