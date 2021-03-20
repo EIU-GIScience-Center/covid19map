@@ -22,6 +22,7 @@ html, body, #fullheight {
   display: none;
 } 
 
+
 #opening_screen{
 	display: grid;
 	grid-template-columns: 65vw 32vw;
@@ -217,6 +218,7 @@ html, body, #fullheight {
 	grid-template-columns: auto auto;
 	grid-template-rows: auto auto auto auto auto auto auto;
 	grid-row-gap: 5px;
+	grid-column-gap: 5px;
 }
 
 #regionlabel{
@@ -501,23 +503,6 @@ input:checked + .slider:before {
     z-index: 50;
 }
 
-#zoomDown, #zoomUp {
-      position: relative;
-      background: #ECF0F1;
-      padding-right: 26px;
-      border-radius: 50%;
-      color: black;
-      padding: 0 0px;
-      width: 35px;
-      cursor: pointer;
-      height: 35px;
-    }
-#zoomDown:hover, #zoomUp:hover {
-      background-color: #F4F6F7;
-      border-color: #888;
-      border-radius: 50%;
-      box-shadow: 0 0 1px 2px rgba(59, 153, 252, .7);
-    }
 
 
 
@@ -560,7 +545,10 @@ input:checked + .slider:before {
   font-size: 12px;
 }
 
-
+.zoom_button{
+	width: 45px;
+	height: 45px;
+}
 .big_button {
       font-family: 'Montserrat';
       font-size: 20px;

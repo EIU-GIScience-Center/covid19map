@@ -47,16 +47,12 @@ function dataJHU_USA_Counties(){return {
 		
 		// get geoJSONs one after the other so that the variables don't update in between
 		function getGeoJsons(id){
-			console.log("Getting geojsons #" + id);
 			if(id<num_states){
 				var stateID = stateIDs[id];
 				var stateName = cart_states[stateID];
-				 
 				$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties.geojson", function(src_data) {
-					console.log("got " + stateName + " counties...")
 					src[stateID] = src_data; // add to src object
 					$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties_cartogram.geojson", function(src_data) {
-						console.log("got " + stateName + " cartogram...")
 						src[stateID + "_cartogram"] = src_data; // add to src object
 						getGeoJsons(id+1);
 						process_data(); // attempt to process all datasets
@@ -71,7 +67,6 @@ function dataJHU_USA_Counties(){return {
 		// GET SOURCE DATASET (all polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
-			console.log("got map polygons...")
 			src.all_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -84,7 +79,6 @@ function dataJHU_USA_Counties(){return {
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got JHU county case data...");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -99,7 +93,6 @@ function dataJHU_USA_Counties(){return {
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got JHU county death data...");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -127,11 +120,7 @@ function dataJHU_USA_Counties(){return {
 		function process_data(){
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
-			console.log("Processing data...");
-			console.log(Object.keys(src).length);
 			if (Object.keys(src).length == target_length){
-				console.log("processing all JHU county datasets...");
-				console.log(src);
 				// get tabular data from JHU object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;

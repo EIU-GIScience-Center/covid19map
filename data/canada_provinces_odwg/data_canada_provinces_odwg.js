@@ -44,7 +44,6 @@ function dataODWG_Canada_Provinces(){return {
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
 		$.getJSON("data/canada_provinces_odwg/Canada_provinces_simplified.geojson", function(src_data) {
-			console.log("got map polygons...")
 			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -53,7 +52,6 @@ function dataODWG_Canada_Provinces(){return {
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
 		$.getJSON("data/canada_provinces_odwg/Canada_provinces_simplified_cartogram.geojson", function(src_data) {
-			console.log("got Canada cartogram polys...")
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -66,7 +64,6 @@ function dataODWG_Canada_Provinces(){return {
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/cases_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got Canada case data...");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -80,7 +77,6 @@ function dataODWG_Canada_Provinces(){return {
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/mortality_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got Canada death data...");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -94,7 +90,6 @@ function dataODWG_Canada_Provinces(){return {
 			url: 'https://raw.githubusercontent.com/ishaberry/Covid19Canada/master/timeseries_prov/testing_timeseries_prov.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got Canada testing data...");
 				src.testing_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -125,7 +120,6 @@ function dataODWG_Canada_Provinces(){return {
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			if (Object.keys(src).length == target_length){
-				console.log("processing all datasets... (CANADIAN)");
 				// get tabular data from Canada Working Group object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;

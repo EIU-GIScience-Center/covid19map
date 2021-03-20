@@ -44,7 +44,6 @@ function dataJHU_Europe(){return {
 		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/Europe_JHU/geojson/Europe.geojson", function(src_data) {
-			console.log("got Europe map...")
 			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -52,7 +51,6 @@ function dataJHU_Europe(){return {
 		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/Europe_JHU/geojson/Europe_cartogram.geojson", function(src_data) {
-			console.log("got Europe cartogram...")
 			src.cartogram_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -66,7 +64,6 @@ function dataJHU_Europe(){return {
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got Europe case data...");
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -81,7 +78,6 @@ function dataJHU_Europe(){return {
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv',
 			dataType: "text",
 			success: function(src_data) {
-				console.log("got Europe death data...");
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -109,11 +105,7 @@ function dataJHU_Europe(){return {
 		function process_data(){
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
-			console.log("Processing data...");
-			console.log(Object.keys(src).length);
 			if (Object.keys(src).length == target_length){
-				console.log("processing all JHU county datasets...");
-				console.log(src);
 				// get tabular data from JHU object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
