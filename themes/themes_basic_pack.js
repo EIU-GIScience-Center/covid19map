@@ -6,7 +6,6 @@
 /* eslint-env es6 */
 /* eslint-disable */
 
-console.log("Loading Themes...");
 
 // The theme object
 const themeDailyCases = {
@@ -759,9 +758,6 @@ const themeWeeklyCaseMortality = {
 	tooltipTextFcn: function (feat, date) {
 		var dateID = dataSource.dates.indexOf(date);
 		if(dateID < 21){
-			console.log("insufficient data for themeCaseMortality");
-			console.log("dateID: " + dateID);
-			console.log(date);
 			return "insufficient data";
 		} else {
 			var prevDate = dataSource.dates[dateID-21];

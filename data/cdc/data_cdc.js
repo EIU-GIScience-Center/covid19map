@@ -44,7 +44,6 @@ function data_cdc(){ return {
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
 		$.getJSON("data/states_covidtracking_TEMPLATE/states.geojson", function(src_data) {
-			console.log("got map polygons...")
 			src.map_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
@@ -53,7 +52,6 @@ function data_cdc(){ return {
 		// Typically this will be a geojson file placed in the same folder, 
 		// and you can use JQuery's getJSON function:
 		$.getJSON("data/states_covidtracking_TEMPLATE/states_cartogram.geojson", function(src_data) {
-			console.log("got cartogram polys...")
 			src.carto_polys = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});			
@@ -70,19 +68,9 @@ function data_cdc(){ return {
 			}
 			//,			  "$$app_token" : "YOURAPPTOKENHERE"
 		}).done(function(data) {
-			console.log("Retrieved " + data.length + " records from the CDC");
 			src.tab_data = data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
-
-		/*
-		$.getJSON("https://data.cdc.gov/resource/9mfq-cb36.json$limit=2000", function(src_data) {
-			console.log("got tabular data...");
-			src.tab_data = src_data; // add to src object
-			process_data(); // attempt to process all datasets
-		});			
-		*/
-
 
 		// PROCESS DATA AND RESOLVE PROMISE WITH A DATA OBJECT IN SET FORMAT
 		// You will need to change the code in this function to process your 
@@ -107,20 +95,14 @@ function data_cdc(){ return {
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			if (Object.keys(src).length == target_length){
-				console.log("processing all datasets...");
 				// DEFINE AN ARRAY OF DATES IN TEMPORAL SEQUENCE												
 				var dates = new Set();
 				
 				function parseDateString(dateString){
-					try{
 					var year = parseInt(dateString.substring(0,4));
 					var month = parseInt(dateString.substring(5,7));
 					var day = parseInt(dateString.substring(8,10));
 					var defaultDateString = new Date(year, month-1,day,0,0,0,0).toDateString()
-					} catch(err){
-						console.log(dateString);
-						console.log(err.message);
-					}
 					return defaultDateString.slice(4,-5) + "," + defaultDateString.slice(-5);
 				}			
 				
