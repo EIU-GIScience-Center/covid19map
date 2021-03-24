@@ -607,6 +607,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			var match = dataSources.find(v => v.dataSourceName == dataSourceName);
 			
 			if(match){
+				
 				// for error checking
 				error_displayed=false;
 				// get promised data object
@@ -624,7 +625,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
 						var featID = dataSource.getID(feat);
 						var val;
-						if(dataSource.dateDistrictData == undefined || featID == undefined){
+						if(dataSource.dateDistrictData == undefined || featID == undefined || ){
 							val=0;
 						} else {
 							var val = dataSource.dateDistrictData[date][featID][varName];
@@ -1552,11 +1553,12 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		textData=[0];
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
+		var tick_ids = tickDateIds(dataSource.dates,10);
 		slider = d3
 			.sliderHorizontal()
 			.min(0)
 			.max(dataSource.dates.length-1)
-			.ticks(10)
+			.tickValues(tick_ids)
 			.width(slider_width - 50) // slider should be smaller than the svg
 			.fill('#CA6')
 			.handle(d3.symbol()

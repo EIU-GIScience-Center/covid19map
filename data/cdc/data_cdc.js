@@ -31,7 +31,9 @@ To create a new data source:
 /* eslint-disable */
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
-function data_cdc(){ return {
+function data_cdc(){ 
+	console.log("attempting to get data from CDC...");
+	return {
 	dataSourceName: "USA", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
 	dataFunc: new Promise(function(resolve, reject){
@@ -70,6 +72,9 @@ function data_cdc(){ return {
 		}).done(function(data) {
 			src.tab_data = data; // add to src object
 			process_data(); // attempt to process all datasets
+		}).fail(function(){
+			console.log("we failed...");
+			reject(42);
 		});
 
 		// PROCESS DATA AND RESOLVE PROMISE WITH A DATA OBJECT IN SET FORMAT

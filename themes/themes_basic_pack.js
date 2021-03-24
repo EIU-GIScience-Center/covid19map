@@ -395,12 +395,7 @@ const themeDailyChangeCases = {
 	choroplethLegendTitle: "Increase in cases vs. one week ago",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -491,12 +486,7 @@ const themeWeeklyChangeCases = {
 	choroplethLegendTitle: "Increase in cases vs. prior week",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -585,12 +575,7 @@ const themeWeeklyChangeDeaths = {
 	choroplethLegendTitle: "Increase in deaths vs. prior week",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -665,12 +650,7 @@ const themeWeeklyPositivityRate = {
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -747,12 +727,7 @@ const themeWeeklyCaseMortality = {
 	choroplethLegendTitle: "Deaths as a percent of reported cases.",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -817,8 +792,6 @@ const themeCumulativeCases = {
 	circle: true,
     circleAreaFcn: function (feat, curDate) {
 		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
 		return totalCases;
 	},
 	circleFill: '#45c',
@@ -884,8 +857,6 @@ const themeCumulativeDeaths = {
 	circle: true,
     circleAreaFcn: function (feat, curDate) {
 		var totaldeaths = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
 		return totaldeaths;
 	},
 	circleFill: '#45c',
@@ -956,12 +927,7 @@ const themeCumulativePositivityRate = {
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "total through",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -1033,12 +999,7 @@ const themeCumulativeCaseMortality = {
 	choroplethLegendTitle: "Deaths as a percent of cases",
 	datePrefix: "total through",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
