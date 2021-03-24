@@ -279,3 +279,23 @@ function nearestDate(date,dates){
 	}
 }
 
+function tickDateIds(dates,maxMonthTicks){
+	var out_ids = [];
+	// get ids of all dates with new month
+	// first date
+	out_ids.push(0);
+	var this_date_str = dates[0];
+	var date = new Date(this_date_str);
+	var last_month = date.getDate();
+	for(let i=0; i < dates.length; i++){
+		this_date_str = dates[i];
+		date = new Date(this_date_str);
+		var month = date.getMonth();
+		if(month != last_month){
+			last_month = month;
+			out_ids.push(i);
+			console.log(this_date_str);
+		}
+	}
+	return out_ids;
+}
