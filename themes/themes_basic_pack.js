@@ -6,7 +6,6 @@
 /* eslint-env es6 */
 /* eslint-disable */
 
-console.log("Loading Themes...");
 
 // The theme object
 const themeDailyCases = {
@@ -22,13 +21,16 @@ const themeDailyCases = {
 	// function of all features, one date returning string label for aggregate value across all features
 	aggregateLabelFcn: function(feats,date){
 		var totalCases=0;
+		var totalPop=0;
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
 			totalCases += periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1]);
+			var pop = dataSource.getPopulation(feat);
+			totalPop += pop;
 		}
 		var aggLbl = "";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalCases.toFixed(0));
+		msg= "total: " + withCommas(totalCases.toFixed(0))  + " (" + withCommas(toAppropriateDecimals(1000000*totalCases/totalPop)) + "/million)";
 		return msg;
 	},
 
@@ -117,13 +119,16 @@ const themeDailyDeaths = {
 	// function of all features, one date returning string label for aggregate value across all features
 	aggregateLabelFcn: function(feats,date){
 		var totalDeaths=0;
+		var totalPop=0;
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
 			totalDeaths += periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1]);
+			var pop = dataSource.getPopulation(feat);
+			totalPop += pop;
 		}
 		var aggLbl = "";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalDeaths.toFixed(0));
+		msg= "total: " + withCommas(totalDeaths.toFixed(0)) + " (" + withCommas(toAppropriateDecimals(1000000*totalDeaths/totalPop)) + "/million)";
 		return msg;
 	},
 	
@@ -207,13 +212,16 @@ const themeWeeklyCases = {
 	dateRange: [-6,0],
 	aggregateLabelFcn: function(feats,date){
 		var totalCases=0;
+		var totalPop=0;
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
 			totalCases += 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
+			var pop = dataSource.getPopulation(feat);
+			totalPop += pop;
 		}
 		var aggLbl = "overall";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalCases.toFixed(0));
+		msg= "total: " + withCommas(totalCases.toFixed(0)) + " (" + withCommas(toAppropriateDecimals(1000000*totalCases/totalPop)) + "/million)";
 		return msg;
 	},
 	choroplethValueFcn: function (feat, date) {
@@ -272,13 +280,16 @@ const themeWeeklyDeaths = {
 	},
 	aggregateLabelFcn: function(feats,date){
 		var totalDeaths=0;
+		var totalPop=0;
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
 			totalDeaths += 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]);
+			var pop = dataSource.getPopulation(feat);
+			totalPop += pop;
 		}
 		var aggLbl = "overall";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalDeaths.toFixed(0));
+		msg= "total: " + withCommas(totalDeaths.toFixed(0)) + " (" + withCommas(toAppropriateDecimals(1000000*totalDeaths/totalPop)) + "/million)";
 		return msg;
 	},
 
@@ -320,6 +331,97 @@ const themeWeeklyDeaths = {
 		return msg;
 	}
 };
+
+const themeDailyChangeCases = {
+	themeName: "Daily Change in Cases",
+	briefDescription: "The ratio of new cases today to new cases one week ago.",
+	requiredVariables: ["cases"],
+	dateRange: [-13,-7,-6,0],
+	aggregateLabelFcn: function(feats,date){
+		var todayCases=0;
+		var casesOneWeekAgo=0;
+		for(i=0;i<feats.length;i++){
+			var feat = feats[i];
+			todayCases += periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1]);
+			casesOneWeekAgo += periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1]);
+		}
+		var msg = "";
+		if(casesOneWeekAgo==0){
+			if(todayCases==0){
+				msg = "no data"; 
+			} else {
+				msg = "no data for prior week"; 
+			}
+		} else {
+			var ratio = todayCases/casesOneWeekAgo; 
+			if(ratio < 1){
+				ratio = 100*(1-ratio);
+				msg = "-" + ratio.toFixed(0) + "%";
+			} else {
+				ratio = 100*(ratio-1);
+				msg = "+" + ratio.toFixed(0) + "%";
+			}
+		}
+		var aggLbl = "overall";
+		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
+		msg = aggLbl + " overall: " + msg;
+		return msg;
+	},
+	choroplethValueFcn: function (feat, date) {
+		var currentCases = getValue(feat,date,'cases', false, false)
+		var currentCasesPerMillion = getValue(feat,date,'cases', true, false)
+		var increaseInCases = getValue(feat,date,'cases', false, true)
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1])
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1])
+		if(prior_week==0){
+			if(this_week==0){
+				return 1; // No data, so we want a neutral color. A ratio of 1 means no increase or decrease.
+			} else {
+				return 2; // Increase from zero to a non-zero value, so we want a dark color. An increase of 2x is pretty big.
+			}
+		} else {
+			return this_week/prior_week; // The usual case: just return the increase ratio.
+		}
+	},
+
+	choroplethColorInterpolator: d3.interpolateRdBu,
+	choroplethValueScale: function(d){return d;},
+	invertColorScale: true,
+	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
+	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
+    legendmin: 0.2,
+    legendmax: 1.8,
+    updateDailyValueRange: false,
+	choroplethLegendTitle: "Increase in cases vs. one week ago",
+	datePrefix: "week ending",
+    circle: false,
+	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleFill: '#45c',
+	circleStroke: '#459',
+	tooltipTextFcn: function (feat, date) {
+		var one_week_ago = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1])
+		var today = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1])		
+		var increase;
+		if(one_week_ago==0){
+			var increase="Increase: n/a";
+		} else {
+			var increase = today/one_week_ago ;
+			if (increase <= 1){
+				increase = 100*(1-increase);
+				increase = "Decrease: " + increase.toFixed(1) + "%"
+			} else {
+				increase = 100*(increase-1);
+				increase = "Increase: " + increase.toFixed(1) + "%"
+			}
+			
+		}
+		msg = "<p>Previous week: " + one_week_ago.toFixed(1) + " new cases/day</p>";
+		msg += "<p>This week: " + today.toFixed(1) + " new cases/day</p>";
+		msg += "<p>" + increase + "</p>";		
+		return msg;
+	}
+}
+
 
 const themeWeeklyChangeCases = {
 	themeName: "Weekly Change in Cases",
@@ -384,12 +486,7 @@ const themeWeeklyChangeCases = {
 	choroplethLegendTitle: "Increase in cases vs. prior week",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -478,12 +575,7 @@ const themeWeeklyChangeDeaths = {
 	choroplethLegendTitle: "Increase in deaths vs. prior week",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -558,12 +650,7 @@ const themeWeeklyPositivityRate = {
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -607,7 +694,7 @@ const themeWeeklyCaseMortality = {
 			aggLbl += "no case data"; 
 		} else {
 			var pct = 100*newDeaths/newCases;
-			aggLbl += pct.toFixed(1);
+			aggLbl += pct.toFixed(1) + "%";
 		}
 		return aggLbl;
 	},
@@ -640,20 +727,12 @@ const themeWeeklyCaseMortality = {
 	choroplethLegendTitle: "Deaths as a percent of reported cases.",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
 		var dateID = dataSource.dates.indexOf(date);
 		if(dateID < 21){
-			console.log("insufficient data for themeCaseMortality");
-			console.log("dateID: " + dateID);
-			console.log(date);
 			return "insufficient data";
 		} else {
 			var prevDate = dataSource.dates[dateID-21];
@@ -678,13 +757,16 @@ const themeCumulativeCases = {
 	requiredVariables: ["cases"],
 	aggregateLabelFcn: function(feats,date){
 		var totalCases=0;
+		var totalPop=0;
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
 			totalCases += periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, false)}, [1]);
+			var pop = dataSource.getPopulation(feat);
+			totalPop += pop;
 		}
 		var aggLbl = "";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalCases.toFixed(0));
+		msg= "total: " + withCommas(totalCases.toFixed(0)) + " (" + withCommas(toAppropriateDecimals(1000000*totalCases/totalPop)) + "/million)";
 		return msg;
 	},
 	choroplethValueFcn: function (feat, date) {
@@ -710,8 +792,6 @@ const themeCumulativeCases = {
 	circle: true,
     circleAreaFcn: function (feat, curDate) {
 		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
 		return totalCases;
 	},
 	circleFill: '#45c',
@@ -739,13 +819,16 @@ const themeCumulativeDeaths = {
 	requiredVariables: ["deaths"],
 	aggregateLabelFcn: function(feats,date){
 		var totalDeaths=0;
+		var totalPop=0;
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
 			totalDeaths += periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, false)}, [1]);
+			var pop = dataSource.getPopulation(feat);
+			totalPop += pop;
 		}
 		var aggLbl = "";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel();};
-		msg= aggLbl + " total: " + withCommas(totalDeaths.toFixed(0));
+		msg= "total: " + withCommas(totalDeaths.toFixed(0)) + " (" + withCommas(toAppropriateDecimals(1000000*totalDeaths/totalPop)) + "/million)";
 		return msg;
 	},
 	choroplethValueFcn: function (feat, date) {
@@ -774,8 +857,6 @@ const themeCumulativeDeaths = {
 	circle: true,
     circleAreaFcn: function (feat, curDate) {
 		var totaldeaths = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
 		return totaldeaths;
 	},
 	circleFill: '#45c',
@@ -846,12 +927,7 @@ const themeCumulativePositivityRate = {
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "total through",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -923,12 +999,7 @@ const themeCumulativeCaseMortality = {
 	choroplethLegendTitle: "Deaths as a percent of cases",
 	datePrefix: "total through",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
-		// for now, set radius as 1/10th of sqrt of cases
-		// or return zero for illustrations with no circles
-		return 0;
-	},
+	circleAreaFcn: function (feat, curDate) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {

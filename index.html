@@ -22,33 +22,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap" rel="stylesheet">
  <link href="https://fonts.googleapis.com/css2?family=B612+Mono&display=swap" rel="stylesheet">
   <title>COViz</title>
-  <script>console.log("loading jquery...");</script>
   <script src="jquery-3.4.1.js"></script>
   <script src="jquery.csv-0.71.min.js"></script>
-  <script>console.log("loading papaparse...");</script>
   <script src="papaparse.min.js"></script>
   <script src="d3.v5.js" charset="utf-8"></script>
-  <script>console.log("loading utils...");</script>
   <script src="utils.js"></script>  
-  <script>console.log("loading covidtracking...");</script>
+  <script src="data/cdc/data_cdc.js"></script>
   <script src="data/states_covidtracking_TEMPLATE/data_covidtracking_states.js"></script>
-  <script>console.log("loading jhu...");</script>
   <script src="data/counties_jhu/data_counties_JHU.js"></script>
-  <script>console.log("loading canada...");</script>
   <script src="data/canada_provinces_odwg/data_canada_provinces_odwg.js"></script>
-  <script>console.log("loading Europe...");</script>
   <script src="data/Europe_jhu/data_Europe_JHU.js"></script>
-  <script>console.log("loading slider...");</script>
-  
   <script src="d3-simple-slider.min.js"></script>
-  <script>console.log("loading resize sensor...");</script>
   <script src="ResizeSensor.js"></script>
-  <script>console.log("loading susielu...");</script>
   <script src="legend_susielu.js"></script>
-  <script>console.log("loading themes...");</script>
   <script src="themes/themes_basic_pack.js"></script>
-  
-
 </head>
 
 <body>
@@ -83,76 +70,69 @@
 			</div>
 		</div>
 		<div id="options_panel">
-			<div id="options" style="display: table; overflow: hidden; min-height: 100%;">
+			<div id="options">
+				<div id="vertical_center_wrapper">
 				<div id="vertical_center">
-					<table id="table_setting">
-						<tr>
-							<td>
-								<b>Region:</b>
-							</td>
-							<td>
-								<select class="select-css" id="dataSourceSelector">
-								</select>			
-							</td>
-						</tr>
-						<tr id="zoomrow" style="display: none">
-							<td>
-								<b><button id="zoomUp" data-tooltip-position="bottom" data-tooltip="ZoomOut"><img src="images/minus.png" alt="zoomUp" width="16.7" height="25"></button></b>
-							</td>
-							<td id="zoomtarget">
-										
-							</td>
-						</tr>
-						<tr>
-							<td colspan=2 id="data_source_brief_description">
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<b>Map Theme:</b>
-							</td>
-							<td>
-								<select class="select-css" id="themeSelector">
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td colspan=2 id="theme_brief_description">
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<b>Map Type:</b>
-							</td>
-							<td>
-								<span>
-									Map
-									<label class = "switch">
-									<input id="carttoggle" type="checkbox">
-									<span class="slider round"></span>
-									</label>
-									<a id="cartOptLbl" > Cartogram</a>
-								</span>					
-							</td>
-						</tr>
-						<tr>
-							<td colspan=2 id="map_type_description" class="map_type_description">
-						</td>
-						</tr>
-					</table>		  
+					<div id="selection_area">
+						<div id="regionlabel">
+							<b>Region:</b>
+						</div>
+						<div id="regioncontrol">
+							<select class="select-css" id="dataSourceSelector">
+							</select>		
+						</div>
+						<div id="regiondescription">
+						</div>
+						
+						<div id="zoomlabel">
+						</div>
+						<div id="zoomcontrol">
+							<button id="zoomUp"  class="big_button" data-tooltip-position="bottom" data-tooltip="Zoom Out"><b>&#10134;</b></button>
+							<p id="zoomUpLabel"></p>
+						</div>
+						
+						<div id="themelabel">
+							<span><b>Map Theme:</b></span>
+						</div>
+						<div id="themecontrol">
+							<select class="select-css" id="themeSelector">
+							</select>
+						</div>
+						<div id="themedescription">
+						</div>
+						
+						<div id="maptypelabel">
+							<b>Map Type:</b>
+						</div>
+						<div id="maptypecontrol">
+							<span>
+								Map
+								<label class = "switch">
+								<input id="carttoggle" type="checkbox">
+								<span class="slider round"></span>
+								</label>
+								<a id="cartOptLbl" > Cartogram</a>
+							</span>				
+						</div>
+						<div id="maptypedescription">
+						</div>
+					</div>
+				</div>
 				</div>
 			</div>
 			<div id="time_controls">
 			
-				<button id="play-button" data-tooltip-position="bottom" data-tooltip="Play/Pause">►</button>
-				<span class="dot" id="Slowest" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(0)"></span> 
-				<span class="dot" id="Slower" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(1)"></span> 
-				<span class="dot" id="Normal Speed" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(2)"></span>
-				<span class="dot" id="Faster" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(3)"></span> 
-				<span class="dot" id="Fastest" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(4)"></span>  
-				<button id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease Speed">◀◀</button>
-				<button id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase Speed">▶▶</button> 
-				<button id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
+				<button class="big_button" id="play-button" data-tooltip-position="bottom" data-tooltip="Play/Pause">►</button>
+				
+					<span class="dot" id="Slowest" data-tooltip-position="bottom" data-tooltip="Slowest" onclick="delayDots(0)"></span> 
+					<span class="dot" id="Slower" data-tooltip-position="bottom" data-tooltip="Slower" onclick="delayDots(1)"></span> 
+					<span class="dot" id="Normal Speed" data-tooltip-position="bottom" data-tooltip="Normal Speed" onclick="delayDots(2)"></span>
+					<span class="dot" id="Faster" data-tooltip-position="bottom" data-tooltip="Faster" onclick="delayDots(3)"></span> 
+					<span class="dot" id="Fastest" data-tooltip-position="bottom" data-tooltip="Fastest" onclick="delayDots(4)"></span>  
+				
+				<button class="big_button" id="slower-button" data-tooltip-position="bottom" data-tooltip="Decrease Speed">◀◀</button>
+				<button class="big_button" id="faster-button" data-tooltip-position="bottom" data-tooltip="Increase Speed">▶▶</button> 
+				<button class="big_button" id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
 			</div>
 			<div id="slider"></div>
 			</div>
@@ -286,7 +266,6 @@
 
 
 <script>
-	console.log("starting main script...");
 	var active_feature = null;
 	var active;
 	var oncartogram = false;
@@ -334,6 +313,7 @@
 		themeWeeklyPositivityRate,
 		themeWeeklyCaseMortality,
 		themeDailyCases,
+		themeDailyChangeCases,
 		themeDailyDeaths,
         themeCumulativeCases,
 		themeCumulativeDeaths,
@@ -344,7 +324,7 @@
 	// array of data sources
 	// each data source should be defined in a separate file; see data_covidtracking_states.js for a template
 	var dataSources = [
-		dataCovidTracking_states()]
+		data_cdc()]
 		/*,
 		dataODWG_Canada_Provinces(),
 		dataJHU_USA_Counties()
@@ -378,7 +358,6 @@
 	function addDataSourcesToSelector(dataSourcesToAdd){
 		// Add datasets to the selector
 		const dataSourceSelector = document.getElementById("dataSourceSelector");
-		console.log("ADDING DATASETS");
 		for (i=0; i<dataSourcesToAdd.length; ++i) {
 			var thisDataSrc = dataSourcesToAdd[i];
 			if(thisDataSrc.showInSelector){
@@ -590,7 +569,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			if (match) {
 				theme = match;
 				// show the description of the theme
-				document.getElementById("theme_brief_description").innerHTML ="<i>" + theme.briefDescription + "</i>";
+				document.getElementById("themedescription").innerHTML ="<i>" + theme.briefDescription + "</i>";
 				// calculate true legend/color/size scales based on theme parameters
 				if(theme.invertColorScale){
 					lowValColor = theme.choroplethColorInterpolator(1);
@@ -615,7 +594,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				} else {
 					fixedValueRange();
 				}   
-				console.log("updating map from loadTheme");
 				updateMap();
 				// console.log("loading legend from loadTheme");
 				// loadLegend(); not necessary; updateMap calls loadLegend				
@@ -624,18 +602,16 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	} // loadTheme function
 
 	var loadData = function(dataSourceName, filterValue=null) {
-		console.log("creating loadData promise function...");
 		return new Promise(function(resolve,reject){
 			// find matching data source
 			var match = dataSources.find(v => v.dataSourceName == dataSourceName);
 			
 			if(match){
+				
 				// for error checking
 				error_displayed=false;
 				// get promised data object
-				console.log(match.dataFunc);
 				match.dataFunc.then(function(the_data_obj){
-					console.log("Got the DATA OBJECT");
 					dataSource = the_data_obj; // the data object is what we'll call the dataSource
 					dataSourceFilter = filterValue;
 					if(dataSourceFilter==null){dataSourceFilter = dataSource.defaultFilter;};
@@ -643,29 +619,16 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					active_feature = null;
 					feature_mouseout(null,null);
 					// show the description of the data source
-					document.getElementById("data_source_brief_description").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
+					document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 					addThemesToSelector(dataSource); // determine which themes are valid for this data source
 					// create a getValue function that can be used in themes
 					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
 						var featID = dataSource.getID(feat);
 						var val;
-						if(dataSource.dateDistrictData == undefined || featID == undefined){
+						if(dataSource.dateDistrictData == undefined || featID == undefined ){
 							val=0;
 						} else {
-							try{
 							var val = dataSource.dateDistrictData[date][featID][varName];
-							}
-							catch(err){
-								if(error_displayed==false){
-									console.log("ERROR in Florida");
-									console.log(err.message);
-									console.log("date: " + date);
-									console.log("featID: " + featID);
-									console.log("varName: " + varName);
-									console.log(dataSource.dateDistrictData);
-									error_displayed=true;
-								}
-							}
 						}
 						if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
 						if(getIncrease){
@@ -709,13 +672,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function extendColorScale(initScale,inVal){
 		if (lowValColor != null){
 			if (inVal <= lowVal){
-				console.log("value below lowVal.");
 				return lowValColor;
 			} 
 		}
 		if (highValColor != null){
 			if (inVal >= highVal){
-				console.log("value above lowVal.");
 				return highValColor;
 			}
 		}
@@ -747,7 +708,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
         // the added reflectY function puts a minus sign before the Y coordinate, because SVG y-coordinates are upside-down
         // the added fitExtent function does most of the work. It creates translation and scaling parameters to automatically
         // fit the input features to the box inside the div
-		console.log("fitting extent in divPathFunc...");
         var zoomProjection = d3.geoIdentity()
             .reflectY(true)
             .fitExtent([[padding,padding],[width-padding, height-padding]],geojsonObj);
@@ -761,15 +721,12 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function resize(){
 		if(do_resize){
 			if (curDate != null){
-				console.log("resize triggered...");
 				divid='map';
 				mapdiv = document.getElementById(divid); // Do not use #
 				var width = mapdiv.offsetWidth;
 				var height = mapdiv.offsetHeight;
-				console.log("SVG dimensions: " + width + " x " + height);
 				// update map, legend and slider only if div size has changed
-				if(width != mapWidth || height != mapHeight){
-					console.log("Resizing...");		
+				if(width != mapWidth || height != mapHeight){	
 					// record new width/height so we can avoid resizing next time if this doesn't change
 					mapWidth = width;					
 					mapHeight = height;
@@ -788,8 +745,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
                     } else {
                         radScaleFac = areaScaleFac(baseFeatures);
                     }
-					console.log("Radius factor: " + radScaleFac);
-					console.log("updating map from resize");
 					updateMap();
 					//loadLegend();
 					var slider_val = parseInt(slider.value());
@@ -893,14 +848,12 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					.on("mouseout",feature_mouseout);			
 
 				do_resize=true; // prevent repeated resizing
-				console.log("resolving transition...");
 				resolve();
 			});
 			
 	});}
 
 	function replaceMapData(featdata,categories, category){
-		console.log("replacing map data...");
 		// replaces current map polygons with reatdata
 		// remove all paths from map
 		mapsvg.selectAll("g").remove();
@@ -909,7 +862,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		districtPaths = mapsvg.append('g');
 		// calculate radius scale 
 		radScaleFac = areaScaleFac(featdata);
-		console.log("radScaleFac: " + radScaleFac);
 		// remove and re-create paths in SVG
 		curZoomFunc = divPathFunc("mapdiv", featdata, 30);
 		districtPaths.selectAll('path')
@@ -954,10 +906,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 
 
 	function loadMap(featdata,categories, category, transition=false){return new Promise(function(resolve,reject){
-		console.log("loading map...");
-		console.log("Transition: " + transition);
-		console.log(categories);
-		console.log(category);
 		// make sure we have a data source
 		if(dataSource !== undefined){		
 			divid='map';
@@ -968,8 +916,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			
 			// d3.select(divid).selectAll('svg').remove();		
 			// create svg object inside map div
-			console.log("Debugging - loadMap");
-			console.log(mapsvg);
+			
 			if(mapsvg == undefined){
 				mapsvg = d3.select(divid)
 						.append('svg')
@@ -977,21 +924,16 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 						.attr('height',height)
 						.on('click',reset);		
 			}
-			console.log("In loadMap function...");
-			console.log("Transition: " + transition);
 			if(transition){
 				transitionMapData(featdata,categories,category).then(function(){
-					console.log("resolving loadMap after transition");
 					resolve();
 				});
 			} else {
 				replaceMapData(featdata,categories,category);
-				console.log("resolving loadMap after replace");
 				resolve();
 			}
 			// end if dataSource is not undefined
 		}  else {
-			console.log("resolving loadMap after data undefined");
 			resolve();
 		}
 	});}
@@ -1000,7 +942,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function toggle_map(milliseconds=1500, callback){
 		oncartogram = !oncartogram;
 		document.getElementById("carttoggle").checked=oncartogram;
-		console.log("updating map from toggle_map");
 		updateMap(milliseconds, callback);
 	}
 
@@ -1008,7 +949,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	function updateMapTitle(){
 		var newtitle= "<b>" + theme.themeName + "</b>";
 		document.getElementById("map_title_left").innerHTML=newtitle;
-		document.getElementById("map_title_center").innerHTML=datePeriodExpression(curDate, theme.dateRange, dataSource.dates);
+		document.getElementById("map_title_center").innerHTML=datePeriodExpression(curDate, [], dataSource.dates); //theme.dateRange
 		if(theme.aggregateLabelFcn == undefined){
 			document.getElementById("map_title_right").innerHTML="";
 		} else {
@@ -1047,7 +988,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			} 
 			mapTypeDescription += "</ul></p>";
 		}
-		document.getElementById("map_type_description").innerHTML ="<i>" + mapTypeDescription + "</i>";
+		document.getElementById("maptypedescription").innerHTML ="<i>" + mapTypeDescription + "</i>";
 		divid='map';
 			mapdiv = document.getElementById(divid); // Do not use #
 			var width = mapdiv.offsetWidth;
@@ -1059,14 +1000,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 
 				// get features (either map or cartogram)
 				var todata; 
-				console.log("updating map...");
 				if (oncartogram==false){
 					todata=baseFeatures;
 				} else {
 					todata=cartogramFeatures;
 				};
-				console.log("Features in updateMap:");
-				console.log(todata);
 				// get data and choropleth/symbol functions depending on if we're showing a map or cartogram
 				var localChoroplethColor;
 				var localCircleRadius;
@@ -1091,7 +1029,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 					localFeatureStroke = '#DDD';
 					localCircleStroke = "rgba(0, 255, 255,0.35)";
-					localCircleFill="rgba(0, 255, 255,0.35)";
+					localCircleFill="rgba(0, 255, 255,0.05)";
 				} else {
 					// symbology for a cartogram
 					todata=cartogramFeatures;
@@ -1118,11 +1056,15 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					.attr("fill",localChoroplethColor)
 					.style('opacity',1)
 					.end()
+					//FOLLOWING IS CALLING ERRORS - DO WE NEED CALLBACK?
 					.then(() => {
+						console.log("*** in callback...");
+						console.log(callback);
 						if(callback != undefined){
 							callback();
 						};
 					});
+					
 					//.on("end",callback);	
 
 				// transition circle symbols
@@ -1143,10 +1085,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					.style('stroke',localCircleStroke)
 					.duration(milliseconds);
 				// reload legend
-				console.log("loading legend from updateMap");
 				loadLegend();
 				if(moving==false){
-                    console.log("Load circle legend from updateMap");
                     loadCircleLegend();
 				};
 				// update map title
@@ -1161,19 +1101,21 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 
 	function loadLegend(){
 		do_resize=false; // prevent repeated resizing
-		console.log("Loading Legend...");
-		var legwidth =(document.getElementById("legend").offsetWidth);
-            if(legwidth < 100){legwidth=100;}
+		// get width
+		var legwidth =(document.getElementById("mapbottom").offsetWidth);
+            
+		if (theme.circle == true){legwidth = legwidth/2}		
+		if(legwidth < 100){legwidth=100;}
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
 		// create svg for new legend
 		var legendsvg = d3.select("#legend")
 			.append('svg')
 			.attr('width',legwidth)
-            .attr("height", 60)
+            .attr("height", 90)
 		legendsvg.append("g")
 		  .attr("class", "legendChoropleth")
-		  .attr("transform", "translate(20,20)");
+		  .attr("transform", "translate(30,30)");
 		// create legend
 		var truncatedCells
         var truncatedLabels
@@ -1192,7 +1134,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			.scale(choroplethColorScale)
 			.shapePadding(-1)
 			.shapeHeight(15)
-			.labelOffset(6); 
+			.labelOffset(16); 
 		// call function to draw legend in svg
 		legendsvg.select(".legendChoropleth")
 		  .call(legendChoropleth);
@@ -1263,40 +1205,39 @@ function areaScaleFac(features, maxOccupancy = 0.35){
     
     //Load circle legend
     function loadCircleLegend() {
-            console.log("Loading Circle Legend...");
-            var legwidth = (document.getElementById("circleLegend").offsetWidth);
-            legwidth = $("#map_panel").width();
-            legheight = $("#circleLegend").height();
-            // remove any existing legend
+		var legwidth = (document.getElementById("circleLegend").offsetWidth);
+		legwidth = $("#map_panel").width();
+		legheight = $("#circleLegend").height();
+		// remove any existing legend
         d3.select("#circleLegend").selectAll('svg').remove();
-            // create svg for circle legend
-            // choose cirRadmax/min based on whether animation is playing or not
-            if (theme.updateDailyValueRange && moving==false){
-                //daily maximum and minimum value
-                  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
-                  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
-            } else {
-                //global maximum and minimum value
-                  var cirRadmax = maxCirValue(theme.circleAreaFcn);
-                  var cirRadmin = minCirValue(theme.circleAreaFcn);
-            }   
-            // find minmum and maximum circle radius
-            var maxCircleRadius=function(d){
-                var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
-                if (cRadius >= 43){
-                    return 43
-                } else {
-                return cRadius;
-                }
-            };
-            var minCircleRadius=function(d){
-                var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
-                if (cRadius <= 5){
-                    return 5
-                } else {
-                return cRadius;
-                }
-            };
+		// create svg for circle legend
+		// choose cirRadmax/min based on whether animation is playing or not
+		if (theme.updateDailyValueRange && moving==false){
+			//daily maximum and minimum value
+			  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
+			  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
+		} else {
+			//global maximum and minimum value
+			  var cirRadmax = maxCirValue(theme.circleAreaFcn);
+			  var cirRadmin = minCirValue(theme.circleAreaFcn);
+		}   
+		// find minimum and maximum circle radius
+		var maxCircleRadius=function(d){
+			var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
+			if (cRadius >= 43){
+				return 43
+			} else {
+			return cRadius;
+			}
+		};
+		var minCircleRadius=function(d){
+			var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
+			if (cRadius <= 5){
+				return 5
+			} else {
+			return cRadius;
+			}
+		};
         //domain = value
         //range = disply pixel size = circle radius
         var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
@@ -1318,83 +1259,93 @@ function areaScaleFac(features, maxOccupancy = 0.35){
               .style("fill", "rgba(0, 215, 215, 1)")
         }
         // legend title
-            var crmin = cirRadmin
-            var crmax = cirRadmax
-            var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
-            var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
-            var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
-            if (crmin >= 1000){
-                crmin = crmin.toString().slice(0,-3) + 'K';
-            } else {
-                crmin = '~1K'
-            }
-            if (crmax >= 1000){
-                crmax = crmax.toString().slice(0,-3) + 'K';
-            }
-            if (cr1 >= 1000){
-                cr1 = cr1.toString().slice(0,-3) + 'K';
-            }
-            if (cr2 >= 1000){
-                cr2 = cr2.toString().slice(0,-3) + 'K';
-            }
-            if (cr3 >= 1000){
-                cr3 = cr3.toString().slice(0,-3) + 'K';
-            }
+		var crmin = cirRadmin
+		var crmax = cirRadmax
+		var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
+		var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
+		var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
+		if (crmin >= 1000){
+			crmin = crmin.toString().slice(0,-3) + 'K';
+		} else {
+			crmin = '~1K'
+		}
+		if (crmax >= 1000){
+			crmax = crmax.toString().slice(0,-3) + 'K';
+		}
+		if (cr1 >= 1000){
+			cr1 = cr1.toString().slice(0,-3) + 'K';
+		}
+		if (cr2 >= 1000){
+			cr2 = cr2.toString().slice(0,-3) + 'K';
+		}
+		if (cr3 >= 1000){
+			cr3 = cr3.toString().slice(0,-3) + 'K';
+		}
 
-            legendsvg.append("text")
-              .attr("x", 15)
-              .attr("y", 15)
-              .attr("dy", ".35em")
-              .style("text-align", "left")
-              .text(theme.circleLegendTitle)
-        // legend size and label
-            var legendSize = d3.legendSize()
-              .scale(linearSize)
-              .shape('circle')
-              .shapePadding(20)
-              .labelOffset(15)
-              .orient('horizontal')
-            // truncate to only show integer, added comma in every three digits
-            // label = calculate the values between minimum and maximum values
-            // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
-              .labels([crmin, cr1, cr2, cr3, crmax]);
-        
-        
-            // call function to draw legend in svg
-            legendsvg.select(".legendSize")
-                .call(legendSize);
-            do_resize=true;
+		legendsvg.append("text")
+		  .attr("x", 15)
+		  .attr("y", 15)
+		  .attr("dy", ".35em")
+		  .style("text-align", "left")
+		  .text(theme.circleLegendTitle)
+		// legend size and label
+			var legendSize = d3.legendSize()
+			  .scale(linearSize)
+			  .shape('circle')
+			  .shapePadding(30)
+			  .labelOffset(21)
+			  .orient('horizontal')
+			// truncate to only show integer, added comma in every three digits
+			// label = calculate the values between minimum and maximum values
+			// formular = (((Maximum - Minimum)/10)*7.5) + Minimum
+			  .labels([crmin, cr1, cr2, cr3, crmax]);
+		
+		
+			// call function to draw legend in svg
+			legendsvg.select(".legendSize")
+				.call(legendSize);
+			do_resize=true;
         }
     
 	// smooth zoom
 	function smoothZoom(toDataSource){
+		console.log("*** smoothZoom start...")
 		toDataSource.dataFunc.then(function(the_data_obj){
-		// if on cartogram, first toggle back to map
-		if(oncartogram){
-			busy = true;
-			toggle_map(750,function(){
-				console.log("loading data from Zoom to Child toggle...");
-				loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
-					handleDataLoaded(transition=true).then(function(){
-						document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
-						if(cartogramFeatures != null){
-							toggle_map(750);
-							busy = false;
-						} else {
-							busy = false;
-						};
+			// if on cartogram, first toggle back to map
+			console.log("*** oncartogram: " + oncartogram)
+			if(oncartogram){
+				busy = true;
+				toggle_map(750,function(){
+					console.log("*** toggleMap start...")
+					loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
+						console.log("*** loadData then start...")
+						handleDataLoaded(transition=true).then(function(){
+							console.log("*** handleDataLoaded then start...")
+							document.getElementById("zoomcontrol").style.display='block';// show option to zoom back to parent features
+							document.getElementById("zoomlabel").style.display='block';// show option to zoom back to parent features
+							document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom out to " + dataSource.dataParentName + "</i>";
+							if(cartogramFeatures != null){
+								console.log("*** just before toggle_map...")
+								toggle_map(750);
+								console.log("*** just after toggle_map...")
+								busy = false;
+							} else {
+								busy = false;
+							};
+						});
 					});
 				});
-			});
-		} else {
-			console.log("loading data from Zoom to Child...");
-			loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){
-				handleDataLoaded(transition=true).then(function(){
-					document.getElementById("zoomrow").style.display='block';// show option to zoom back to parent features
+			} else {
+				loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){
+					handleDataLoaded(transition=true).then(function(){
+						document.getElementById("zoomcontrol").style.display='block';// show option to zoom back to parent features
+						document.getElementById("zoomlabel").style.display='block';// show option to zoom back to parent features
+						document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom to " + dataSource.dataParentName + "</i>";
+					});
 				});
-			});
-		}
-	})};
+			}
+		})
+	};
     
 	// zoom to child 
     function zoomToChild(feat){
@@ -1434,7 +1385,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			showHTML += "<div style='float: left;'>";
 			if(showInteractiveElements){
 				// button to show child data source	
-				showHTML += "<button id='zoomDown' data-tooltip-position='bottom' data-tooltip='Zoom In'><img src=images/plus.png alt=zoomDown width=16.7 height=25></button>";
+				showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In'>&#10133;</button><i> Zoom to " + dataSource.getID(d) + "</i>";
 			} else {
 				// hint that button exists
 				showHTML += "&lt;click for zoom button&gt;";
@@ -1573,17 +1524,15 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	}
 
   	var loadSlider=function(){return new Promise(function(resolve, reject){
-		console.log("loading slider...");
-		console.log(curDate);
 		// remove existing slider
 		if (slider_svg != null){
 			slider_svg.remove();
 		}
 		// get available width
-		var viewportwidth = $(window).width();
-		// var slider_width = 0.45*(viewportwidth);
-		var slider_width = $("#options_panel").width();
+
+		var slider_width = $("#options_panel").width()-60;
 		if(slider_width < 100){slider_width=100;};
+		
 		var secretCode="Yes please show month!";
 		function dateString(sliderID, showMonthParam){
 			sliderID = parseInt(sliderID);
@@ -1604,14 +1553,17 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		textData=[0];
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
+		var tick_ids = tickDateIds(dataSource.dates,10);
 		slider = d3
 			.sliderHorizontal()
 			.min(0)
 			.max(dataSource.dates.length-1)
-			.ticks(10)
-			.width(slider_width-60) // slider should be smaller than the svg
+			.tickValues(tick_ids)
+			.width(slider_width - 50) // slider should be smaller than the svg
 			.fill('#CA6')
-			.handle(circlepath)
+			.handle(d3.symbol()
+			  .type(d3.symbolCircle)
+			  .size(500))
 			.tickFormat(dateString)		
 			.displayValue(true)
 			.on('onchange', function(val) {
@@ -1628,7 +1580,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					// console.log("loading legend from slider change");
 					// loadLegend();
 				};
-				console.log("updating map from slider change");
 				updateMap(slider_update_duration);
 			});
 		slider_svg
@@ -1639,32 +1590,27 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			.attr('transform', 'translate(30,30)')
 			.call(slider);
 		// report that function worked
-		console.log("slider initial date:");
-		console.log(dataSource.dates[slider.value()]);
 		var nearestDate = dataSource.dates.reduce((a,b) => {
 					return Math.abs(Date.parse(b)-Date.parse(curDate)) , Math.abs(Date.parse(a)-Date.parse(curDate)) ? b : a;
 				});
 				curDate = nearestDate
 		// slider.value(dataSource.dates.indexOf(curDate));
-		console.log("best date:");
-		console.log(curDate);
 		resolve();
 	})}
 
 	function handleDataLoaded(transition=false){return new Promise(function(resolve,reject){
 		// loads new data into the map and updates the slider
 		// update the slider
-		console.log("HANDLING DATA LOADED...");
-		console.log("Transition: " + transition);
 		// report current dataset
 		if(dataSource.dataParentName==null){
-			document.getElementById("zoomrow").style.display="none";
+			document.getElementById("zoomlabel").style.display="none";
+			document.getElementById("zoomcontrol").style.display="none";
 		} else {
-			document.getElementById("zoomrow").style.display='';
-			document.getElementById("zoomtarget").innerHTML="zoomed to: " + dataSourceFilter;
+			document.getElementById("zoomlabel").style.display='block';
+			document.getElementById("zoomlabel").innerHTML="zoomed to: " + dataSourceFilter;
+			document.getElementById("zoomcontrol").style.display="block";
 		};
 		loadSlider().then(function(){
-			console.log("slider loaded:");
 			// define current date
 			var oldDate = curDate;
 			 // change this to get the nearest date
@@ -1678,10 +1624,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 				curDate=dataSource.dates[0];
 			}
 			// load the map!
-			console.log("loading map from handleDataLoaded...");
 			loadMap(baseFeatures,undefined, undefined, transition).then(function(){
 				//load the Theme
-				console.log("loading Theme from handleDataLoaded");
 				loadTheme();
 				// resize everything
 				resize();
@@ -1725,12 +1669,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
     
 	function handlePlayButtonClick(){	
 		var button = d3.select(playButton);
-		console.log("*******************");
-		console.log("CLICKED PLAY:");
-		console.log("current button: " + button.text());
-		console.log("*******************");
-		console.log(sliderID);
-		console.log(dataSource.dates.length);
 		if (playButton.text() == "∥") {
 		  moving = false;
 		  touring = false;
@@ -1748,13 +1686,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		  moving = true;
           loadCircleLegend();
 		  fixedValueRange();
-		  console.log("loading legend from handlePlayButtonClick");
 		  loadLegend();
 		  //delay = 0;
 		  timer = setInterval(step, delay);
 		  playButton.text("∥"); 
 		}
-		console.log("Slider moving: " + moving);
 	}
 	
     playButton
@@ -1764,7 +1700,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
         var targetIndex = dataSource.dates.length-1;
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
-		console.log("Slider moving: " + moving);
 		if (theme.updateDailyValueRange && moving==false){
 					updateValueRange(curDate);
                 } else {
@@ -1831,22 +1766,17 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			looping = true;
 			button.text("⇥");
 		}
-		console.log("Looping: " + looping);	
 	}
 	
     var loopButton = d3.select("#loop-button");
         loopButton
             .on("click", handleLoopButtonClick);
 
-	console.log("STARTING...");
-
 	function playTour(){
-		console.log("******PLAYING TOUR **********");
 		// restrict user control
 		busy=true;
 		touring=true;
 		document.getElementById("Faster").click();
-		console.log(slider.value());
 		
 		setTimeout(function(){
 			if(touring){
@@ -1879,23 +1809,18 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		document.onkeydown=handlekeydown;			
 		document.getElementById("carttoggle").addEventListener("change",function(){
 			touring=false;
-			console.log("clicked toggle...");
-			console.log("busy: " + busy);
 			if(busy == false){toggle_map(1500);};
 		});
 		document.getElementById("themeSelector").addEventListener("change",function(){
 			touring=false;
-			console.log("loading theme from theme option change");
 			if(busy == false){loadTheme();};
 		});
 		document.getElementById("dataSourceSelector").addEventListener(
 			"change",function(){
 				touring=false;
 				if(busy == false){
-					console.log("loading data from dataSourceSelector change...");
 					loadData(document.getElementById("dataSourceSelector").value).then(
 						function(){
-							console.log("handling data loaded from change in data source selector");
 							handleDataLoaded()
 						}
 					);
@@ -1904,7 +1829,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		);
 		document.getElementById('zoomUp').addEventListener("click",function(){
 			console.log("Zoom up clicked...");
-			console.log("busy: " + busy);
 			if(busy == false){zoomToParent();};
 		});
 		$('themeSelector').on('keydown', function(e){
@@ -1914,7 +1838,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			}
 		});
 			
-		console.log("script finished.");		
 		
 		var newDataSources = [
 			dataODWG_Canada_Provinces(),
@@ -1924,6 +1847,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		
 		dataSources=dataSources.concat(newDataSources);
 		addDataSourcesToSelector(newDataSources);
+		
 		handleDataLoaded().then(function(){
 			defaultPlayStart = dataSource.dates.length-56; // by default play the last 8 weeks
 			if(defaultPlayStart < 0){defaultPlayStart = 0;};
@@ -1935,9 +1859,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					slider_update_duration = orig_duration;
 				},500
 			);
-			console.log("DATA LOADED AND READY");
 			// Start default animation tour!
-			playTour();
+			//playTour();
 		});
 	});
 
