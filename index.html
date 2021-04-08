@@ -880,7 +880,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			.on("mouseout",feature_mouseout);	
 
 		circles = mapsvg.append('g');
-		
 		circles.selectAll('circle')
 			.data(featdata.features)
 			.enter()
@@ -1098,12 +1097,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			} // end if date is not null
 		} // end if mapsvg is not null
 	}
-
+    
 	function loadLegend(){
 		do_resize=false; // prevent repeated resizing
 		// get width
 		var legwidth =(document.getElementById("mapbottom").offsetWidth);
-            
 		if (theme.circle == true){legwidth = legwidth/2}		
 		if(legwidth < 100){legwidth=100;}
 		// remove any existing legend
@@ -1112,10 +1110,10 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		var legendsvg = d3.select("#legend")
 			.append('svg')
 			.attr('width',legwidth)
-            .attr("height", 90)
+            .attr("height", 120)
 		legendsvg.append("g")
 		  .attr("class", "legendChoropleth")
-		  .attr("transform", "translate(30,30)");
+		  .attr("transform", "translate(30,40)");
 		// create legend
 		var truncatedCells
         var truncatedLabels
@@ -1123,18 +1121,35 @@ function areaScaleFac(features, maxOccupancy = 0.35){
              [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailyChomin, dailyChomax);
         } else {
 			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
-        }        
+        }
+        if (oncartogram==true){
+        legendChoropleth = d3.legendColor()
+            .shape('circle')
+			.cells(truncatedCells)
+			.orient("horizontal")
+			.labels(truncatedLabels)
+			.scale(choroplethColorScale)
+            .shapePadding(4)
+            .shapeRadius(20)
+			.labelOffset(16); 
+        } else {
         var numCells = truncatedCells.length;
 		legendChoropleth = d3.legendColor()
 			.shapeWidth((legwidth-30)/numCells)
-			.title(theme.choroplethLegendTitle)
 			.cells(truncatedCells)
 			.orient("horizontal")
 			.labels(truncatedLabels)
 			.scale(choroplethColorScale)
 			.shapePadding(-1)
 			.shapeHeight(15)
-			.labelOffset(16); 
+			.labelOffset(16);
+        }
+        legendsvg.append("text")
+              .attr("x", 15)
+              .attr("y", 6)
+              .attr("dy", ".35em")
+              .style("text-align", "left")
+              .text(theme.choroplethLegendTitle);
 		// call function to draw legend in svg
 		legendsvg.select(".legendChoropleth")
 		  .call(legendChoropleth);
@@ -1244,67 +1259,66 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             var legendsvg = d3.select("#circleLegend")
                 .append('svg')
                 .attr('width',legwidth)
-                .attr("height", legheight)
+                .attr("height", 125);
         // make circle transparent when there is no circle symbol on the map
         if (theme.circle == false){
             legendsvg.append("g")
               .attr("class", "legendSize")
-              .attr("transform", "translate(20,40)")
+              .attr("transform", "translate(30,40)")
               .style("fill", "rgba(0, 0, 0, 0)")
-        } else {
         // show circle legend with color match with the symbol from the map
+        } else {
             legendsvg.append("g")
               .attr("class", "legendSize")
-              .attr("transform", "translate(20,37)")
+              .attr("transform", "translate(30,40)")
               .style("fill", "rgba(0, 215, 215, 1)")
         }
         // legend title
-		var crmin = cirRadmin
-		var crmax = cirRadmax
-		var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
-		var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
-		var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
-		if (crmin >= 1000){
-			crmin = crmin.toString().slice(0,-3) + 'K';
-		} else {
-			crmin = '~1K'
-		}
-		if (crmax >= 1000){
-			crmax = crmax.toString().slice(0,-3) + 'K';
-		}
-		if (cr1 >= 1000){
-			cr1 = cr1.toString().slice(0,-3) + 'K';
-		}
-		if (cr2 >= 1000){
-			cr2 = cr2.toString().slice(0,-3) + 'K';
-		}
-		if (cr3 >= 1000){
-			cr3 = cr3.toString().slice(0,-3) + 'K';
-		}
+            var crmin = cirRadmin
+            var crmax = cirRadmax
+            var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
+            var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
+            var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
+            if (crmin >= 1000){
+                crmin = crmin.toString().slice(0,-3) + 'K';
+            } else {
+                crmin = '~1K'
+            }
+            if (crmax >= 1000){
+                crmax = crmax.toString().slice(0,-3) + 'K';
+            }
+            if (cr1 >= 1000){
+                cr1 = cr1.toString().slice(0,-3) + 'K';
+            }
+            if (cr2 >= 1000){
+                cr2 = cr2.toString().slice(0,-3) + 'K';
+            }
+            if (cr3 >= 1000){
+                cr3 = cr3.toString().slice(0,-3) + 'K';
+            }
 
-		legendsvg.append("text")
-		  .attr("x", 15)
-		  .attr("y", 15)
-		  .attr("dy", ".35em")
-		  .style("text-align", "left")
-		  .text(theme.circleLegendTitle)
-		// legend size and label
-			var legendSize = d3.legendSize()
-			  .scale(linearSize)
-			  .shape('circle')
-			  .shapePadding(30)
-			  .labelOffset(21)
-			  .orient('horizontal')
-			// truncate to only show integer, added comma in every three digits
-			// label = calculate the values between minimum and maximum values
-			// formular = (((Maximum - Minimum)/10)*7.5) + Minimum
-			  .labels([crmin, cr1, cr2, cr3, crmax]);
-		
-		
-			// call function to draw legend in svg
-			legendsvg.select(".legendSize")
-				.call(legendSize);
-			do_resize=true;
+            legendsvg.append("text")
+              .attr("x", 15)
+              .attr("y", 6)
+              .attr("dy", ".35em")
+              .style("text-align", "left")
+              .text(theme.circleLegendTitle)
+        // legend size and label
+            var legendSize = d3.legendSize()
+              .scale(linearSize)
+              .shape('circle')
+              .shapePadding(20)
+              .labelOffset(15)
+              .orient('horizontal')
+            // truncate to only show integer, added comma in every three digits
+            // label = calculate the values between minimum and maximum values
+            // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
+              .labels([crmin, cr1, cr2, cr3, crmax]);
+            
+            // call function to draw legend in svg
+            legendsvg.select(".legendSize")
+                .call(legendSize)
+            do_resize=true;
         }
     
 	// smooth zoom
