@@ -1122,7 +1122,12 @@ function areaScaleFac(features, maxOccupancy = 0.35){
         } else {
 			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
         }
-        if (oncartogram==true){
+        var circlePaddingWidth = 8*truncatedCells.length
+        var circleSize = ((legwidth-circlePaddingWidth)/truncatedCells.length)/2
+        if (circleSize >= 15){
+            circleSize = 15
+        }
+        if (oncartogram==true & theme.circle == true){
         legendChoropleth = d3.legendColor()
             .shape('circle')
 			.cells(truncatedCells)
@@ -1130,7 +1135,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			.labels(truncatedLabels)
 			.scale(choroplethColorScale)
             .shapePadding(4)
-            .shapeRadius(20)
+            .shapeRadius(circleSize)
 			.labelOffset(16); 
         } else {
         var numCells = truncatedCells.length;
@@ -1271,7 +1276,10 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             legendsvg.append("g")
               .attr("class", "legendSize")
               .attr("transform", "translate(30,40)")
-              .style("fill", "rgba(0, 215, 215, 1)")
+              .style("fill", "rgba(0, 0, 0, 0.1)")
+              .style("opacity", .65)
+              .style("stroke", "black")
+              .style("stroke-width", "1px");
         }
         // legend title
             var crmin = cirRadmin
