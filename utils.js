@@ -294,7 +294,6 @@ function tickDateIds(dates,maxMonthTicks){
 		if(month != last_month){
 			last_month = month;
 			out_ids.push(i);
-			console.log(this_date_str);
 		}
 	}
 	return out_ids;

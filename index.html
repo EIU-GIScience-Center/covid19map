@@ -263,8 +263,6 @@
 			<p>Latest project updates can be found on our <a href = "https://github.com/EIU-GIScience-Center/covid19map">github repository</a>. This is a work in progress. Feel free to send <a href="mailto: bjkronenfeld@eiu.edu">comments or feedback</a>.</p>
 			<br><br>
 	</div>
-
-
 <script>
 	var active_feature = null;
 	var active;
@@ -280,6 +278,7 @@
 	// map theme functions and values
 	var theme;
 	var dataSource;
+	var data_transitioning = false; // Flag to prevent duplicate data loading
 	var baseFeatures;
 	var cartogramFeatures;
 	var curZoomFunc;
@@ -297,7 +296,6 @@
 	var dailyChomax;
 	var radScaleFac = 0;
     var timer;
-	var do_resize = true; // if true, map will reload on change in page size
 	var touring = false; // if true, we are in the middle of an animated tour
 	var busy = false; // if true, user controls will not work
 	var defaultPlayStart = 35; // the day to start playing from when the user plays from the end
@@ -403,7 +401,6 @@
 		return [cells,labels];
 	}
 
-
 	// Auto-Update the legend Values
 	function dailymaxChoroplethValue(date, valuefunction){
 		var baseFeat = baseFeatures;
@@ -420,7 +417,6 @@
 			return dailyChomax;
 		}
 	}
-
 
 	// The minimum value across all features on a given date
 	function dailyminChoroplethValue(date, valuefunction){
@@ -509,7 +505,7 @@
 
 	// calculates the radius scale factor that will result in the largest circle
 	// occupying the given proportion of the feature area
-function areaScaleFac(features, maxOccupancy = 0.35){
+	function areaScaleFac(features, maxOccupancy = 0.35){
 		// determine the largest ratio of value/screenarea
 		if(features == undefined || theme == undefined || $.isNumeric(theme.circleAreaFcn) == true) {
 			return "undefined";
@@ -595,78 +591,81 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					fixedValueRange();
 				}   
 				updateMap();
-				// console.log("loading legend from loadTheme");
 				// loadLegend(); not necessary; updateMap calls loadLegend				
 			} // found match
 		} // datasource is defined
 	} // loadTheme function
 
 	var loadData = function(dataSourceName, filterValue=null) {
-		return new Promise(function(resolve,reject){
-			// find matching data source
-			var match = dataSources.find(v => v.dataSourceName == dataSourceName);
-			
-			if(match){
-				
-				// for error checking
-				error_displayed=false;
-				// get promised data object
-				match.dataFunc.then(function(the_data_obj){
-					dataSource = the_data_obj; // the data object is what we'll call the dataSource
-					dataSourceFilter = filterValue;
-					if(dataSourceFilter==null){dataSourceFilter = dataSource.defaultFilter;};
-					// get rid of any tooltip
-					active_feature = null;
-					feature_mouseout(null,null);
-					// show the description of the data source
-					document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
-					addThemesToSelector(dataSource); // determine which themes are valid for this data source
-					// create a getValue function that can be used in themes
-					getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
-						var featID = dataSource.getID(feat);
-						var val;
-						if(dataSource.dateDistrictData == undefined || featID == undefined ){
-							val=0;
-						} else {
-							var val = dataSource.dateDistrictData[date][featID][varName];
-						}
-						if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
-						if(getIncrease){
-							var yesterday = previousDate(date, dataSource.dates);
-							if (yesterday != null){
-								var yesterdayVal = getValue(feat,yesterday,varName,perMillion,false);				
-								val = val-yesterdayVal
+		if(data_transitioning){
+			return new Promise(function(resolve,reject){
+				reject('data transitioning, please wait...');
+			})
+		} else {
+			return new Promise(function(resolve,reject){
+				// find matching data source
+				var match = dataSources.find(v => v.dataSourceName == dataSourceName);
+				if(match){
+					// for error checking
+					error_displayed=false;
+					// get promised data object
+					match.dataFunc.then(function(the_data_obj){
+						dataSource = the_data_obj; // the data object is what we'll call the dataSource
+						dataSourceFilter = filterValue;
+						if(dataSourceFilter==null){dataSourceFilter = dataSource.defaultFilter;};
+						// get rid of any tooltip
+						active_feature = null;
+						feature_mouseout(null,null);
+						// show the description of the data source
+						document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
+						addThemesToSelector(dataSource); // determine which themes are valid for this data source
+						// create a getValue function that can be used in themes
+						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
+							var featID = dataSource.getID(feat);
+							var val;
+							if(dataSource.dateDistrictData == undefined || featID == undefined ){
+								val=0;
+							} else {
+								var val = dataSource.dateDistrictData[date][featID][varName];
 							}
-						}		
-						return val;
-					}
-					// get features
-					baseFeatures = dataSource.baseFeatures(dataSourceFilter);
-					cartogramFeatures = dataSource.cartogramFeatures(dataSourceFilter);
-					// check to see if there are cartogram features
-					if (cartogramFeatures == null){
-						// if not, disable map type selector and set cartogram to false
-						document.getElementById("carttoggle").disabled=true;
-						document.getElementById("carttoggle").checked=false;
-						oncartogram = false;
-						document.getElementById("cartOptLbl").style.color="#CCCCCC";
-					} else {
-						// otherwise need to make sure it is visible
-						document.getElementById("carttoggle").disabled=false;
-						document.getElementById("cartOptLbl").style.color=null;
-						
-				
-					}
-					// get scale factor for circle symbols
-					if(oncartogram){
-						radScaleFac = areaScaleFac(cartogramFeatures);
-					} else {
-						radScaleFac = areaScaleFac(baseFeatures);
-					}
-					resolve();
-				});
-			};		
-		});
+							if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
+							if(getIncrease){
+								var yesterday = previousDate(date, dataSource.dates);
+								if (yesterday != null){
+									var yesterdayVal = getValue(feat,yesterday,varName,perMillion,false);				
+									val = val-yesterdayVal
+								}
+							}		
+							return val;
+						}
+						// get features
+						baseFeatures = dataSource.baseFeatures(dataSourceFilter);
+						cartogramFeatures = dataSource.cartogramFeatures(dataSourceFilter);
+						// check to see if there are cartogram features
+						if (cartogramFeatures == null){
+							// if not, disable map type selector and set cartogram to false
+							document.getElementById("carttoggle").disabled=true;
+							document.getElementById("carttoggle").checked=false;
+							oncartogram = false;
+							document.getElementById("cartOptLbl").style.color="#CCCCCC";
+						} else {
+							// otherwise need to make sure it is visible
+							document.getElementById("carttoggle").disabled=false;
+							document.getElementById("cartOptLbl").style.color=null;
+							
+					
+						}
+						// get scale factor for circle symbols
+						if(oncartogram){
+							radScaleFac = areaScaleFac(cartogramFeatures);
+						} else {
+							radScaleFac = areaScaleFac(baseFeatures);
+						}
+						resolve();
+					});
+				};		
+			});
+		}
 	}
            
 	function extendColorScale(initScale,inVal){
@@ -719,7 +718,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
     }
 
 	function resize(){
-		if(do_resize){
+		if(data_transitioning==false){
 			if (curDate != null){
 				divid='map';
 				mapdiv = document.getElementById(divid); // Do not use #
@@ -776,85 +775,84 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		}
 	}
 
-	function transitionMapData(featdata,categories, category){return new Promise(function(resolve,reject){
-		// zooms to new feature data and then 
-		// replaces current map polygons
-		// *** need to:
-		//     1. get the circles back
-		//     2. test zooming when cartogram is showing
-		do_resize=false; // prevent repeated resizing
-		circles.remove(); // remove circles while zooming
-		// get old and new zoom functions
-		var oldZoomPathFunc = curZoomFunc;
-		var newZoomPathFunc = divPathFunc("mapdiv",featdata,30);
-		localChoroplethColor=function(d){return choroplethColor(d, curDate);};
+	function transitionMapData(featdata,categories, category){
+		return new Promise(function(resolve,reject){
+			// zooms to new feature data and then 
+			// replaces current map polygons
+			data_transitioning=true; // prevent repeated resizing
+			circles.remove(); // remove circles while zooming
+			// get old and new zoom functions
+			var oldZoomPathFunc = curZoomFunc;
+			var newZoomPathFunc = divPathFunc("mapdiv",featdata,30);
+			localChoroplethColor=function(d){return choroplethColor(d, curDate);};
 
-		// transition old district paths to new zoom
-		districtPaths.selectAll('path')
-			.transition()
-			.duration(3000)
-			.attr('d',newZoomPathFunc);
-		// create new district paths
-		var newPaths = mapsvg.append('g');
-		// add new district paths in (invisible)
-		newPaths.selectAll('path')			
-			.data(featdata.features)
-			.enter()
-			.append('path')
-			.attr('pointer-events', 'all')
-			.attr('d',oldZoomPathFunc)
-			.attr("class","feature")
-			.attr("stroke", "#EEE")
-			.attr("stroke-width", "1px")
-			.attr("fill", localChoroplethColor) 
-			.style('opacity',0)
-			.on("click",feature_click)
-			.on("mouseover",feature_mouseover)
-			.on("mouseout",feature_mouseout)	
-			.transition()
-			.duration(3000)
-			.style('opacity',1)
-			.attr('d',newZoomPathFunc);
-		// fade in and zoom new district paths
-		districtPaths.transition()
-			.duration(5000)
-			.style("opacity",0)
-			.end()
-			.then(() => {
-				// remove and replace district paths
-				districtPaths.remove();
-				districtPaths = newPaths;
-				// record new zoom function
-				curZoomFunc = newZoomPathFunc;
-				// add circles back in (with zero radius...)
-				circles = mapsvg.append('g');		
-				circles.selectAll('circle')
-					.data(featdata.features)
-					.enter()
-					.append('circle')
-					.attr('pointer-events', 'none')
-					.attr('d', curZoomFunc)
-					.attr("cx", function(d){
-						return curZoomFunc.centroid(d)[0];
-					})
-					.attr("cy", function(d){
-						return curZoomFunc.centroid(d)[1];
-					})
-					.style('stroke-width',1)
-					.style('stroke',"#FFFFCC")
-					.style('opacity',1)
-					.on("click",feature_click)
-					.on("mouseover",feature_mouseover)
-					.on("mouseout",feature_mouseout);			
-
-				do_resize=true; // prevent repeated resizing
-				resolve();
-			});
+			// transition old district paths to new zoom
+			districtPaths.selectAll('path')
+				.transition()
+				.duration(3000)
+				.attr('d',newZoomPathFunc);
+			// create new district paths
+			var newPaths = mapsvg.append('g');
+			// add new district paths in (invisible)
+			newPaths.selectAll('path')			
+				.data(featdata.features)
+				.enter()
+				.append('path')
+				.attr('pointer-events', 'all')
+				.attr('d',oldZoomPathFunc)
+				.attr("class","feature")
+				.attr("stroke", "#EEE")
+				.attr("stroke-width", "1px")
+				.attr("fill", localChoroplethColor) 
+				.style('opacity',0)
+				.on("click",feature_click)
+				.on("mouseover",feature_mouseover)
+				.on("mouseout",feature_mouseout)	
+				.transition()
+				.duration(3000)
+				.style('opacity',1)
+				.attr('d',newZoomPathFunc);
+			// fade in and zoom new district paths
+			districtPaths.transition()
+				.duration(5000)
+				.style("opacity",0)
+				.end()
+				.then(() => {
+					// remove and replace district paths
+					districtPaths.remove();
+					districtPaths = newPaths;
+					// record new zoom function
+					curZoomFunc = newZoomPathFunc;
+					// add circles back in (with zero radius...)
+					circles = mapsvg.append('g');		
+					circles.selectAll('circle')
+						.data(featdata.features)
+						.enter()
+						.append('circle')
+						.attr('pointer-events', 'none')
+						.attr('d', curZoomFunc)
+						.attr("cx", function(d){
+							return curZoomFunc.centroid(d)[0];
+						})
+						.attr("cy", function(d){
+							return curZoomFunc.centroid(d)[1];
+						})
+						.style('stroke-width',1)
+						.style('stroke',"#FFFFCC")
+						.style('opacity',1)
+						.on("click",feature_click)
+						.on("mouseover",feature_mouseover)
+						.on("mouseout",feature_mouseout);			
+					data_transitioning=false; // prevent repeated resizing, data loading
+					resolve();
+				})
+				.catch(() => {data_transitioning=false;});
+			
 			
 	});}
 
 	function replaceMapData(featdata,categories, category){
-		// replaces current map polygons with reatdata
+		// replaces current map polygons with featdata
 		// remove all paths from map
 		mapsvg.selectAll("g").remove();
 		// mapsvg.remove();
@@ -901,10 +899,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		districtPaths.exit().remove();
 	}
 
-	
-
-
-	function loadMap(featdata,categories, category, transition=false){return new Promise(function(resolve,reject){
+	function loadMap(featdata,categories, category, transition=false){
+		return new Promise(function(resolve,reject){
 		// make sure we have a data source
 		if(dataSource !== undefined){		
 			divid='map';
@@ -923,6 +919,10 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 						.attr('height',height)
 						.on('click',reset);		
 			}
+			// *** TEMP DEBUGGING 
+			//transition = false;
+			// *** END DEBUGGING
+			
 			if(transition){
 				transitionMapData(featdata,categories,category).then(function(){
 					resolve();
@@ -939,9 +939,12 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 
 	// toggles between the current base map and cartogram
 	function toggle_map(milliseconds=1500, callback){
-		oncartogram = !oncartogram;
-		document.getElementById("carttoggle").checked=oncartogram;
-		updateMap(milliseconds, callback);
+		if(data_transitioning){
+		} else {
+			oncartogram = !oncartogram;
+			document.getElementById("carttoggle").checked=oncartogram;
+			updateMap(milliseconds, callback);
+		}
 	}
 
 	// updates the map title based on current selections
@@ -1055,14 +1058,13 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					.attr("fill",localChoroplethColor)
 					.style('opacity',1)
 					.end()
-					//FOLLOWING IS CALLING ERRORS - DO WE NEED CALLBACK?
 					.then(() => {
-						console.log("*** in callback...");
-						console.log(callback);
 						if(callback != undefined){
 							callback();
 						};
-					});
+					})
+					.catch(error => {}); // without this catch, chrome will show an error
+					
 					
 					//.on("end",callback);	
 
@@ -1099,7 +1101,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	}
     
 	function loadLegend(){
-		do_resize=false; // prevent repeated resizing
 		// get width
 		var legwidth =(document.getElementById("mapbottom").offsetWidth);
 		if (theme.circle == true){legwidth = legwidth/2}		
@@ -1158,7 +1159,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		// call function to draw legend in svg
 		legendsvg.select(".legendChoropleth")
 		  .call(legendChoropleth);
-		do_resize=true;
 	}
     // Circle Legend --------------------------------------------------------------
     // the daily minimum and maximum value
@@ -1326,30 +1326,19 @@ function areaScaleFac(features, maxOccupancy = 0.35){
             // call function to draw legend in svg
             legendsvg.select(".legendSize")
                 .call(legendSize)
-            do_resize=true;
         }
     
 	// smooth zoom
 	function smoothZoom(toDataSource){
-		console.log("*** smoothZoom start...")
 		toDataSource.dataFunc.then(function(the_data_obj){
 			// if on cartogram, first toggle back to map
-			console.log("*** oncartogram: " + oncartogram)
 			if(oncartogram){
 				busy = true;
 				toggle_map(750,function(){
-					console.log("*** toggleMap start...")
 					loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
-						console.log("*** loadData then start...")
 						handleDataLoaded(transition=true).then(function(){
-							console.log("*** handleDataLoaded then start...")
-							document.getElementById("zoomcontrol").style.display='block';// show option to zoom back to parent features
-							document.getElementById("zoomlabel").style.display='block';// show option to zoom back to parent features
-							document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom out to " + dataSource.dataParentName + "</i>";
 							if(cartogramFeatures != null){
-								console.log("*** just before toggle_map...")
 								toggle_map(750);
-								console.log("*** just after toggle_map...")
 								busy = false;
 							} else {
 								busy = false;
@@ -1358,13 +1347,11 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					});
 				});
 			} else {
-				loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){
-					handleDataLoaded(transition=true).then(function(){
-						document.getElementById("zoomcontrol").style.display='block';// show option to zoom back to parent features
-						document.getElementById("zoomlabel").style.display='block';// show option to zoom back to parent features
-						document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom to " + dataSource.dataParentName + "</i>";
-					});
-				});
+				loadData(toDataSource.dataSourceName, dataSourceFilter)
+				.then(function(){
+					handleDataLoaded(transition=true);
+				})
+				.catch(error => {});
 			}
 		})
 	};
@@ -1372,18 +1359,15 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	// zoom to child 
     function zoomToChild(feat){
 		touring=false;
-		reset();
-		console.log("Zooming to:" + dataSource.getLabel(feat));
 		// obtain path function for all features
-		
 		var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
 		if(match){
+			reset();
 			smoothZoom(match);
 		};      
 	}
 	
 	function zoomToParent(){
-		console.log("Zooming up");
 		var match = dataSources.find(v => v.dataSourceName == dataSource.dataParentName);			
 		dataSourceFilter=null;
 		if(match){
@@ -1519,7 +1503,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		}
 		if(e.keyCode==37){
 			if(document.activeElement === document.getElementById("themeSelector")){
-				// console.log("selecting themes...");
 			} else {
 				// move back one time step
 				curval = slider.value();
@@ -1532,7 +1515,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		}
 		if(e.keyCode==39){
 			if(document.activeElement === document.getElementById("themeSelector")){
-				// console.log("selecting themes...");
 			} else {
 				// move forward one time step
 				curval = slider.value();
@@ -1599,8 +1581,6 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 					fixedValueRange();
 				}
 				if(moving==false){
-					// console.log("loading legend from slider change");
-					// loadLegend();
 				};
 				updateMap(slider_update_duration);
 			});
@@ -1620,7 +1600,8 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 		resolve();
 	})}
 
-	function handleDataLoaded(transition=false){return new Promise(function(resolve,reject){
+	function handleDataLoaded(transition=false){
+		return new Promise(function(resolve,reject){
 		// loads new data into the map and updates the slider
 		// update the slider
 		// report current dataset
@@ -1631,6 +1612,7 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			document.getElementById("zoomlabel").style.display='block';
 			document.getElementById("zoomlabel").innerHTML="zoomed to: " + dataSourceFilter;
 			document.getElementById("zoomcontrol").style.display="block";
+			document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom out to " + dataSource.dataParentName + "</i>";
 		};
 		loadSlider().then(function(){
 			// define current date
@@ -1747,20 +1729,20 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	}
     
     var slowerButton = d3.select("#slower-button");
-        slowerButton
-            .on("click", function() {
-            var button = d3.select(this);
-            clearInterval(timer);
-            if (delay < 600) {
-            delay = delay + 150
-            }
-            if (moving == true) {
+		slowerButton
+			.on("click", function() {
+			var button = d3.select(this);
+			clearInterval(timer);
+			if (delay < 600) {
+			delay = delay + 150
+			}
+			if (moving == true) {
 				timer = setInterval(step, delay);
 				playButton.text("∥");
-                moving = true;
-            }
-                delayIndi()
-          });
+				moving = true;
+			}
+				delayIndi()
+		  });
     
     var fasterButton = d3.select("#faster-button");
 		fasterButton
@@ -1819,14 +1801,10 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 	}
 
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
-		
 		//set 3dots
 		delayIndi();
 		// load the invisible tooltip div...
 		loadTooltips();
-		
-
-
 		// set defaults, add event listeners
 		document.onkeydown=handlekeydown;			
 		document.getElementById("carttoggle").addEventListener("change",function(){
@@ -1841,16 +1819,15 @@ function areaScaleFac(features, maxOccupancy = 0.35){
 			"change",function(){
 				touring=false;
 				if(busy == false){
-					loadData(document.getElementById("dataSourceSelector").value).then(
-						function(){
+					loadData(document.getElementById("dataSourceSelector").value)
+						.then(function(){
 							handleDataLoaded()
-						}
-					);
+						})
+						.catch(error => {});
 				};
 			}
 		);
 		document.getElementById('zoomUp').addEventListener("click",function(){
-			console.log("Zoom up clicked...");
 			if(busy == false){zoomToParent();};
 		});
 		$('themeSelector').on('keydown', function(e){
