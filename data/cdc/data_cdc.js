@@ -230,7 +230,9 @@ function data_cdc(){
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
-					getID: function(feat){return feat.properties.ABBREV;}, 
+					getID: function(feat){
+						return feat.properties.ABBREV;
+						}, 
 					getLabel: function(feat){return feat.properties.STATE_NAME;}, 
 					getPopulation: function(feat){return feat.properties.POP_2010;}, 
 					districtClassLabel: "state",
