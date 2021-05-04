@@ -61,6 +61,9 @@ const themeDailyCases = {
 	// Corresponding labels on the choropleth legend (should be the same length as "cells")
 	choroplethLabels: expBase10CellsAndLabels()[1],
 
+	// Function to label an arbitrary cell value
+	customLabel: function(val){return withCommas(Math.round(val))},
+
     // Fixed choropleth legend bounds
     legendmin: null,
     legendmax: null,
@@ -158,6 +161,9 @@ const themeDailyDeaths = {
 
 	// Corresponding labels on the choropleth legend (should be the same length as "cells")
 	choroplethLabels: expBase10CellsAndLabels()[1],
+
+	// Function to label an arbitrary cell value
+	customLabel: function(val){return withCommas(Math.round(val))},
 	
     // Fixed choropleth legend bounds
     legendmin: null,
@@ -240,6 +246,7 @@ const themeWeeklyCases = {
 	invertColorScale: true,
 	choroplethCells: expBase10CellsAndLabels()[0],
 	choroplethLabels: expBase10CellsAndLabels()[1],
+	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: null,
     legendmax: null,
     updateDailyValueRange: true,
@@ -304,6 +311,7 @@ const themeWeeklyDeaths = {
 	invertColorScale: true,
 	choroplethCells: expBase10CellsAndLabels()[0],
 	choroplethLabels: expBase10CellsAndLabels()[1],
+	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: null,
     legendmax: null,
     updateDailyValueRange: true,
@@ -389,7 +397,14 @@ const themeDailyChangeCases = {
 	invertColorScale: true,
 	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
 	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
-    legendmin: 0.2,
+    customLabel: function(val){
+		if(val < 1){
+			return "-" + Math.round(1-curVal).toString() + "%"
+		} else {
+			return "+" + Math.round(curVal-1).toString() + "%"
+		}
+	},
+	legendmin: 0.2,
     legendmax: 1.8,
     updateDailyValueRange: false,
 	choroplethLegendTitle: "Increase in cases vs. one week ago",
@@ -480,6 +495,13 @@ const themeWeeklyChangeCases = {
 	invertColorScale: true,
 	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
 	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
+    customLabel: function(val){
+		if(val < 1){
+			return "-" + Math.round(1-curVal).toString() + "%"
+		} else {
+			return "+" + Math.round(curVal-1).toString() + "%"
+		}
+	},
     legendmin: 0.2,
     legendmax: 1.8,
     updateDailyValueRange: false,
@@ -569,6 +591,13 @@ const themeWeeklyChangeDeaths = {
 	invertColorScale: true,
 	choroplethCells: [0.2,0.5,0.7,0.8,0.9,1,1.1,1.2,1.3,1.5,1.8],
 	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
+    customLabel: function(val){
+		if(val < 1){
+			return "-" + Math.round(1-curVal).toString() + "%"
+		} else {
+			return "+" + Math.round(curVal-1).toString() + "%"
+		}
+	},
     legendmin: 0.2,
     legendmax: 1.8,
     updateDailyValueRange: false,
@@ -644,6 +673,7 @@ const themeWeeklyPositivityRate = {
 	invertColorScale: true,
 	choroplethCells: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
 	choroplethLabels: ["","~ 1%","","","","5%","","","","","10%","","","","","15% ~"], 
+    customLabel: function(val){return Math.round(val).toString() + "%"},
     legendmin: 0,
     legendmax: 15,
     updateDailyValueRange: false,
@@ -783,6 +813,7 @@ const themeCumulativeCases = {
 	invertColorScale: true,
 	choroplethCells: expBase10CellsAndLabels()[0],
 	choroplethLabels: expBase10CellsAndLabels()[1],
+	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: 0,
     legendmax: 10000,
     updateDailyValueRange: true,
@@ -848,6 +879,7 @@ const themeCumulativeDeaths = {
 	invertColorScale: true,
 	choroplethCells: expBase10CellsAndLabels()[0],
 	choroplethLabels: expBase10CellsAndLabels()[1],
+	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: 0,
     legendmax: 10000,
     updateDailyValueRange: true,

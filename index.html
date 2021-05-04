@@ -298,8 +298,8 @@
     var timer;
 	var touring = false; // if true, we are in the middle of an animated tour
 	var busy = false; // if true, user controls will not work
-	var defaultPlayStart = 35; // the day to start playing from when the user plays from the end
-	var playStart;
+	var defaultPlayStartID = 35; // the day to start playing from when the user plays from the end
+	var playStartID, playEndID; // the start and end dates of animation
 	var delayIntervals = [600,450,300,150,0];
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
@@ -398,85 +398,76 @@
 		// slice out the corresponding section of the cells and labels
 		cells = cells.slice(lowIndex, highIndex + 1);
 		labels = labels.slice(lowIndex, highIndex + 1);
+		// fill in first and last labels if there is more than one empty label on either end
+		if(labels[0]=="" && labels[1]==""){
+			labels[0] = theme.customLabel(cells[0]);
+		}
+		var n = cells.length;
+		if(labels[n-1]=="" && labels[n-2]==""){
+			labels[n-1]=theme.customLabel(cells[n-1]);
+		}
 		return [cells,labels];
 	}
 
-	// Auto-Update the legend Values
-	function dailymaxChoroplethValue(date, valuefunction){
+	// Quartile values for a given date range
+	function quartileValues(valueFunction,startDateID, endDateID){
+		// error checking
 		var baseFeat = baseFeatures;
-		if(baseFeat, date == undefined){
+		if(baseFeat, startDateID == undefined){
 			return "undefined";
 		} else {
-			var dailyChomax = valuefunction(baseFeat.features[0], date);
-			for (let i = 0; i < baseFeat.features.length; i++){
-				var currentValue = valuefunction(baseFeat.features[i], date);
-				if (currentValue > dailyChomax){
-					dailyChomax = currentValue;
+			// we're going to create an array of value-population pairs
+			var valPops = [];
+			var sumPop = 0;
+			// get value-population for every feature on every date
+			for (let dateID = startDateID; dateID < endDateID+1; dateID++){
+				var thisDate = dataSource.dates[dateID];
+				for (let featID = 0; featID < baseFeat.features.length; featID++){
+					var curFeat = baseFeat.features[featID];
+					var curVal = valueFunction(curFeat, thisDate);
+					var curPop = dataSource.getPopulation(curFeat);
+					valPops.push([curVal,curPop]);
+					sumPop += curPop;
 				}
 			}
-			return dailyChomax;
-		}
-	}
-
-	// The minimum value across all features on a given date
-	function dailyminChoroplethValue(date, valuefunction){
-		var baseFeat = baseFeatures;
-		if(baseFeat, date == undefined){
-			return "undefined";
-		} else {   
-			var dailyChomin = valuefunction(baseFeat.features[0], date);
-			for (let i = 0; i < baseFeat.features.length; i++){
-				var currentValue = valuefunction(baseFeat.features[i], date);
-				if (currentValue < dailyChomin){
-					dailyChomin = currentValue;
-				}
+			// sort value-population pairs by value
+			valPops.sort((a,b) => (a[0] > b[0]) ? 1 : -1);
+			// get min & max
+			var minVal = valPops[0][0];
+			var maxVal = valPops[valPops.length-1][0];
+			// get 1st quartile, median and 3rd quartile in a loop
+			var q1Pop = sumPop/4;
+			var q2Pop = q1Pop*2;
+			var q3Pop = q1Pop*3;
+			var cumulativePop = 0;
+			var q1Val, q2Val, q3Val;
+			for(let i = 0; i < valPops.length; i++){
+				var nextPop = cumulativePop + valPops[i][1];
+				if(cumulativePop <= q1Pop && nextPop >= q1Pop){q1Val = valPops[i][0];}
+				if(cumulativePop <= q2Pop && nextPop >= q2Pop){q2Val = valPops[i][0];}
+				if(cumulativePop <= q3Pop && nextPop >= q3Pop){q3Val = valPops[i][0];}
+				cumulativePop = nextPop;
 			}
-			return dailyChomin;
+			// return quartiles
+			return [minVal,q1Val,q2Val,q3Val,maxVal];
 		}
 	}
     
-	// The minimum value across all features on all dates
-	function minChoroplethValue(valuefunction){
-		if(baseFeatures == undefined){
-			return "undefined";
-		} else {
-			var globalmin =dailyminChoroplethValue(dataSource.dates[0],valuefunction);
-			for(let i=1; i < dataSource.dates.length; i++){
-				var currentValue = dailyminChoroplethValue(dataSource.dates[i],valuefunction);
-				if (currentValue < globalmin){
-					globalmin = currentValue;
-				}	
-			}
-			return globalmin;
-		}
-	}
-
-	// The maximum value across all features on all dates
-	function maxChoroplethValue(valuefunction){
-		if(baseFeatures == undefined){
-			return "undefined";
-		} else {
-			var globalmax =dailymaxChoroplethValue(dataSource.dates[0],valuefunction);
-			for(let i=0; i < dataSource.dates.length; i++){
-				var currentValue = dailymaxChoroplethValue(dataSource.dates[i],valuefunction);
-				if (currentValue > globalmax){
-					globalmax = currentValue;
-				}
-			}
-			return globalmax;
-		}
-	}
-    
-	function updateValueRange(date){
-		dailyChomin = dailyminChoroplethValue(date, theme.choroplethValueFcn);             
-		dailyChomax = dailymaxChoroplethValue(date, theme.choroplethValueFcn);
+	function updateValueRange(startDateID, endDateID){
+		var qvals = quartileValues(theme.choroplethValueFcn,startDateID,endDateID);
+		//dailyChomin = qvals[0];
+		//dailyChomax=qvals[4];
+		theme.legendmin = qvals[0];
+		theme.legendmax = qvals[4];
 		// determine legend span, and expand range to include legend span
-		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailyChomin, dailyChomax);
-		dailyChomin = truncatedCells[0];
-		dailyChomax = truncatedCells[truncatedCells.length-1];
+		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
+		theme.legendmin = truncatedCells[0]; // dailyChomin = truncatedCells[0];
+		theme.legendmax = truncatedCells[truncatedCells.length-1];
 		// truncate legend cells and labels to low and high values
+		var domainVals = qvals.map(x => theme.choroplethValueScale(x));
 		var unitIntervalScale = d3.scaleLinear()
-		.domain([theme.choroplethValueScale(dailyChomin), theme.choroplethValueScale(dailyChomax)]);
+		.domain(domainVals)
+		.range([0,0.25,0.5,0.75,1]);
 		if(theme.invertColorScale){
 			choroplethColorScale =d3.scaleSequential(function(d){
 				return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
@@ -484,24 +475,10 @@
 		} else {
 			choroplethColorScale =d3.scaleSequential(function(d){
 				return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
-			});
-		
+			});		
 		}
 	}
 
-	function fixedValueRange(){
-		var unitIntervalScale = d3.scaleLinear()
-			.domain([theme.choroplethValueScale(theme.legendmin), theme.choroplethValueScale(theme.legendmax)]);
-			if(theme.invertColorScale){
-				choroplethColorScale =d3.scaleSequential(function(d){
-					return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
-				});
-			} else {
-				choroplethColorScale =d3.scaleSequential(function(d){
-					return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
-				});			
-			}
-    }
 
 	// calculates the radius scale factor that will result in the largest circle
 	// occupying the given proportion of the feature area
@@ -576,8 +553,12 @@
 				}	
 				
 				// get legend minimum and maximum
-				if (theme.legendmin == null){theme.legendmin = minChoroplethValue(theme.choroplethValueFcn)};
-				if (theme.legendmax == null){theme.legendmax = maxChoroplethValue(theme.choroplethValueFcn)};
+				if (theme.legendmin == null){
+					var qvals = quartileValues(theme.choroplethValueFcn,dataSource.dates[0],dataSource.dates[dataSource.dates.length-1]);
+					theme.legendmin = qvals[0];
+					theme.legendmax = qvals[4];
+				};
+				
 				// calculate radius scale factor
 				if(oncartogram){
 					radScaleFac = areaScaleFac(cartogramFeatures);
@@ -586,9 +567,10 @@
 				}
 				// update the map and legend
 				if (theme.updateDailyValueRange && moving==false){
-					updateValueRange(curDate);
+					var dateID = dataSource.dates.indexOf(curDate);
+					updateValueRange(dateID,dateID);
 				} else {
-					fixedValueRange();
+					updateValueRange(playStartID,playEndID);
 				}   
 				updateMap();
 				// loadLegend(); not necessary; updateMap calls loadLegend				
@@ -626,7 +608,22 @@
 							if(dataSource.dateDistrictData == undefined || featID == undefined ){
 								val=0;
 							} else {
-								var val = dataSource.dateDistrictData[date][featID][varName];
+								try{
+									val = dataSource.dateDistrictData[date][featID][varName];
+								}
+								catch(err){
+									// sometimes JHU data is missing spaces. try one more time, removing spaces after commas
+									try{
+										val = dataSource.dateDistrictData[date][featID.replaceAll(', ',',')][varName];
+									} catch(err){
+										console.log("ERROR IN loadData");
+										console.log("date: " + date);
+										console.log("featID: " + featID);
+										console.log("varName: " + varName);
+										console.log("date data: ");
+										return 0;
+									}									
+								}
 							}
 							if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
 							if(getIncrease){
@@ -1119,7 +1116,7 @@
 		var truncatedCells
         var truncatedLabels
         if (theme.updateDailyValueRange && moving==false){
-             [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, dailyChomin, dailyChomax);
+             [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);// dailyChomin, dailyChomax);
         } else {
 			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
         }
@@ -1358,21 +1355,25 @@
     
 	// zoom to child 
     function zoomToChild(feat){
-		touring=false;
-		// obtain path function for all features
-		var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
-		if(match){
-			reset();
-			smoothZoom(match);
-		};      
+		if(data_transitioning == false){
+			touring=false;
+			// obtain path function for all features
+			var match = dataSources.find(v => v.dataSourceName == dataSource.dataChildName);			
+			if(match){
+				reset();
+				smoothZoom(match);
+			};      
+		}
 	}
 	
 	function zoomToParent(){
-		var match = dataSources.find(v => v.dataSourceName == dataSource.dataParentName);			
-		dataSourceFilter=null;
-		if(match){
-			smoothZoom(match);
-		};      
+		if(data_transitioning == false){
+			var match = dataSources.find(v => v.dataSourceName == dataSource.dataParentName);			
+			dataSourceFilter=null;
+			if(match){
+				smoothZoom(match);
+			};      
+		}
 		/*
 		loadData(dataSource.dataParentName).then(function(){
 			dataSourceFilter=null;
@@ -1576,12 +1577,11 @@
 				slider.displayValue("Hi there!");
 				d3.select('#value').text("???");
 				if (theme.updateDailyValueRange && moving==false){
-					updateValueRange(curDate);
+					var dateID = dataSource.dates.indexOf(curDate);
+					updateValueRange(dateID,dateID);
                 } else {
-					fixedValueRange();
+				//	updateValueRange(playStartID,playEndID);
 				}
-				if(moving==false){
-				};
 				updateMap(slider_update_duration);
 			});
 		slider_svg
@@ -1682,14 +1682,15 @@
 		  playButton.text("►");
 		} else { 
 		  if (sliderID == dataSource.dates.length-1) {
-			  currentIndex = defaultPlayStart;
+			  currentIndex = defaultPlayStartID;
 		  } else {
 			currentIndex = sliderID;
 		  }
-		  playStart = currentIndex;
+		  playStartID = currentIndex;
+		  playEndID = dataSource.dates.length-1;
 		  moving = true;
           loadCircleLegend();
-		  fixedValueRange();
+		  updateValueRange(playStartID,playEndID);
 		  loadLegend();
 		  //delay = 0;
 		  timer = setInterval(step, delay);
@@ -1705,14 +1706,15 @@
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		if (theme.updateDailyValueRange && moving==false){
-					updateValueRange(curDate);
-                } else {
-					fixedValueRange();
-				}
+			var dateID = dataSource.dates.indexOf(curDate);
+			updateValueRange(dateID,dateID);
+        } else {
+			// no need to adjust legend, it has been adjusted when we started playing
+		}
 		// pause at end of loop (if looping)
         if (sliderID == dataSource.dates.length-1 && looping == true) {
                 var pauseStart = setTimeout(function(){
-                    currentIndex = playStart;
+                    currentIndex = playStartID;
                 },3000);
               } else {
                 currentIndex = currentIndex + 1;
@@ -1720,7 +1722,7 @@
 		// stop at end of loop otherwise
         if (currentIndex > targetIndex && looping == false) {
 			moving = false;
-			currentIndex = defaultPlayStart;
+			currentIndex = defaultPlayStartID;
 			clearInterval(timer);
 			// timer = 0;
 			playButton.text("►");
@@ -1848,8 +1850,8 @@
 		addDataSourcesToSelector(newDataSources);
 		
 		handleDataLoaded().then(function(){
-			defaultPlayStart = dataSource.dates.length-56; // by default play the last 8 weeks
-			if(defaultPlayStart < 0){defaultPlayStart = 0;};
+			defaultPlayStartID = dataSource.dates.length-56; // by default play the last 8 weeks
+			if(defaultPlayStartID < 0){defaultPlayStartID = 0;};
 			setTimeout(function()
 				{
 					orig_duration = slider_update_duration;
