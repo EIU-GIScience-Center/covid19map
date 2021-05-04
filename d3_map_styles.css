@@ -339,6 +339,10 @@ rect {
 	stroke-width: 5px;
 }
 
+.feature:hover{
+	stroke-width: 5px;
+}
+
 .mesh {
   fill: none;
   stroke: red;
