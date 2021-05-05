@@ -39,21 +39,18 @@ function dataJHU_USA_Counties(){return {
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var cart_states = {"AL":"Alabama", "CO":"Colorado", "FL":"Florida","GA":"Georgia","ID":"Idaho", 
-							"IA":"Iowa", "LA":"Louisiana", "MS":"Mississippi", "NH":"New Hampshire"};
-		var stateIDs = Object.keys(cart_states);
-		var num_states = stateIDs.length;
+		var cart_states = ["Alabama", "Colorado", "Florida", "Georgia", "Idaho", "Iowa", "Louisiana", "Mississippi", "New Hampshire"];
+		var num_states = cart_states.length;
 		var target_length = num_states*2+3;
 		
 		// get geoJSONs one after the other so that the variables don't update in between
 		function getGeoJsons(id){
 			if(id<num_states){
-				var stateID = stateIDs[id];
-				var stateName = cart_states[stateID];
+				var stateName = cart_states[id];
 				$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties.geojson", function(src_data) {
-					src[stateID] = src_data; // add to src object
+					src[stateName] = src_data; // add to src object
 					$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties_cartogram.geojson", function(src_data) {
-						src[stateID + "_cartogram"] = src_data; // add to src object
+						src[stateName + "_cartogram"] = src_data; // add to src object
 						getGeoJsons(id+1);
 						process_data(); // attempt to process all datasets
 					});	
@@ -266,12 +263,12 @@ function dataJHU_USA_Counties(){return {
 							return src.Georgia_counties;
 						} else if (filter=="FL") {
 							return src.florida_counties;*/
-						} else if (stateIDs.includes(filter)) {
+						} else if (cart_states.includes(filter)) {
 							return src[filter];
 						} else {
 							var this_state = src.all_counties;
 							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
-							this_state.features = this_state.features.filter(feat => feat.properties.StateAbbre==filter);
+							this_state.features = this_state.features.filter(feat => feat.properties.STATE_NAME==filter);
 							return this_state;
 						}
 					},
@@ -282,7 +279,7 @@ function dataJHU_USA_Counties(){return {
 							return src.Georgia_cartogram;
 						} else if (filter=="FL") {
 							return src.florida_cartogram;*/
-						} else if (stateIDs.includes(filter)) {
+						} else if (cart_states.includes(filter)) {
 							return src[filter + "_cartogram"];
 						} else {
 							return null;

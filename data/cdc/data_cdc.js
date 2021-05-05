@@ -225,6 +225,7 @@ function data_cdc(){
 					},
 					defaultFilter: null,
 					dataChildName: "USA Counties",
+					getChildFilter: function(feat){return feat.properties.STATE_NAME;},
 					dataParentName: null,
 					dates: dates, 
 					districtIDs: districtIDs, 

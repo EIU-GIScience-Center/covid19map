@@ -36,10 +36,6 @@ function daysInMonth(monthID){
 	return -1; // if monthID is invalid, don't break the code - just show nothing
 }
 
-
-
-
-
 /**
  * Takes a date in YYYYMMDD format and returns the year, monthID and day as integers
  */
@@ -86,12 +82,6 @@ function dateRangeExpression(date1,date2,includeYear, abbreviatedMonth=false){
 	y2=jsDate2.getFullYear();
 	m2 = jsDate2.getMonth();
 	d2 = jsDate2.getDate();
-	
-	
-	console.log("DEBUGGING DATERANGEEXPRESSION");
-	console.log([date1,date2]);
-	console.log([y1,m1,d1,y2,m2,d2]);
-	
 	// handle case of different years
 	if(includeYear && y1 != y2){
 		return date1 + " - " + date2
@@ -141,8 +131,6 @@ function datePeriodExpression(baseDate, dateOffsets, allDates){
 	}
 
 }
-
-
 
 /**
  * Adds commas to a number for display purposes
