@@ -79,7 +79,9 @@
 						</div>
 						<div id="regioncontrol">
 							<select class="select-css" id="dataSourceSelector">
-							</select>		
+							</select>	
+							<select class="select-css" id="dataFilterSelector" size="1" style="display:none">
+							</select>			
 						</div>
 						<div id="regiondescription">
 						</div>
@@ -367,6 +369,26 @@
 	}
 	addDataSourcesToSelector(dataSources);
 
+	function showFilterSelector(){
+		var filterSel = document.getElementById("dataFilterSelector");
+		var baseFeat = baseFeatures;
+		if(baseFeat != undefined){
+			var s = baseFeat.features.length+1;
+			// add no filter option
+			const option = document.createElement("option");
+			option.text="(all)";
+			filterSel.add(option);
+			// add individual filters
+			for (let featID = 0; featID < baseFeat.features.length; featID++){
+				var curFeat = baseFeat.features[featID];
+				var filterText = dataSource.getChildFilter(curFeat);
+				const option = document.createElement("option");
+				option.text=filterText;
+				filterSel.add(option);
+			}
+		}
+	}
+
 	function truncateCellsAndLabels(cells,labels, lowVal, highVal){
 		// get indices of highest cell below lowVal, and lowest cell above highVal
 		var lowIndex=0;
@@ -414,7 +436,10 @@
 		// error checking
 		var baseFeat = baseFeatures;
 		if(baseFeat, startDateID == undefined){
-			return "undefined";
+			console.log("start date: " + startDateID);
+			console.log("baseFeat:");
+			console.log(baseFeat);
+			return "change this to null!";
 		} else {
 			// we're going to create an array of value-population pairs
 			var valPops = [];
@@ -455,30 +480,45 @@
     
 	function updateValueRange(startDateID, endDateID){
 		var qvals = quartileValues(theme.choroplethValueFcn,startDateID,endDateID);
-		//dailyChomin = qvals[0];
-		//dailyChomax=qvals[4];
-		theme.legendmin = qvals[0];
-		theme.legendmax = qvals[4];
-		// determine legend span, and expand range to include legend span
-		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
-		theme.legendmin = truncatedCells[0]; // dailyChomin = truncatedCells[0];
-		theme.legendmax = truncatedCells[truncatedCells.length-1];
-		// truncate legend cells and labels to low and high values
-		var domainVals = qvals.map(x => theme.choroplethValueScale(x));
-		var unitIntervalScale = d3.scaleLinear()
-		.domain(domainVals)
-		.range([0,0.25,0.5,0.75,1]);
-		if(theme.invertColorScale){
-			choroplethColorScale =d3.scaleSequential(function(d){
-				return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
-			});
-		} else {
-			choroplethColorScale =d3.scaleSequential(function(d){
-				return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
-			});		
+		if(qvals != null){
+			//dailyChomin = qvals[0];
+			//dailyChomax=qvals[4];
+			theme.legendmin = qvals[0];
+			theme.legendmax = qvals[4];
+			// determine legend span, and expand range to include legend span
+			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
+			theme.legendmin = truncatedCells[0]; // dailyChomin = truncatedCells[0];
+			theme.legendmax = truncatedCells[truncatedCells.length-1];
+			// truncate legend cells and labels to low and high values
+			var domainVals = qvals.map(x => theme.choroplethValueScale(x));
+			var unitIntervalScale = d3.scaleLinear()
+			.domain(domainVals)
+			.range([0,0.25,0.5,0.75,1]);
+			if(theme.invertColorScale){
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
+				});
+			} else {
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
+				});		
+			}
 		}
 	}
 
+	function initFixedValueRange(){
+		var unitIntervalScale = d3.scaleLinear()
+			.domain([theme.choroplethValueScale(theme.legendmin), theme.choroplethValueScale(theme.legendmax)]);
+			if(theme.invertColorScale){
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return theme.choroplethColorInterpolator(1-unitIntervalScale(theme.choroplethValueScale(d)));
+				});
+			} else {
+				choroplethColorScale =d3.scaleSequential(function(d){
+					return theme.choroplethColorInterpolator(unitIntervalScale(theme.choroplethValueScale(d)));
+				});			
+			}
+    }
 
 	// calculates the radius scale factor that will result in the largest circle
 	// occupying the given proportion of the feature area
@@ -570,7 +610,7 @@
 					var dateID = dataSource.dates.indexOf(curDate);
 					updateValueRange(dateID,dateID);
 				} else {
-					updateValueRange(playStartID,playEndID);
+					initFixedValueRange();
 				}   
 				updateMap();
 				// loadLegend(); not necessary; updateMap calls loadLegend				
@@ -1407,7 +1447,7 @@
 		// add events to interactive elements
 		if(showInteractiveElements){
 			if(dataSource.dataChildName != null){
-				dataSourceFilter = dataSource.getID(d);
+				dataSourceFilter = dataSource.getChildFilter(d);
 				document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
 			};
 		}
@@ -1614,6 +1654,10 @@
 			document.getElementById("zoomcontrol").style.display="block";
 			document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom out to " + dataSource.dataParentName + "</i>";
 		};
+		// show filter options
+		if(dataSource.dataChildName != null){
+			showFilterSelector();
+		}
 		loadSlider().then(function(){
 			// define current date
 			var oldDate = curDate;
