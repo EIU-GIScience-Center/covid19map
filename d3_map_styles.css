@@ -516,10 +516,10 @@ input:checked + .slider:before {
 	width: 100%;
 	min-width: 300px;
 	vertical-align: middle;
-	height: 50px;
+	height: 95px;
 	/*border-left: 2px solid powderblue;*/
 	overflow-y: auto;
-	padding-left: 10px;
+	padding-left: 30px;
 	margin-left: 0ex;
 	margin-right: 0ex;
 	margin-top:0ex; 

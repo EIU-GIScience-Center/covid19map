@@ -137,6 +137,13 @@
 				<button class="big_button" id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
 			</div>
 			<div id="slider"></div>
+            <div id="datePicker" align ="center">
+                <form action="/action_page.php">
+			From : <input type="date" name="field1" id="field1" onchange="changeDateRange(event)" />
+			To :   <input type="date" name="field2" id="field2" onchange="changeDateRange(event)" /><br /><br />
+                   <input type="reset" value="Reset" onclick="resetDateRange(event)"/>
+                </form>
+            </div>
 			</div>
 		</div>
 	<div id="below_screen">
@@ -296,6 +303,8 @@
 	var highVal;
 	var dailyChomin;
 	var dailyChomax;
+    var startDate;
+    var endDate;
 	var radScaleFac = 0;
     var timer;
 	var touring = false; // if true, we are in the middle of an animated tour
@@ -1301,7 +1310,7 @@
             var legendsvg = d3.select("#circleLegend")
                 .append('svg')
                 .attr('width',legwidth)
-                .attr("height", 125);
+                .attr("height", 128);
         // make circle transparent when there is no circle symbol on the map
         if (theme.circle == false){
             legendsvg.append("g")
@@ -1567,9 +1576,30 @@
 			}
 		}
 	}
-
+    
+var maxDateID
+var minDateID
+var reset = false;
+    function changeDateRange(e) {
+        startDate = ymdToMdy(document.getElementById('field1').value)
+        endDate = ymdToMdy(document.getElementById('field2').value)
+        loadSlider().then(updateMap(slider_update_duration));
+    }
+    
+    function resetDateRange(e) {
+        reset = true;
+        startDate = 0
+        endDate = dataSource.length
+        loadSlider().then(updateMap(slider_update_duration));
+        playButton.text("►");
+        moving = false;
+        clearInterval(timer);
+        slider.value(maxDateID);
+    }
+    
+    
   	var loadSlider=function(){return new Promise(function(resolve, reject){
-		// remove existing slider
+        // remove existing slider
 		if (slider_svg != null){
 			slider_svg.remove();
 		}
@@ -1577,7 +1607,21 @@
 
 		var slider_width = $("#options_panel").width()-60;
 		if(slider_width < 100){slider_width=100;};
-		
+
+        /* Finding index of startDate and endDate selected by user*/
+        minDateID = dataSource.dates.indexOf(startDate)
+        maxDateID = dataSource.dates.indexOf(endDate)
+        if (minDateID == -1){
+            minDateID = 0;
+        }
+        if (maxDateID == -1){
+            maxDateID = dataSource.dates.length-1
+        }
+        if (minDateID >= maxDateID){
+            minDateID = maxDateID
+        }
+       var dtSlice = dataSource.dates.slice(minDateID,maxDateID);
+        
 		var secretCode="Yes please show month!";
 		function dateString(sliderID, showMonthParam){
 			sliderID = parseInt(sliderID);
@@ -1596,13 +1640,14 @@
 			.attr('align','center')
 			.append('svg');
 		textData=[0];
+
 		// load slider
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
-		var tick_ids = tickDateIds(dataSource.dates,10);
+		var tick_ids = tickDateIds(dataSource.dates,10,minDateID,maxDateID);
 		slider = d3
 			.sliderHorizontal()
-			.min(0)
-			.max(dataSource.dates.length-1)
+			.min(minDateID)
+			.max(maxDateID)
 			.tickValues(tick_ids)
 			.width(slider_width - 50) // slider should be smaller than the svg
 			.fill('#CA6')
@@ -1612,8 +1657,7 @@
 			.tickFormat(dateString)		
 			.displayValue(true)
 			.on('onchange', function(val) {
-				sliderID=parseInt(slider.value());
-				curDate = dataSource.dates[sliderID];
+                curDate = dataSource.dates[slider.value()];
 				slider.displayValue("Hi there!");
 				d3.select('#value').text("???");
 				if (theme.updateDailyValueRange && moving==false){
@@ -1631,12 +1675,7 @@
 			.append('g')
 			.attr('transform', 'translate(30,30)')
 			.call(slider);
-		// report that function worked
-		var nearestDate = dataSource.dates.reduce((a,b) => {
-					return Math.abs(Date.parse(b)-Date.parse(curDate)) , Math.abs(Date.parse(a)-Date.parse(curDate)) ? b : a;
-				});
-				curDate = nearestDate
-		// slider.value(dataSource.dates.indexOf(curDate));
+        curDate = dataSource.dates[slider.value()];
 		resolve();
 	})}
 
@@ -1684,8 +1723,8 @@
 		});	
 	})};
     
-    var sliderID
-    var currentIndex = sliderID;
+    //var sliderID
+    var currentIndex //= sliderID;
     var playButton = d3.select("#play-button");
     var moving = false;
     var looping = false;
@@ -1725,13 +1764,13 @@
 		  // timer = 0;
 		  playButton.text("►");
 		} else { 
-		  if (sliderID == dataSource.dates.length-1) {
-			  currentIndex = defaultPlayStartID;
+		  if (slider.value() == maxDateID) {
+			  currentIndex = minDateID;
 		  } else {
-			currentIndex = sliderID;
+			currentIndex = slider.value();
 		  }
 		  playStartID = currentIndex;
-		  playEndID = dataSource.dates.length-1;
+		  playEndID = maxDateID;
 		  moving = true;
           loadCircleLegend();
 		  updateValueRange(playStartID,playEndID);
@@ -1746,7 +1785,7 @@
         .on("click", handlePlayButtonClick);
     
 	function step(){
-        var targetIndex = dataSource.dates.length-1;
+        var targetIndex = maxDateID;
 		curDate = dataSource.dates[currentIndex];
 		slider.value(currentIndex);
 		if (theme.updateDailyValueRange && moving==false){
@@ -1756,7 +1795,7 @@
 			// no need to adjust legend, it has been adjusted when we started playing
 		}
 		// pause at end of loop (if looping)
-        if (sliderID == dataSource.dates.length-1 && looping == true) {
+        if (slider.value() == maxDateID && looping == true) {
                 var pauseStart = setTimeout(function(){
                     currentIndex = playStartID;
                 },3000);
@@ -1764,7 +1803,7 @@
                 currentIndex = currentIndex + 1;
               }
 		// stop at end of loop otherwise
-        if (currentIndex > targetIndex && looping == false) {
+        if (currentIndex > maxDateID && looping == false) {
 			moving = false;
 			currentIndex = defaultPlayStartID;
 			clearInterval(timer);
@@ -1901,6 +1940,7 @@
 					orig_duration = slider_update_duration;
 					slider_update_duration = 500;
 					slider.value(dataSource.dates.length-1);
+                    
 					slider_update_duration = orig_duration;
 				},500
 			);

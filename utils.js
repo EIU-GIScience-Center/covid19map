@@ -4,6 +4,16 @@
 /**
  * Provides the 3-letter abbrev. for a given month ID # (1-12)
  */
+/*transform year month date to month date year
+ex) 2021-06-08 to Jun 08, 2021*/
+function ymdToMdy(ymd){
+    var year = ymd.slice(0,4)
+    var month = ymd.slice(5,7)
+    var day = ymd.slice(8,10)
+    var mtm = monthString(month)
+    return mtm+" "+day+", "+year
+}
+
 function monthString(monthID){
 	if (monthID==1){return "Jan";}
 	if (monthID==2){return "Feb";}
@@ -267,15 +277,13 @@ function nearestDate(date,dates){
 	}
 }
 
-function tickDateIds(dates,maxMonthTicks){
+function tickDateIds(dates,maxMonthTicks,minDateID,maxDateID){
 	var out_ids = [];
 	// get ids of all dates with new month
-	// first date
-	out_ids.push(0);
 	var this_date_str = dates[0];
 	var date = new Date(this_date_str);
 	var last_month = date.getDate();
-	for(let i=0; i < dates.length; i++){
+	for(let i=minDateID; i <= maxDateID; i++){
 		this_date_str = dates[i];
 		date = new Date(this_date_str);
 		var month = date.getMonth();
