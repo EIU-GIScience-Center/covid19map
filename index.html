@@ -139,8 +139,8 @@
 			<div id="slider"></div>
             <div id="datePicker" align ="center">
                 <form action="/action_page.php">
-			From : <input type="date" name="field1" id="field1" onchange="changeDateRange(event)" />
-			To :   <input type="date" name="field2" id="field2" onchange="changeDateRange(event)" /><br /><br />
+			From : <input type="date" name="field1" min="minDate" max="maxDate" id="startDatePicker" onchange="changeDateRange(event)" />
+			To :   <input type="date" name="field2" min="minDate" max="maxDate" id="endDatePicker" onchange="changeDateRange(event)" /><br /><br />
                    <input type="reset" value="Reset" onclick="resetDateRange(event)"/>
                 </form>
             </div>
@@ -303,8 +303,6 @@
 	var highVal;
 	var dailyChomin;
 	var dailyChomax;
-    var startDate;
-    var endDate;
 	var radScaleFac = 0;
     var timer;
 	var touring = false; // if true, we are in the middle of an animated tour
@@ -603,7 +601,7 @@
 				
 				// get legend minimum and maximum
 				if (theme.legendmin == null){
-					var qvals = quartileValues(theme.choroplethValueFcn,dataSource.dates[0],dataSource.dates[dataSource.dates.length-1]);
+					var qvals = quartileValues(theme.choroplethValueFcn,dataSource.dates[0],dataSource.dates[maxDateID]);
 					theme.legendmin = qvals[0];
 					theme.legendmax = qvals[4];
 				};
@@ -1568,7 +1566,7 @@
 			} else {
 				// move forward one time step
 				curval = slider.value();
-				if (curval < dataSource.dates.length-1){
+				if (curval < maxDateID){
 					moving = true;
 					slider.value(curval+1);
 					moving = false;
@@ -1576,20 +1574,28 @@
 			}
 		}
 	}
-    
+
 var maxDateID
 var minDateID
+    
+var input = document.getElementById("startDatePicker");
+    input.setAttribute("min",'2019-01-22');
+    input.setAttribute("max",'2021-07-11');
+var input = document.getElementById("endDatePicker");
+    input.setAttribute("min",'2019-01-22');
+    input.setAttribute("max",'2021-07-11');
+    
 var reset = false;
     function changeDateRange(e) {
-        startDate = ymdToMdy(document.getElementById('field1').value)
-        endDate = ymdToMdy(document.getElementById('field2').value)
+        minDateID = ymdToMdy(document.getElementById('startDatePicker').value)
+        maxDateID = ymdToMdy(document.getElementById('endDatePicker').value)
         loadSlider().then(updateMap(slider_update_duration));
     }
     
     function resetDateRange(e) {
         reset = true;
-        startDate = 0
-        endDate = dataSource.length
+        minDateID = 0
+        maxDateID = dataSource.length
         loadSlider().then(updateMap(slider_update_duration));
         playButton.text("►");
         moving = false;
@@ -1597,20 +1603,18 @@ var reset = false;
         slider.value(maxDateID);
     }
     
-    
   	var loadSlider=function(){return new Promise(function(resolve, reject){
         // remove existing slider
 		if (slider_svg != null){
 			slider_svg.remove();
 		}
 		// get available width
-
 		var slider_width = $("#options_panel").width()-60;
 		if(slider_width < 100){slider_width=100;};
 
         /* Finding index of startDate and endDate selected by user*/
-        minDateID = dataSource.dates.indexOf(startDate)
-        maxDateID = dataSource.dates.indexOf(endDate)
+        minDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('startDatePicker').value))
+        maxDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('endDatePicker').value))
         if (minDateID == -1){
             minDateID = 0;
         }
@@ -1939,7 +1943,7 @@ var reset = false;
 				{
 					orig_duration = slider_update_duration;
 					slider_update_duration = 500;
-					slider.value(dataSource.dates.length-1);
+					slider.value(maxDateID);
                     
 					slider_update_duration = orig_duration;
 				},500
