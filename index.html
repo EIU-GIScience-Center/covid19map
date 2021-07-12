@@ -625,6 +625,7 @@
 		} // datasource is defined
 	} // loadTheme function
 
+
 	var loadData = function(dataSourceName, filterValue=null) {
 		if(data_transitioning){
 			return new Promise(function(resolve,reject){
@@ -696,9 +697,9 @@
 							// otherwise need to make sure it is visible
 							document.getElementById("carttoggle").disabled=false;
 							document.getElementById("cartOptLbl").style.color=null;
-							
-					
 						}
+						// update date picker min/max values
+						changeDateRange();
 						// get scale factor for circle symbols
 						if(oncartogram){
 							radScaleFac = areaScaleFac(cartogramFeatures);
@@ -1575,27 +1576,88 @@
 		}
 	}
 
-var maxDateID
-var minDateID
+//var maxDateID
+//var minDateID
     
-var input = document.getElementById("startDatePicker");
-    input.setAttribute("min",'2019-01-22');
-    input.setAttribute("max",'2021-07-11');
-var input = document.getElementById("endDatePicker");
-    input.setAttribute("min",'2019-01-22');
-    input.setAttribute("max",'2021-07-11');
     
 var reset = false;
-    function changeDateRange(e) {
-        minDateID = ymdToMdy(document.getElementById('startDatePicker').value)
-        maxDateID = ymdToMdy(document.getElementById('endDatePicker').value)
-        loadSlider().then(updateMap(slider_update_duration));
+
+    function changeDateRange(prioritizeEndDate=true) {
+		
+		// call this function whenever a new data source is loaded or a new date is selected from a date picker
+		// when calling from start date picker user selection, set prioritizeEndDate to False
+		
+		// CURRENT:
+		// updates min/max of each date picker
+		// updates date picker value if needed (i.e. if current value(s) out of range
+		// ALSO NEED TO:
+		//   make sure slider value is within range of date pickerStart
+		//   update legend color and size ranges (move update call from loadData to here)
+		//   
+
+		// get first and last dates of data source in YMD format
+		dataStart = mdyToYmd(dataSource.dates[0]);
+		dataEnd = mdyToYmd(dataSource.dates[dataSource.dates.length-1]);
+
+		// shortcut variables to start and end date picker objects
+		var startPicker = document.getElementById("startDatePicker");
+		var endPicker = document.getElementById("endDatePicker");
+
+		// current values for start and end dates
+		var pickerStart = startPicker.value; 
+		var pickerEnd = endPicker.value;
+
+		// determine if date for start date picker needs to be updated
+		if(pickerStart==''){pickerStart = dataStart;} // if null, set to data source start
+		if(compareDates(pickerStart,dataStart)==-1){ // if before data source start, set to data source start
+			pickerStart = dataStart;
+		}
+		if(compareDates(pickerStart,dataEnd) == 1){ // if after data source end, set to data source end
+			pickerStart = dataEnd;
+		}
+		
+		// determine if date for end date picker needs to be updated
+		if(pickerEnd==''){pickerEnd = dataEnd;} // if null, set to data source end
+		if(compareDates(pickerStart,dataStart)==-1){ // if before data source start, set to data source start 
+			pickerEnd = dataStart;
+		}
+		if(compareDates(pickerStart,dataEnd) == 1){// if after data source end, set to data source end
+			pickerEnd = dataEnd;
+		}
+		// make sure start date picker date is before end date picker date
+		if (compareDates(pickerStart,pickerEnd) == 1){
+			// if not, we'll update the one that is not prioritized
+			if (prioritizeEndDate){
+				pickerStart = pickerEnd;
+			} else {
+				pickerEnd = pickerStart
+			}
+		}
+		
+		// set date picker values and min/max ranges
+		
+		startPicker.value = pickerStart;
+		startPicker.min = dataStart;
+		startPicker.max = pickerEnd;
+		
+		endPicker.value = pickerEnd;
+		endPicker.min = pickerStart;
+		endPicker.max = dataEnd;
+		
+		// when finished, reload the slider
+		if (theme != undefined){
+			loadSlider().then(updateMap(slider_update_duration));
+		}
     }
     
     function resetDateRange(e) {
         reset = true;
-        minDateID = 0
-        maxDateID = dataSource.length
+		// THIS DOESN'T WORK:
+		//document.getElementById('startDatePicker').setAttribute("value",mdyToYmd(dataSource.dates[0]));
+		//document.getElementById('endDatePicker').setAttribute("value",mdyToYmd(dataSource.dates[dataSource.dates.length-1]));
+		// THIS WORKS:
+		document.getElementById('startDatePicker').value = mdyToYmd(dataSource.dates[0]);
+		document.getElementById('endDatePicker').value = mdyToYmd(dataSource.dates[dataSource.dates.length-1]);
         loadSlider().then(updateMap(slider_update_duration));
         playButton.text("►");
         moving = false;
@@ -1615,6 +1677,7 @@ var reset = false;
         /* Finding index of startDate and endDate selected by user*/
         minDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('startDatePicker').value))
         maxDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('endDatePicker').value))
+		
         if (minDateID == -1){
             minDateID = 0;
         }

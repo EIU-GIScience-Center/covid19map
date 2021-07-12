@@ -7,12 +7,67 @@
 /*transform year month date to month date year
 ex) 2021-06-08 to Jun 08, 2021*/
 function ymdToMdy(ymd){
-    var year = ymd.slice(0,4)
-    var month = ymd.slice(5,7)
-    var day = ymd.slice(8,10)
-    var mtm = monthString(month)
-    return mtm+" "+day+", "+year
+	if(ymd=='')
+	{
+		return '';
+	} else {
+		var year = ymd.slice(0,4)
+		var month = ymd.slice(5,7)
+		var day = ymd.slice(8,10)
+		var mtm = monthString(month)
+		return mtm+" "+day+", "+year
+	}
 }
+
+function mdyToYmd(mdy){
+	if(mdy==''){
+		return ''
+	} else {
+		mdy = mdy.replace(',',''); // remove comma
+		var year = mdy.slice(7,11);
+		var month = monthID(mdy.slice(0,3));
+		month = ("0" + month).slice(-2);
+		var day = mdy.slice(4,6);
+		return year + '-' + month + '-' + day;
+	}
+}
+
+// compares two date strings in 'yyyy-mm-dd' format
+// returns 1 if ymd1 is later than ymd2
+// returns -1 if ymd1 is earlier than ymd2
+// returns 0 of they are the same date
+function compareDates(ymd1,ymd2){
+	// parse
+	var y1 = parseInt(ymd1.slice(0,4));
+	var m1 = parseInt(ymd1.slice(5,7));
+	var d1 = parseInt(ymd1.slice(8,10));
+	var y2 = parseInt(ymd2.slice(0,4));
+	var m2 = parseInt(ymd2.slice(5,7));
+	var d2 = parseInt(ymd2.slice(8,10));
+	// compare years
+	if(y1 > y2){
+		return 1
+	} else if (y1 < y2) {
+		return -1
+	} else {
+		// compare months
+		if(m1 > m2){
+			return 1
+		} else if (m1 < m2) {
+			return -1 
+		} else {
+			// compare days
+			if(d1 > d2){
+				return 1
+			} else if (d1 < d2) {
+				return -1
+			} else {
+				return 0
+			}
+		}
+	}
+}
+
 
 function monthString(monthID){
 	if (monthID==1){return "Jan";}
@@ -27,6 +82,22 @@ function monthString(monthID){
 	if (monthID==10){return "Oct";}
 	if (monthID==11){return "Nov";}
 	if (monthID==12){return "Dec";}
+	return ""; // if monthID is invalid, don't break the code - just show nothing
+}
+
+function monthID(monthStr){
+	if (monthStr=='Jan'){return 1;}
+	if (monthStr=='Feb'){return 2;}
+	if (monthStr=='Mar'){return 3;}
+	if (monthStr=='Apr'){return 4;}
+	if (monthStr=='May'){return 5;}
+	if (monthStr=='Jun'){return 6;}
+	if (monthStr=='Jul'){return 7;}
+	if (monthStr=='Aug'){return 8;}
+	if (monthStr=='Sep'){return 9;}
+	if (monthStr=='Oct'){return 10;}
+	if (monthStr=='Nov'){return 11;}
+	if (monthStr=='Dec'){return 12;}
 	return ""; // if monthID is invalid, don't break the code - just show nothing
 }
 

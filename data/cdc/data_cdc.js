@@ -216,6 +216,7 @@ function data_cdc(){
 				
 				// THE DATA OBJECT
 				the_data_object = {
+					name: 'USA',
 					briefDescription: "Data from the <a href='https://dev.socrata.com/foundry/data.cdc.gov/9mfq-cb36'>CDC</a>.",
 					baseFeatures: function(filter=null){
 						return src.map_polys;

@@ -255,6 +255,7 @@ function dataJHU_USA_Counties(){return {
 				
 				// THE DATA OBJECT
 				the_data_object = {
+					name: 'USA counties',
 					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
 					baseFeatures: function(filter=null){
 						if(filter==null){

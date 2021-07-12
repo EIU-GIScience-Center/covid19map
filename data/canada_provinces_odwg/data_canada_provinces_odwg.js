@@ -176,7 +176,11 @@ function dataODWG_Canada_Provinces(){return {
 					var day = pieces[0];
 					var month = pieces[1];
 					var year = pieces[2];
-					var this_date = new Date(year, month-1, day,0,0,0,0).toDateString(); //why month-1???
+					month = monthString(month);
+					// month =  ("0" + string(monthID(month))).slice(-2);
+					// day = ("0" + day).slice(-2);
+					// var this_date = new Date(year, month-1, day,0,0,0,0).toDateString(); //why month-1???
+					var this_date = month + ' ' + day + ', ' + year
 					return this_date;
 				}
 
@@ -277,6 +281,7 @@ function dataODWG_Canada_Provinces(){return {
 				
 				// THE DATA OBJECT
 				the_data_object = {
+					name: 'Canada',
 					briefDescription: "Data from the <a href='https://github.com/ishaberry/Covid19Canada'>COVID-19 Canadian Open Data Working Group</a>.",
 					baseFeatures: function(filter=null){
 						return src.map_polys;
