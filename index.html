@@ -65,8 +65,8 @@
 			</div>
 			<div id="map"></div>
 			<div id="mapbottom">
-				<div id="legend"></div>
                 <div id="circleLegend"></div>
+				<div id="legend"></div>
 			</div>
 		</div>
 		<div id="options_panel">
@@ -1308,7 +1308,7 @@
         var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
             var legendsvg = d3.select("#circleLegend")
                 .append('svg')
-                .attr('width',legwidth)
+                .attr('width',legwidth/2)
                 .attr("height", 128);
         // make circle transparent when there is no circle symbol on the map
         if (theme.circle == false){

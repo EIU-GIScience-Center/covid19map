@@ -146,7 +146,7 @@ html, body, #fullheight {
 
 #legend{
     width: auto;
-	grid-column: 1;
+	grid-column: 2;
     margin: auto;
 	display: flex;
 	height: 100%;
@@ -154,7 +154,7 @@ html, body, #fullheight {
 }
 #circleLegend{
     width: auto;
-	grid-column: 2;
+	grid-column: 1;
     height: 125px;
     margin: auto;
     overflow: visible;
