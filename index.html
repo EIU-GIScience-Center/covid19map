@@ -71,9 +71,14 @@
 		</div>
 		<div id="options_panel">
 			<div id="options">
+				<div id = "messagearea">
+					<p><i>Loading data, please wait...</i><p>
+					
+				</div>
 				<div id="vertical_center_wrapper">
 				<div id="vertical_center">
 					<div id="selection_area">
+						
 						<div id="regionlabel">
 							<b>Region:</b>
 						</div>
@@ -436,10 +441,7 @@
 		// error checking
 		var baseFeat = baseFeatures;
 		if(baseFeat, startDateID == undefined){
-			console.log("start date: " + startDateID);
-			console.log("baseFeat:");
-			console.log(baseFeat);
-			return "change this to null!";
+			return null;
 		} else {
 			// we're going to create an array of value-population pairs
 			var valPops = [];
@@ -641,6 +643,7 @@
 						// show the description of the data source
 						document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 						addThemesToSelector(dataSource); // determine which themes are valid for this data source
+						document.getElementById("messagearea").innerHTML="<p><i>Click on any " + dataSource.districtClassLabel + " for more details.</i></p>"
 						// create a getValue function that can be used in themes
 						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
 							var featID = dataSource.getID(feat);
@@ -846,6 +849,9 @@
 				.style('opacity',0)
 				.on("click",feature_click)
 				.on("mouseover",feature_mouseover)
+				.on("touchstart",feature_click,{ passive: true })
+				.on("touchmove",feature_click,{ passive: true })
+				//.on("touchend",feature_click,{ passive: true })
 				.on("mouseout",feature_mouseout)	
 				.transition()
 				.duration(3000)
@@ -880,6 +886,9 @@
 						.style('stroke',"#FFFFCC")
 						.style('opacity',1)
 						.on("click",feature_click)
+						.on("touchstart",feature_click,{ passive: true })
+						.on("touchmove",feature_click,{ passive: true })
+						//.on("touchend",feature_click,{ passive: true })
 						.on("mouseover",feature_mouseover)
 						.on("mouseout",feature_mouseout);			
 					data_transitioning=false; // prevent repeated resizing, data loading
@@ -913,6 +922,9 @@
 			.attr("stroke-width", "1px")
 			.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
 			.on("click",feature_click)
+			.on("touchstart",feature_click,{ passive: true })
+			.on("touchmove",feature_click,{ passive: true })
+			//.on("touchend",feature_click,{ passive: true })
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);	
 
@@ -933,6 +945,9 @@
 			.style('stroke',"#FFFFCC")
 			.style('opacity',1)
 			.on("click",feature_click)
+			.on("touchstart",feature_click,{ passive: true })
+			.on("touchmove",feature_click,{ passive: true })
+			//.on("touchend",feature_click,{ passive: true })
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);			
 		districtPaths.exit().remove();
@@ -1024,7 +1039,7 @@
 			mapTypeDescription = "The size of each " + dcLabel + " represents its <span style='color: #B37; font-weight: 700'>land area</span>.<p><ul>";
 			if(theme.circle){
 				mapTypeDescription += "<li>Circle sizes represent <span style='color: #B37; font-weight: 700'>" + tUnit + " counts</span>";
-				mapTypeDescription += "<li>" + upperdcLabel + " colors represent <span style='color: #B37; font-weight: 700'>" + tUnit + " rates</span>";
+				mapTypeDescription += "<li><u>" + upperdcLabel + "</u> colors represent <span style='color: #B37; font-weight: 700'>" + tUnit + " rates</span>";
 				mapTypeDescription += "<li> Circle density is  not meaningful";
 			} 
 			mapTypeDescription += "</ul></p>";
@@ -1372,8 +1387,7 @@
 		
 		toDataSource.dataFunc.then(function(the_data_obj){
 			// if a filter is set, make sure there is data returned by filter
-			console.log("YOU ARE HERE");
-			console.log(dataSourceFilter);
+
 			// if on cartogram, first toggle back to map
 			if(oncartogram){
 				busy = true;
@@ -1436,18 +1450,22 @@
 		// add interactive elements (i.e. zoom button)		
 		if(dataSource.dataChildName != null){
 			dataSourceFilter = dataSource.getChildFilter(d);
-			console.log("YOU ARE IN showFeatureInfo");
-			console.log(dataSource);
 			if(dataSource.filterValid(dataSourceFilter)){
-				showHTML += "<div style='float: left;'>";
+				//showHTML += "<div style='float: left;'>";
 				if(showInteractiveElements){
 					// button to show child data source	
-					showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In'>&#10133;</button><i> Zoom to " + dataSource.getID(d) + "</i>";
+					showHTML += "<div style='display: table; width: 100%;'>";
+					showHTML += "<div style = 'display: table-cell; vertical-align: middle;'>"
+					showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In' style='display:inline-block;'>&#10133;</button>";
+					showHTML += "</div>";
+					showHTML += "<div style = 'display: table-cell; vertical-align: middle; white-space: nowrap;'>";
+					showHTML += "Zoom to " + dataSource.getLabel(d) + "</i>";
+					showHTML += "</div></div>";
 				} else {
 					// hint that button exists
 					showHTML += "&lt;click for zoom button&gt;";
 				};
-				showHTML += "</div>"
+				//showHTML += "</div>"
 			}
 		}
 		// determine if tooltip will go above or below cursor
@@ -1488,7 +1506,7 @@
 	function feature_click(d,i) {
 	  // d is the geometry object
 	  // if user clicked on active feature, reset map
-	  if (active_feature === d){return reset()};
+	  //if (active_feature === d){return reset()};
 	  // otherwise, set all features on both maps to inactive
 	  districtPaths.selectAll(".active").classed("active", false);
 	  // set user-clicked feature on both maps to active
