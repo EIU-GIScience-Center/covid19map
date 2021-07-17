@@ -653,6 +653,7 @@
 								}
 								catch(err){
 									// sometimes JHU data is missing spaces. try one more time, removing spaces after commas
+									/*
 									try{
 										val = dataSource.dateDistrictData[date][featID.replaceAll(', ',',')][varName];
 									} catch(err){
@@ -662,7 +663,8 @@
 										console.log("varName: " + varName);
 										console.log("date data: ");
 										return 0;
-									}									
+									}
+*/									
 								}
 							}
 							if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
@@ -1367,7 +1369,11 @@
     
 	// smooth zoom
 	function smoothZoom(toDataSource){
+		
 		toDataSource.dataFunc.then(function(the_data_obj){
+			// if a filter is set, make sure there is data returned by filter
+			console.log("YOU ARE HERE");
+			console.log(dataSourceFilter);
 			// if on cartogram, first toggle back to map
 			if(oncartogram){
 				busy = true;
@@ -1427,30 +1433,39 @@
 	function showFeatureInfo(d, showInteractiveElements=true){		
 		// get feature info
 		var showHTML = featureInfoHTML(d);
-		// add interactive elements		
+		// add interactive elements (i.e. zoom button)		
 		if(dataSource.dataChildName != null){
-			showHTML += "<div style='float: left;'>";
-			if(showInteractiveElements){
-				// button to show child data source	
-				showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In'>&#10133;</button><i> Zoom to " + dataSource.getID(d) + "</i>";
-			} else {
-				// hint that button exists
-				showHTML += "&lt;click for zoom button&gt;";
-			};
-			showHTML += "</div>"
+			dataSourceFilter = dataSource.getChildFilter(d);
+			console.log("YOU ARE IN showFeatureInfo");
+			console.log(dataSource);
+			if(dataSource.filterValid(dataSourceFilter)){
+				showHTML += "<div style='float: left;'>";
+				if(showInteractiveElements){
+					// button to show child data source	
+					showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In'>&#10133;</button><i> Zoom to " + dataSource.getID(d) + "</i>";
+				} else {
+					// hint that button exists
+					showHTML += "&lt;click for zoom button&gt;";
+				};
+				showHTML += "</div>"
+			}
 		}
 		// determine if tooltip will go above or below cursor
 		d3.select('#tooltip')
 			.style('opacity',1)
 			.html(showHTML)
 			.raise();
-		// add events to interactive elements
+		// add event listeners to interactive elements
+		
 		if(showInteractiveElements){
-			if(dataSource.dataChildName != null){
-				dataSourceFilter = dataSource.getChildFilter(d);
-				document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
-			};
+			if(dataSource.filterValid(dataSourceFilter)){
+				if(dataSource.dataChildName != null){
+					dataSourceFilter = dataSource.getChildFilter(d);
+					document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
+				};
+			}
 		}
+		
 		if(d3.event != null){
 			if(d3.event.pageY < window.innerHeight/3){
 				d3.select('#tooltip')
