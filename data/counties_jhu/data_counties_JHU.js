@@ -39,34 +39,26 @@ function dataJHU_USA_Counties(){return {
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var cart_states = ["Alabama", "Colorado", "Florida", "Georgia", "Idaho", "Iowa", "Louisiana", "Mississippi", "New Hampshire"];
-		var num_states = cart_states.length;
-		var target_length = num_states*2+3;
+		var target_length = 4;
 		
-		// get geoJSONs one after the other so that the variables don't update in between
-		function getGeoJsons(id){
-			if(id<num_states){
-				var stateName = cart_states[id];
-				$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties.geojson", function(src_data) {
-					src[stateName] = src_data; // add to src object
-					$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties_cartogram.geojson", function(src_data) {
-						src[stateName + "_cartogram"] = src_data; // add to src object
-						getGeoJsons(id+1);
-						process_data(); // attempt to process all datasets
-					});	
-				});
-			}
-		}
-
-		getGeoJsons(0);
 
 
-		// GET SOURCE DATASET (all polygons)
+
+		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
-			src.all_counties = src_data; // add to src object
+			src.map_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
+
+		// GET SOURCE DATASET (cartogram polygons)
+		// Typically this will be a geojson file placed in the same folder
+		$.getJSON("data/counties_JHU/geojson/USA_counties_cartogram.geojson", function(src_data) {
+			src.cartogram_counties = src_data; // add to src object
+			process_data(); // attempt to process all datasets
+		});
+
+
 
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
@@ -258,31 +250,22 @@ function dataJHU_USA_Counties(){return {
 					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
 					baseFeatures: function(filter=null){
 						if(filter==null){
-							return src.all_counties;
-						/*} else if (filter=="GA") {
-							return src.Georgia_counties;
-						} else if (filter=="FL") {
-							return src.florida_counties;*/
-						} else if (cart_states.includes(filter)) {
-							return src[filter];
+							return null;
 						} else {
-							var this_state = src.all_counties;
+							var this_state = src.map_counties;
 							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
 							this_state.features = this_state.features.filter(feat => feat.properties.STATE_NAME==filter);
 							return this_state;
 						}
 					},
 					cartogramFeatures: function(filter=null){
-						if(filter==null){
-							return null;						
-						/*} else if (filter=="GA") {
-							return src.Georgia_cartogram;
-						} else if (filter=="FL") {
-							return src.florida_cartogram;*/
-						} else if (cart_states.includes(filter)) {
-							return src[filter + "_cartogram"];
-						} else {
+						if(filter==null || filter == 'District of Columbia'){
 							return null;
+						} else {
+							var this_state = src.cartogram_counties;
+							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
+							this_state.features = this_state.features.filter(feat => feat.properties.STATE_NAME==filter);
+							return this_state;
 						}
 					},
 					defaultFilter: "GA",
