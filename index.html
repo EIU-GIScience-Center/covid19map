@@ -71,9 +71,14 @@
 		</div>
 		<div id="options_panel">
 			<div id="options">
+				<div id = "messagearea">
+					<p><i>Loading data, please wait...</i><p>
+					
+				</div>
 				<div id="vertical_center_wrapper">
 				<div id="vertical_center">
 					<div id="selection_area">
+						
 						<div id="regionlabel">
 							<b>Region:</b>
 						</div>
@@ -443,10 +448,7 @@
 		// error checking
 		var baseFeat = baseFeatures;
 		if(baseFeat, startDateID == undefined){
-			console.log("start date: " + startDateID);
-			console.log("baseFeat:");
-			console.log(baseFeat);
-			return "change this to null!";
+			return null;
 		} else {
 			// we're going to create an array of value-population pairs
 			var valPops = [];
@@ -649,6 +651,7 @@
 						// show the description of the data source
 						document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 						addThemesToSelector(dataSource); // determine which themes are valid for this data source
+						document.getElementById("messagearea").innerHTML="<p><i>Click on any " + dataSource.districtClassLabel + " for more details.</i></p>"
 						// create a getValue function that can be used in themes
 						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
 							var featID = dataSource.getID(feat);
@@ -661,6 +664,7 @@
 								}
 								catch(err){
 									// sometimes JHU data is missing spaces. try one more time, removing spaces after commas
+									/*
 									try{
 										val = dataSource.dateDistrictData[date][featID.replaceAll(', ',',')][varName];
 									} catch(err){
@@ -670,7 +674,8 @@
 										console.log("varName: " + varName);
 										console.log("date data: ");
 										return 0;
-									}									
+									}
+*/									
 								}
 							}
 							if(perMillion){val = val*1000000/dataSource.getPopulation(feat);}
@@ -852,6 +857,9 @@
 				.style('opacity',0)
 				.on("click",feature_click)
 				.on("mouseover",feature_mouseover)
+				.on("touchstart",feature_click,{ passive: true })
+				.on("touchmove",feature_click,{ passive: true })
+				//.on("touchend",feature_click,{ passive: true })
 				.on("mouseout",feature_mouseout)	
 				.transition()
 				.duration(3000)
@@ -886,6 +894,9 @@
 						.style('stroke',"#FFFFCC")
 						.style('opacity',1)
 						.on("click",feature_click)
+						.on("touchstart",feature_click,{ passive: true })
+						.on("touchmove",feature_click,{ passive: true })
+						//.on("touchend",feature_click,{ passive: true })
 						.on("mouseover",feature_mouseover)
 						.on("mouseout",feature_mouseout);			
 					data_transitioning=false; // prevent repeated resizing, data loading
@@ -919,6 +930,9 @@
 			.attr("stroke-width", "1px")
 			.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
 			.on("click",feature_click)
+			.on("touchstart",feature_click,{ passive: true })
+			.on("touchmove",feature_click,{ passive: true })
+			//.on("touchend",feature_click,{ passive: true })
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);	
 
@@ -939,6 +953,9 @@
 			.style('stroke',"#FFFFCC")
 			.style('opacity',1)
 			.on("click",feature_click)
+			.on("touchstart",feature_click,{ passive: true })
+			.on("touchmove",feature_click,{ passive: true })
+			//.on("touchend",feature_click,{ passive: true })
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);			
 		districtPaths.exit().remove();
@@ -1030,7 +1047,7 @@
 			mapTypeDescription = "The size of each " + dcLabel + " represents its <span style='color: #B37; font-weight: 700'>land area</span>.<p><ul>";
 			if(theme.circle){
 				mapTypeDescription += "<li>Circle sizes represent <span style='color: #B37; font-weight: 700'>" + tUnit + " counts</span>";
-				mapTypeDescription += "<li>" + upperdcLabel + " colors represent <span style='color: #B37; font-weight: 700'>" + tUnit + " rates</span>";
+				mapTypeDescription += "<li><u>" + upperdcLabel + "</u> colors represent <span style='color: #B37; font-weight: 700'>" + tUnit + " rates</span>";
 				mapTypeDescription += "<li> Circle density is  not meaningful";
 			} 
 			mapTypeDescription += "</ul></p>";
@@ -1375,7 +1392,10 @@
     
 	// smooth zoom
 	function smoothZoom(toDataSource){
+		
 		toDataSource.dataFunc.then(function(the_data_obj){
+			// if a filter is set, make sure there is data returned by filter
+
 			// if on cartogram, first toggle back to map
 			if(oncartogram){
 				busy = true;
@@ -1435,30 +1455,43 @@
 	function showFeatureInfo(d, showInteractiveElements=true){		
 		// get feature info
 		var showHTML = featureInfoHTML(d);
-		// add interactive elements		
+		// add interactive elements (i.e. zoom button)		
 		if(dataSource.dataChildName != null){
-			showHTML += "<div style='float: left;'>";
-			if(showInteractiveElements){
-				// button to show child data source	
-				showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In'>&#10133;</button><i> Zoom to " + dataSource.getID(d) + "</i>";
-			} else {
-				// hint that button exists
-				showHTML += "&lt;click for zoom button&gt;";
-			};
-			showHTML += "</div>"
+			dataSourceFilter = dataSource.getChildFilter(d);
+			if(dataSource.filterValid(dataSourceFilter)){
+				//showHTML += "<div style='float: left;'>";
+				if(showInteractiveElements){
+					// button to show child data source	
+					showHTML += "<div style='display: table; width: 100%;'>";
+					showHTML += "<div style = 'display: table-cell; vertical-align: middle;'>"
+					showHTML += "<button id='zoomDown' class='big_button' data-tooltip-position='bottom' data-tooltip='Zoom In' style='display:inline-block;'>&#10133;</button>";
+					showHTML += "</div>";
+					showHTML += "<div style = 'display: table-cell; vertical-align: middle; white-space: nowrap;'>";
+					showHTML += "Zoom to " + dataSource.getLabel(d) + "</i>";
+					showHTML += "</div></div>";
+				} else {
+					// hint that button exists
+					showHTML += "&lt;click for zoom button&gt;";
+				};
+				//showHTML += "</div>"
+			}
 		}
 		// determine if tooltip will go above or below cursor
 		d3.select('#tooltip')
 			.style('opacity',1)
 			.html(showHTML)
 			.raise();
-		// add events to interactive elements
+		// add event listeners to interactive elements
+		
 		if(showInteractiveElements){
-			if(dataSource.dataChildName != null){
-				dataSourceFilter = dataSource.getChildFilter(d);
-				document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
-			};
+			if(dataSource.filterValid(dataSourceFilter)){
+				if(dataSource.dataChildName != null){
+					dataSourceFilter = dataSource.getChildFilter(d);
+					document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
+				};
+			}
 		}
+		
 		if(d3.event != null){
 			if(d3.event.pageY < window.innerHeight/3){
 				d3.select('#tooltip')
@@ -1481,7 +1514,7 @@
 	function feature_click(d,i) {
 	  // d is the geometry object
 	  // if user clicked on active feature, reset map
-	  if (active_feature === d){return reset()};
+	  //if (active_feature === d){return reset()};
 	  // otherwise, set all features on both maps to inactive
 	  districtPaths.selectAll(".active").classed("active", false);
 	  // set user-clicked feature on both maps to active

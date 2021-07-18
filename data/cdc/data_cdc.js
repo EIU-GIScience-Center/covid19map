@@ -225,6 +225,13 @@ function data_cdc(){
 						return src.carto_polys; 
 					},
 					defaultFilter: null,
+					filterValid: function(filter){
+						if(filter=='District of Columbia'){
+							return false;
+						} else {
+							return true;
+						}
+					},
 					dataChildName: "USA Counties",
 					getChildFilter: function(feat){return feat.properties.STATE_NAME;},
 					dataParentName: null,
