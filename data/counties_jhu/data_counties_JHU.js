@@ -173,11 +173,11 @@ function dataJHU_USA_Counties(){return {
 				
 				// DEFINE AN ARRAY OF DISTRICT IDs
 				var districtIDs = [];
+				var districtStates = {}
 				for(let i=0; i < case_data.length; i++){
 					var cur_row = case_data[i];
-					//if(cur_row.Province_State == "Georgia"){
-							districtIDs.push(cur_row.Combined_Key);
-					//}
+						districtIDs.push(cur_row.Combined_Key);
+						districtStates[cur_row.Combined_key]=cur_row.Province_State;
 				}
 				
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
@@ -216,7 +216,6 @@ function dataJHU_USA_Counties(){return {
 				// go through src.case_data object and transfer values into dateDistrictData object
 				for(let i=0; i < case_data.length; i++){ // loop through table rows
 					var cur_row = case_data[i]; // get data record
-					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
 						var cur_districtID = cur_row.Combined_Key; // get district id 
 						for(let j=0; j < CovizDates.length; j++){ // loop through dates
 							if(dateDistrictData[CovizDates[j]] != undefined){
@@ -252,20 +251,22 @@ function dataJHU_USA_Counties(){return {
 						if(filter==null){
 							return null;
 						} else {
-							var this_state = src.map_counties;
-							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
-							this_state.features = this_state.features.filter(feat => feat.properties.STATE_NAME==filter);
-							return this_state;
+							filtered_feat = {};
+							filtered_feat['type'] = src.map_counties['type'];
+							filtered_feat['crs'] = src.map_counties['crs'];
+							filtered_feat.features = src.map_counties.features.filter(feat => feat.properties.STATE_NAME==filter);
+							return filtered_feat;
 						}
 					},
 					cartogramFeatures: function(filter=null){
 						if(filter==null || filter == 'District of Columbia'){
 							return null;
 						} else {
-							var this_state = src.cartogram_counties;
-							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
-							this_state.features = this_state.features.filter(feat => feat.properties.STATE_NAME==filter);
-							return this_state;
+							filtered_feat = {};
+							filtered_feat['type'] = src.cartogram_counties['type'];
+							filtered_feat['crs'] = src.cartogram_counties['crs'];
+							filtered_feat.features = src.cartogram_counties.features.filter(feat => feat.properties.STATE_NAME==filter);
+							return filtered_feat;
 						}
 					},
 					defaultFilter: "GA",
@@ -275,6 +276,12 @@ function dataJHU_USA_Counties(){return {
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
+					filteredData: function(filter){
+							console.log("FILTERING...");
+							console.log(filter);
+							console.log(dateDistrictData[0]);
+							
+						},
 					getID: function(feat){return feat.properties.JHU_key;}, 
 					getLabel: function(feat){return feat.properties.CensusName;}, 
 					getPopulation: function(feat){return feat.properties.pop2018;}, 

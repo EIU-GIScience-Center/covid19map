@@ -73,7 +73,6 @@
 			<div id="options">
 				<div id = "messagearea">
 					<p><i>Loading data, please wait...</i><p>
-					
 				</div>
 				<div id="vertical_center_wrapper">
 				<div id="vertical_center">
@@ -529,6 +528,7 @@
 		if(features == undefined || theme == undefined || $.isNumeric(theme.circleAreaFcn) == true) {
 			return "undefined";
 		} else {
+			console.log("function areaScaleFac");
 			// determine the screen factor (ratio of screen coords to geometry coords)
             mapdiv = document.getElementById('map'); // Do not use #
 			var width = mapdiv.clientWidth;
@@ -546,6 +546,10 @@
 			// find the date with the largest sum of values
 			var maxValSum = 0;
 			var maxDate = null;
+			if(dataSource.filteredData != undefined){
+				test = dataSource.filteredData(dataSourceFilter);
+			}
+
 			for(i=0;i<dataSource.dates.length;i++){
 				var thisDate = dataSource.dates[i];
 				var curValSum = d3.sum(feats, x => f(x,thisDate));
@@ -602,6 +606,7 @@
 				};
 				
 				// calculate radius scale factor
+				console.log('areaScaleFac from loadTheme');
 				if(oncartogram){
 					radScaleFac = areaScaleFac(cartogramFeatures);
 				} else {
@@ -697,12 +702,6 @@
 							
 					
 						}
-						// get scale factor for circle symbols
-						if(oncartogram){
-							radScaleFac = areaScaleFac(cartogramFeatures);
-						} else {
-							radScaleFac = areaScaleFac(baseFeatures);
-						}
 						resolve();
 					});
 				};		
@@ -781,6 +780,7 @@
 					}
 					
 					// calculate radius scale factor
+					console.log("areaScaleFac from resize");
 					if(oncartogram){
 					   radScaleFac = areaScaleFac(cartogramFeatures);
                     } else {
@@ -849,9 +849,7 @@
 				.style('opacity',0)
 				.on("click",feature_click)
 				.on("mouseover",feature_mouseover)
-				.on("touchstart",feature_click,{ passive: true })
-				.on("touchmove",feature_click,{ passive: true })
-				//.on("touchend",feature_click,{ passive: true })
+				.on("touchmove",feature_mouseover,{ passive: true })
 				.on("mouseout",feature_mouseout)	
 				.transition()
 				.duration(3000)
@@ -886,9 +884,7 @@
 						.style('stroke',"#FFFFCC")
 						.style('opacity',1)
 						.on("click",feature_click)
-						.on("touchstart",feature_click,{ passive: true })
-						.on("touchmove",feature_click,{ passive: true })
-						//.on("touchend",feature_click,{ passive: true })
+						.on("touchmove",feature_mouseover,{ passive: true })
 						.on("mouseover",feature_mouseover)
 						.on("mouseout",feature_mouseout);			
 					data_transitioning=false; // prevent repeated resizing, data loading
@@ -907,7 +903,9 @@
 		// create new group for district paths
 		districtPaths = mapsvg.append('g');
 		// calculate radius scale 
-		radScaleFac = areaScaleFac(featdata);
+		// we don't need to do this because another function will, e.g. loadTheme
+		//console.log("areaScaleFac from replaceMapData");
+		//radScaleFac = areaScaleFac(featdata);
 		// remove and re-create paths in SVG
 		curZoomFunc = divPathFunc("mapdiv", featdata, 30);
 		districtPaths.selectAll('path')
@@ -922,9 +920,7 @@
 			.attr("stroke-width", "1px")
 			.attr("fill", "#FFFFCC") // function(d){return choroplethColor(d, curDate);})
 			.on("click",feature_click)
-			.on("touchstart",feature_click,{ passive: true })
-			.on("touchmove",feature_click,{ passive: true })
-			//.on("touchend",feature_click,{ passive: true })
+			.on("touchmove",feature_mouseover,{ passive: true })
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);	
 
@@ -945,8 +941,8 @@
 			.style('stroke',"#FFFFCC")
 			.style('opacity',1)
 			.on("click",feature_click)
-			.on("touchstart",feature_click,{ passive: true })
-			.on("touchmove",feature_click,{ passive: true })
+			//.on("touchstart",feature_click,{ passive: true })
+			.on("touchmove",feature_mouseover,{ passive: true })
 			//.on("touchend",feature_click,{ passive: true })
 			.on("mouseover",feature_mouseover)
 			.on("mouseout",feature_mouseout);			
@@ -1383,16 +1379,15 @@
         }
     
 	// smooth zoom
-	function smoothZoom(toDataSource){
-		
+	function smoothZoom(toDataSource,toFilter){
+		if(toFilter==undefined){toFilter = dataSourceFilter;};
 		toDataSource.dataFunc.then(function(the_data_obj){
 			// if a filter is set, make sure there is data returned by filter
-
 			// if on cartogram, first toggle back to map
 			if(oncartogram){
 				busy = true;
 				toggle_map(750,function(){
-					loadData(toDataSource.dataSourceName, dataSourceFilter).then(function(){								
+					loadData(toDataSource.dataSourceName, toFilter).then(function(){								
 						handleDataLoaded(transition=true).then(function(){
 							if(cartogramFeatures != null){
 								toggle_map(750);
@@ -1404,7 +1399,7 @@
 					});
 				});
 			} else {
-				loadData(toDataSource.dataSourceName, dataSourceFilter)
+				loadData(toDataSource.dataSourceName, toFilter)
 				.then(function(){
 					handleDataLoaded(transition=true);
 				})
@@ -1434,12 +1429,6 @@
 				smoothZoom(match);
 			};      
 		}
-		/*
-		loadData(dataSource.dataParentName).then(function(){
-			dataSourceFilter=null;
-			handleDataLoaded(transition=true);
-		});
-		*/
 	}
 	
 	
@@ -1470,7 +1459,7 @@
 		}
 		// determine if tooltip will go above or below cursor
 		d3.select('#tooltip')
-			.style('opacity',1)
+			.style('display','block')
 			.html(showHTML)
 			.raise();
 		// add event listeners to interactive elements
@@ -1504,9 +1493,12 @@
 
 	// processes user click on a specific district
 	function feature_click(d,i) {
+//		if(d3.event != null){
+//			d3.event.stopPropagation();
+//		}
 	  // d is the geometry object
 	  // if user clicked on active feature, reset map
-	  //if (active_feature === d){return reset()};
+	  if (active_feature === d){return reset()};
 	  // otherwise, set all features on both maps to inactive
 	  districtPaths.selectAll(".active").classed("active", false);
 	  // set user-clicked feature on both maps to active
@@ -1524,18 +1516,18 @@
 		}
 	}
 
-	function feature_mouseout(d,i){
+	function feature_mouseout(d,i){	
 		if (active_feature == null){
-			d3.select('#tooltip').style('opacity',0);
+			d3.select('#tooltip').style('display','none');
 		}
 	}
 
 	// unselect any selected features
 	function reset() {
-			districtPaths.selectAll(".active").classed("active", active = false);
-			active_feature = null;
-			districtPaths.transition().duration(750).attr("transform", "");
-			d3.select('#tooltip').style('opacity',0);
+		districtPaths.selectAll(".active").classed("active", active = false);
+		active_feature = null;
+		districtPaths.transition().duration(750).attr("transform", "");
+		d3.select('#tooltip').style('display','none');
 	}
 
 	function loadTooltips(){
@@ -1544,7 +1536,7 @@
 			append('div')
 			.attr('id','tooltip')
 			.style('position','absolute')
-			.style('opacity',0)
+			.style('opacity',1)
 			.style('padding','3px')
 			.style('user-select','none')
 			.style('stroke-alignment','inner');
@@ -1925,8 +1917,9 @@
 		
 		dataSources=dataSources.concat(newDataSources);
 		addDataSourcesToSelector(newDataSources);
-		
+		console.log("data sources added...");
 		handleDataLoaded().then(function(){
+			console.log("handled data loaded...");
 			defaultPlayStartID = dataSource.dates.length-56; // by default play the last 8 weeks
 			if(defaultPlayStartID < 0){defaultPlayStartID = 0;};
 			setTimeout(function()
