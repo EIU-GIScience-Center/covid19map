@@ -486,6 +486,8 @@
 	}
     
 	function updateValueRange(startDateID, endDateID){
+		console.log("UPDATEVALUERANGE");
+		console.log(dataSource.dates[startDateID] + " to " + dataSource.dates[endDateID]);
 		var qvals = quartileValues(theme.choroplethValueFcn,startDateID,endDateID);
 		if(qvals != null){
 			//dailyChomin = qvals[0];
@@ -791,7 +793,7 @@
                     }
 					updateMap();
 					//loadLegend();
-					var slider_val = parseInt(slider.value());
+					var slider_val = Math.round(slider.value());
 					//loadSlider();
 					slider.value(slider_val);
 				}
@@ -1042,6 +1044,11 @@
 			var height = mapdiv.offsetHeight;
 			divid = '#' + divid;		
 		// transition the map only if the map svg and date are defined
+		console.log("UPDATE MAP");
+		console.log("current date: " + curDate);
+		console.log(slider.value());
+		console.log(dataSource.dates[Math.round(slider.value())]);
+		if(dataSource.dates != undefined){curDate = dataSource.dates[Math.round(slider.value())];};
 		if(mapsvg !== undefined){
 			if(curDate != null){	
 
@@ -1691,7 +1698,7 @@ var reset = false;
         
 		var secretCode="Yes please show month!";
 		function dateString(sliderID, showMonthParam){
-			sliderID = parseInt(sliderID);
+			sliderID = Math.round(sliderID);
 			var date = new Date(dataSource.dates[sliderID]);
 			var year = date.getFullYear();
 			var month = date.getMonth()+1;
@@ -1709,6 +1716,10 @@ var reset = false;
 		textData=[0];
 
 		// load slider
+		console.log("LOADING SLIDER");
+		console.log(minDateID + " to " + maxDateID);
+		
+		
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
 		var tick_ids = tickDateIds(dataSource.dates,10,minDateID,maxDateID);
 		slider = d3
@@ -1724,11 +1735,10 @@ var reset = false;
 			.tickFormat(dateString)		
 			.displayValue(true)
 			.on('onchange', function(val) {
-                curDate = dataSource.dates[slider.value()];
 				slider.displayValue("Hi there!");
 				d3.select('#value').text("???");
 				if (theme.updateDailyValueRange && moving==false){
-					var dateID = dataSource.dates.indexOf(curDate);
+					var dateID = Math.round(slider.value()); //dataSource.dates.indexOf(curDate);
 					updateValueRange(dateID,dateID);
                 } else {
 				//	updateValueRange(playStartID,playEndID);
