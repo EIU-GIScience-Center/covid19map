@@ -153,10 +153,10 @@ html, body, #fullheight {
 	align-items: top;
 }
 #circleLegend{
-    width: auto;
+    width: 34%;
 	grid-column: 1;
     height: 125px;
-    margin: auto;
+    margin: none;
     overflow: visible;
 }
     
@@ -729,5 +729,10 @@ input:checked + .slider:before {
 	#vertical_center{
 		display: block;
 	}
-}    
+}
+/* loading animation */
+#messagearea{
+	padding: 10px;
+}
+    
 </style>

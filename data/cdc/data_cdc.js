@@ -32,7 +32,7 @@ To create a new data source:
 
 // THE DATA SOURCE IS A NEW CONSTANT AND MUST HAVE A UNIQUE NAME
 function data_cdc(){ 
-	console.log("attempting to get data from CDC...");
+	console.log("attempting to get data from CDC YO...");
 	return {
 	dataSourceName: "USA", // THIS NAME WILL APPEAR IN THE DROP-DOWN SELECTOR
 	showInSelector: true, // ONLY SHOW HIGHEST-LEVEL GEOGRAPHIES IN SELECTOR
@@ -61,15 +61,20 @@ function data_cdc(){
 		// GET SOURCE DATASET (tabular data)
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a geojson service
-
+		var t0ajax = performance.now();
 		$.ajax({
 			url: "https://data.cdc.gov/resource/9mfq-cb36.json",
 			type: "GET",
 			data: {
-			  "$limit" : 50000
+			  "$limit" : 50000,
+			  "$$app_token" : "2WqwHaw2KS5xndmJLh2XuZVv3"
+			},
+			success : function(response,textStatus,xhr){
+				console.log("CDC response: " + textStatus);
 			}
-			//,			  "$$app_token" : "YOURAPPTOKENHERE"
 		}).done(function(data) {
+			var t1ajax = performance.now();
+			console.log("CDC data retrieved in " + (t1ajax-t0ajax) + "ms");
 			src.tab_data = data; // add to src object
 			process_data(); // attempt to process all datasets
 		}).fail(function(){
@@ -100,6 +105,10 @@ function data_cdc(){
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			if (Object.keys(src).length == target_length){
+				var t0=performance.now();
+				console.log("PROCESSING CDC DATA...");
+				
+				
 				// DEFINE AN ARRAY OF DATES IN TEMPORAL SEQUENCE												
 				var dates = new Set();
 				
@@ -225,6 +234,13 @@ function data_cdc(){
 						return src.carto_polys; 
 					},
 					defaultFilter: null,
+					filterValid: function(filter){
+						if(filter=='District of Columbia'){
+							return false;
+						} else {
+							return true;
+						}
+					},
 					dataChildName: "USA Counties",
 					getChildFilter: function(feat){return feat.properties.STATE_NAME;},
 					dataParentName: null,
@@ -240,6 +256,11 @@ function data_cdc(){
 					districtClassLabel: "state",
 					aggregateLabel: function(){return "USA";}
 				}
+				
+				var t1 = performance.now();
+				console.log("Processed CDC in " + (t1-t0) + " ms");
+
+				
 				resolve(the_data_object);
 
 			} // end of "if (Object.keys(src).length == 3){"

@@ -39,43 +39,39 @@ function dataJHU_USA_Counties(){return {
 		// OBJECT TO HOLD ALL SOURCE DATASETS
 		var src = {};
 		// NUMBER OF SOURCE DATASETS TO BE ACQUIRED
-		var cart_states = ["Alabama", "Colorado", "Florida", "Georgia", "Idaho", "Iowa", "Louisiana", "Mississippi", "New Hampshire"];
-		var num_states = cart_states.length;
-		var target_length = num_states*2+3;
+		var target_length = 4;
 		
-		// get geoJSONs one after the other so that the variables don't update in between
-		function getGeoJsons(id){
-			if(id<num_states){
-				var stateName = cart_states[id];
-				$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties.geojson", function(src_data) {
-					src[stateName] = src_data; // add to src object
-					$.getJSON("data/counties_JHU/geojson/" + stateName + "_counties_cartogram.geojson", function(src_data) {
-						src[stateName + "_cartogram"] = src_data; // add to src object
-						getGeoJsons(id+1);
-						process_data(); // attempt to process all datasets
-					});	
-				});
-			}
-		}
-
-		getGeoJsons(0);
 
 
-		// GET SOURCE DATASET (all polygons)
+
+		// GET SOURCE DATASET (map polygons)
 		// Typically this will be a geojson file placed in the same folder
 		$.getJSON("data/counties_JHU/geojson/USA_counties.geojson", function(src_data) {
-			src.all_counties = src_data; // add to src object
+			src.map_counties = src_data; // add to src object
 			process_data(); // attempt to process all datasets
 		});
+
+		// GET SOURCE DATASET (cartogram polygons)
+		// Typically this will be a geojson file placed in the same folder
+		$.getJSON("data/counties_JHU/geojson/USA_counties_cartogram.geojson", function(src_data) {
+			src.cartogram_counties = src_data; // add to src object
+			process_data(); // attempt to process all datasets
+		});
+
+
 
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
+		var t0case = performance.now();
 		$.ajax({
 			type: "GET",
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv',
 			dataType: "text",
 			success: function(src_data) {
+				var t1case = performance.now();
+				console.log("JHU US case data retrieved in " + (t1case-t0case) + "ms");
+
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -85,11 +81,17 @@ function dataJHU_USA_Counties(){return {
 		// GET SOURCE DATASET (death data)
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
+		var t0death = performance.now();
+
+
 		$.ajax({
 			type: "GET",
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv',
 			dataType: "text",
 			success: function(src_data) {
+				var t1death = performance.now();
+				console.log("JHU US case data retrieved in " + (t1death-t0death) + "ms");
+
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -118,6 +120,8 @@ function dataJHU_USA_Counties(){return {
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			if (Object.keys(src).length == target_length){
+				var t0=performance.now();
+				console.log("PROCESSING JHU DATA...");
 				// get tabular data from JHU object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
@@ -181,11 +185,11 @@ function dataJHU_USA_Counties(){return {
 				
 				// DEFINE AN ARRAY OF DISTRICT IDs
 				var districtIDs = [];
+				var districtStates = {}
 				for(let i=0; i < case_data.length; i++){
 					var cur_row = case_data[i];
-					//if(cur_row.Province_State == "Georgia"){
-							districtIDs.push(cur_row.Combined_Key);
-					//}
+						districtIDs.push(cur_row.Combined_Key);
+						districtStates[cur_row.Combined_key]=cur_row.Province_State;
 				}
 				
 				// DEFINE THE VARIABLES THAT WILL BE PROVIDED
@@ -224,7 +228,6 @@ function dataJHU_USA_Counties(){return {
 				// go through src.case_data object and transfer values into dateDistrictData object
 				for(let i=0; i < case_data.length; i++){ // loop through table rows
 					var cur_row = case_data[i]; // get data record
-					//if(cur_row.Province_State == "Georgia"){ // check that it is in Georgia
 						var cur_districtID = cur_row.Combined_Key; // get district id 
 						for(let j=0; j < CovizDates.length; j++){ // loop through dates
 							if(dateDistrictData[CovizDates[j]] != undefined){
@@ -259,31 +262,24 @@ function dataJHU_USA_Counties(){return {
 					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
 					baseFeatures: function(filter=null){
 						if(filter==null){
-							return src.all_counties;
-						/*} else if (filter=="GA") {
-							return src.Georgia_counties;
-						} else if (filter=="FL") {
-							return src.florida_counties;*/
-						} else if (cart_states.includes(filter)) {
-							return src[filter];
+							return null;
 						} else {
-							var this_state = src.all_counties;
-							this_state = JSON.parse(JSON.stringify(this_state)) // clone object
-							this_state.features = this_state.features.filter(feat => feat.properties.STATE_NAME==filter);
-							return this_state;
+							filtered_feat = {};
+							filtered_feat['type'] = src.map_counties['type'];
+							filtered_feat['crs'] = src.map_counties['crs'];
+							filtered_feat.features = src.map_counties.features.filter(feat => feat.properties.STATE_NAME==filter);
+							return filtered_feat;
 						}
 					},
 					cartogramFeatures: function(filter=null){
-						if(filter==null){
-							return null;						
-						/*} else if (filter=="GA") {
-							return src.Georgia_cartogram;
-						} else if (filter=="FL") {
-							return src.florida_cartogram;*/
-						} else if (cart_states.includes(filter)) {
-							return src[filter + "_cartogram"];
-						} else {
+						if(filter==null || filter == 'District of Columbia'){
 							return null;
+						} else {
+							filtered_feat = {};
+							filtered_feat['type'] = src.cartogram_counties['type'];
+							filtered_feat['crs'] = src.cartogram_counties['crs'];
+							filtered_feat.features = src.cartogram_counties.features.filter(feat => feat.properties.STATE_NAME==filter);
+							return filtered_feat;
 						}
 					},
 					defaultFilter: "GA",
@@ -293,6 +289,9 @@ function dataJHU_USA_Counties(){return {
 					districtIDs: districtIDs, 
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
+					filteredData: function(filter){
+							console.log("FILTERING to " + filter);
+						},
 					getID: function(feat){return feat.properties.JHU_key;}, 
 					getLabel: function(feat){return feat.properties.CensusName;}, 
 					getPopulation: function(feat){return feat.properties.pop2018;}, 
@@ -305,6 +304,9 @@ function dataJHU_USA_Counties(){return {
 						}
 					}		
 				}
+
+				var t1 = performance.now();
+				console.log("Processed JHU in " + (t1-t0) + " ms");
 
 				resolve(the_data_object);
 

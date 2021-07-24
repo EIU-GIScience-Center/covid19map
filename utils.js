@@ -265,9 +265,10 @@ function periodAverage(feat, date, valFunc, periodWts){
 	var i=0;
 	var d=date;
 	while(d != null && i < periodWts.length){
-		var curval = valFunc(feat,d);
-		valsum += periodWts[i] * valFunc(feat, d);
-		weightSum += periodWts[i];
+		if(periodWts[i] != 0){
+			valsum += periodWts[i] * valFunc(feat, d);
+			weightSum += periodWts[i];
+		}
 		i += 1;
 		d = previousDate(d,dataSource.dates);
 	}
