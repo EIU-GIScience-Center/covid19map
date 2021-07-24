@@ -146,17 +146,17 @@ html, body, #fullheight {
 
 #legend{
     width: auto;
-	grid-column: 1;
+	grid-column: 2;
     margin: auto;
 	display: flex;
 	height: 100%;
 	align-items: top;
 }
 #circleLegend{
-    width: auto;
-	grid-column: 2;
+    width: 34%;
+	grid-column: 1;
     height: 125px;
-    margin: auto;
+    margin: none;
     overflow: visible;
 }
     
@@ -516,10 +516,10 @@ input:checked + .slider:before {
 	width: 100%;
 	min-width: 300px;
 	vertical-align: middle;
-	height: 50px;
+	height: 95px;
 	/*border-left: 2px solid powderblue;*/
 	overflow-y: auto;
-	padding-left: 10px;
+	padding-left: 30px;
 	margin-left: 0ex;
 	margin-right: 0ex;
 	margin-top:0ex; 
@@ -729,5 +729,10 @@ input:checked + .slider:before {
 	#vertical_center{
 		display: block;
 	}
-}    
+}
+/* loading animation */
+#messagearea{
+	padding: 10px;
+}
+    
 </style>

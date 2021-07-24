@@ -65,14 +65,14 @@
 			</div>
 			<div id="map"></div>
 			<div id="mapbottom">
-				<div id="legend"></div>
                 <div id="circleLegend"></div>
+				<div id="legend"></div>
 			</div>
 		</div>
 		<div id="options_panel">
 			<div id="options">
 				<div id = "messagearea">
-					<p><i>Loading data, please wait...</i><p>
+					<p><i>Loading data, please wait...</i></p>
 				</div>
 				<div id="vertical_center_wrapper">
 				<div id="vertical_center">
@@ -141,6 +141,24 @@
 				<button class="big_button" id="loop-button" data-tooltip-position="bottom" data-tooltip="Stop/Repeat">↻</button>
 			</div>
 			<div id="slider"></div>
+            <div id="datePicker">
+				<div id="datepickers" style="min-width: 100%">
+					<div style="width: 45%; float: left;">
+						<input type="date" name="field1" min="minDate" max="maxDate" id="startDatePicker" onchange="changeDateRange('user');" />
+					</div>
+					<div style="width: 45%; float: right; text-align: right;">
+						<input type="date" name="field2" min="minDate" max="maxDate" id="endDatePicker" onchange="changeDateRange('user');" />
+					</div>
+				
+					<div style="margin: 0 auto; text-align: center; display: inline-block; min-width: 100%;">
+						<input type="reset" value="last 120 days" onclick="resetDateRange(120)"/>
+						<input type="reset" value="all dates" onclick="resetDateRange()"/>
+						
+					</div>
+				</div>
+
+
+            </div>
 			</div>
 		</div>
 	<div id="below_screen">
@@ -307,6 +325,20 @@
 	var defaultPlayStartID = 35; // the day to start playing from when the user plays from the end
 	var playStartID, playEndID; // the start and end dates of animation
 	var delayIntervals = [600,450,300,150,0];
+	// loading
+	function handlePageLoading(){
+		document.getElementById("messagearea").innerHTML="<p><i>Loading data, please wait...</i></p>"
+		/*
+		msgdiv = document.getElementById('messagearea')
+		msgdiv.style.position='absolute';
+		msgdiv.style.zIndex=999;
+		msgdiv.style.height='100%';
+		msgdiv.style.width='100%';
+		msgdiv.style.backgroundColor='rgba(1,0,0,0.3)';
+		*/
+	}
+	handlePageLoading();
+	
 	// array of themes
 	// each theme should be defined in a separate file; see theme_new_cases.js for a template
 	var themes = [
@@ -445,8 +477,15 @@
 			// we're going to create an array of value-population pairs
 			var valPops = [];
 			var sumPop = 0;
-			// get value-population for every feature on every date
-			for (let dateID = startDateID; dateID < endDateID+1; dateID++){
+			// get value-population for every feature across date range
+			// sample for efficiency - minimum 10 samples
+			var datestep = Math.round((endDateID-startDateID)/10);
+			if(datestep < 1){datestep=1;}
+			if(datestep > 10){datestep=10;}
+			
+			console.log("QUARTILE VALUES - " + startDateID + " to " + endDateID + " step " + datestep);
+			
+			for (let dateID = startDateID; dateID < endDateID+1; dateID+=datestep){
 				var thisDate = dataSource.dates[dateID];
 				for (let featID = 0; featID < baseFeat.features.length; featID++){
 					var curFeat = baseFeat.features[featID];
@@ -456,6 +495,7 @@
 					sumPop += curPop;
 				}
 			}
+			
 			// sort value-population pairs by value
 			valPops.sort((a,b) => (a[0] > b[0]) ? 1 : -1);
 			// get min & max
@@ -479,8 +519,15 @@
 		}
 	}
     
-	function updateValueRange(startDateID, endDateID){
-		var qvals = quartileValues(theme.choroplethValueFcn,startDateID,endDateID);
+	function updateChoroplethValueRange(callerLabel){
+		funcStart = performance.now();
+        startDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('startDatePicker').value))
+        endDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('endDatePicker').value))
+		if(startDateID == -1){startDateID = 0;}
+		if(endDateID == -1){endDateID = dataSource.dates.length-1;}
+		var choroFunc = theme.quickChoroplethValueFcn;
+		if(choroFunc == undefined){choroFunc = theme.choroplethValueFcn;}
+		var qvals = quartileValues(choroFunc,startDateID,endDateID);
 		if(qvals != null){
 			//dailyChomin = qvals[0];
 			//dailyChomax=qvals[4];
@@ -521,64 +568,6 @@
 			}
     }
 
-	// calculates the radius scale factor that will result in the largest circle
-	// occupying the given proportion of the feature area
-	function areaScaleFac(features, maxOccupancy = 0.35){
-		// determine the largest ratio of value/screenarea
-		if(features == undefined || theme == undefined || $.isNumeric(theme.circleAreaFcn) == true) {
-			return "undefined";
-		} else {
-			console.log("function areaScaleFac");
-			// determine the screen factor (ratio of screen coords to geometry coords)
-            mapdiv = document.getElementById('map'); // Do not use #
-			var width = mapdiv.clientWidth;
-			var height = mapdiv.clientHeight;		
-			/*
-            if(oncartogram){
-                        curZoomFunc = divPathFunc("mapdiv", cartogramFeatures, 30);
-                    } else {
-                        curZoomFunc = divPathFunc("mapdiv", baseFeatures, 30);
-                    }
-			*/
-			// shortcut variables
-			var feats = features.features;
-			var f = theme.circleAreaFcn;
-			// find the date with the largest sum of values
-			var maxValSum = 0;
-			var maxDate = null;
-			if(dataSource.filteredData != undefined){
-				test = dataSource.filteredData(dataSourceFilter);
-			}
-
-			for(i=0;i<dataSource.dates.length;i++){
-				var thisDate = dataSource.dates[i];
-				var curValSum = d3.sum(feats, x => f(x,thisDate));
-				if (curValSum > maxValSum){
-					maxValSum = curValSum;
-					maxDate = thisDate;
-				}
-			}			
-			// get areas of all circles and all features
-			var circleArea = 0;
-			var featArea = 0;
-			// check remaining features and update if larger
-			for (let i = 0; i < feats.length; i++){
-				var thisCircleArea = (f(feats[i], maxDate));
-				var thisFeatArea = curZoomFunc.area(feats[i]);
-				circleArea += thisCircleArea;
-				featArea += thisFeatArea;
-			}
-			if (circleArea == 0){
-                return 0;
-            } else {
-            var areaRatio = circleArea/featArea;
-			// calculate radius scale factor needed to make the maxRatio equal to maxOccupancy
-			var scaleFac = maxOccupancy/areaRatio;
-			return scaleFac;
-            }
-		}
-    }
-
     function loadTheme() {
 		// determine the new map theme
 		var themeName = document.getElementById("themeSelector").value;		
@@ -597,33 +586,12 @@
 					lowValColor = theme.choroplethColorInterpolator(0);
 					highValColor = theme.choroplethColorInterpolator(1);
 				}	
-				
-				// get legend minimum and maximum
-				if (theme.legendmin == null){
-					var qvals = quartileValues(theme.choroplethValueFcn,dataSource.dates[0],dataSource.dates[dataSource.dates.length-1]);
-					theme.legendmin = qvals[0];
-					theme.legendmax = qvals[4];
-				};
-				
-				// calculate radius scale factor
-				console.log('areaScaleFac from loadTheme');
-				if(oncartogram){
-					radScaleFac = areaScaleFac(cartogramFeatures);
-				} else {
-					radScaleFac = areaScaleFac(baseFeatures);
-				}
-				// update the map and legend
-				if (theme.updateDailyValueRange && moving==false){
-					var dateID = dataSource.dates.indexOf(curDate);
-					updateValueRange(dateID,dateID);
-				} else {
-					initFixedValueRange();
-				}   
-				updateMap();
-				// loadLegend(); not necessary; updateMap calls loadLegend				
+				loadChoroplethLegend();
+				updateMap(null,null,'loadTheme');
 			} // found match
 		} // datasource is defined
 	} // loadTheme function
+
 
 	var loadData = function(dataSourceName, filterValue=null) {
 		if(data_transitioning){
@@ -639,6 +607,8 @@
 					error_displayed=false;
 					// get promised data object
 					match.dataFunc.then(function(the_data_obj){
+						console.log("loadData : " + curDate);
+						// update data source
 						dataSource = the_data_obj; // the data object is what we'll call the dataSource
 						dataSourceFilter = filterValue;
 						if(dataSourceFilter==null){dataSourceFilter = dataSource.defaultFilter;};
@@ -699,9 +669,13 @@
 							// otherwise need to make sure it is visible
 							document.getElementById("carttoggle").disabled=false;
 							document.getElementById("cartOptLbl").style.color=null;
-							
-					
 						}
+						// make sure date pickers are valid
+						
+						changeDateRange();
+						// get scale factor for circle symbols
+						// updateCircleAreaFac();
+						console.log("loadData end : " + curDate);
 						resolve();
 					});
 				};		
@@ -779,17 +753,8 @@
 						loadMap(baseFeatures);
 					}
 					
-					// calculate radius scale factor
-					console.log("areaScaleFac from resize");
-					if(oncartogram){
-					   radScaleFac = areaScaleFac(cartogramFeatures);
-                    } else {
-                        radScaleFac = areaScaleFac(baseFeatures);
-                    }
-					updateMap();
-					//loadLegend();
-					var slider_val = parseInt(slider.value());
-					//loadSlider();
+					updateMap(null,null,'resize');
+					var slider_val = Math.round(slider.value());
 					slider.value(slider_val);
 				}
 			}
@@ -902,10 +867,6 @@
 		// mapsvg.remove();
 		// create new group for district paths
 		districtPaths = mapsvg.append('g');
-		// calculate radius scale 
-		// we don't need to do this because another function will, e.g. loadTheme
-		//console.log("areaScaleFac from replaceMapData");
-		//radScaleFac = areaScaleFac(featdata);
 		// remove and re-create paths in SVG
 		curZoomFunc = divPathFunc("mapdiv", featdata, 30);
 		districtPaths.selectAll('path')
@@ -993,7 +954,7 @@
 		} else {
 			oncartogram = !oncartogram;
 			document.getElementById("carttoggle").checked=oncartogram;
-			updateMap(milliseconds, callback);
+			updateMap(milliseconds, callback,'toggle_map');
 		}
 	}
 
@@ -1010,9 +971,12 @@
 	}
 
 	// updates map to the user selected type (map or cartogram) and date
-	function updateMap(milliseconds=750, callback){
+	function updateMap(milliseconds=750, callback, callerLabel){
 		// transitions the map features and symbology based on current theme, map type and data source
 		// change the text describing the map type
+		console.log("UPDATE MAP from " + callerLabel);
+		console.log(curDate);
+		if(milliseconds==null){milliseconds=750;};
 		var mapTypeDescription;
 		var tName = theme.themeName.toLowerCase();
 		var tUnit = tName.split(" ");
@@ -1047,6 +1011,10 @@
 			var height = mapdiv.offsetHeight;
 			divid = '#' + divid;		
 		// transition the map only if the map svg and date are defined
+		if(dataSource.dates != undefined){
+			//curDate = dataSource.dates[Math.round(slider.value())];
+			//console.log("updateMap : " + curDate);
+		};
 		if(mapsvg !== undefined){
 			if(curDate != null){	
 
@@ -1063,6 +1031,12 @@
 				var localCircleFill = function(d){return choroplethColor(d, curDate);};
 				var localFeatureStroke;
 				var localCircleStroke;
+
+				// reload legend				
+				if(moving==false){
+					loadChoroplethLegend();
+                    //loadCircleLegend();
+				};
 
 				if(theme.circleAreaFcn==0){
 					localCircleRadius=0;
@@ -1098,6 +1072,7 @@
 				}
                 curZoomFunc = divPathFunc("mapdiv", todata, 30)
 				// transition district polygons
+				console.log("---starting transition---")
 				mapsvg.selectAll('path')
 					.transition()
 					.ease(d3.easeLinear)
@@ -1109,6 +1084,7 @@
 					.style('opacity',1)
 					.end()
 					.then(() => {
+						console.log("---finished transition---");
 						if(callback != undefined){
 							callback();
 						};
@@ -1117,6 +1093,12 @@
 					
 					
 					//.on("end",callback);	
+
+				// reload legend				
+				if(moving==false){
+					//loadChoroplethLegend();
+                    loadCircleLegend();
+				};
 
 				// transition circle symbols
 				mapsvg.selectAll('circle')
@@ -1135,11 +1117,7 @@
 					.style('fill',localCircleFill)
 					.style('stroke',localCircleStroke)
 					.duration(milliseconds);
-				// reload legend
-				loadLegend();
-				if(moving==false){
-                    loadCircleLegend();
-				};
+				
 				// update map title
 				updateMapTitle();
 				// show info tooltip
@@ -1150,10 +1128,11 @@
 		} // end if mapsvg is not null
 	}
     
-	function loadLegend(){
+	function loadChoroplethLegend(){
+		console.log("LOAD CHOROPLETH LEGEND");
 		// get width
 		var legwidth =(document.getElementById("mapbottom").offsetWidth);
-		if (theme.circle == true){legwidth = legwidth/2}		
+		if (theme.circle == true){legwidth = 2*legwidth/3}		
 		if(legwidth < 100){legwidth=100;}
 		// remove any existing legend
 		d3.select("#legend").selectAll('svg').remove();			
@@ -1165,14 +1144,22 @@
 		legendsvg.append("g")
 		  .attr("class", "legendChoropleth")
 		  .attr("transform", "translate(30,40)");
+		// update choropleth scale
+		if (theme.fixedChoroplethLegend==false && moving==false){
+			updateChoroplethValueRange('loadTheme');
+		} else {
+			initFixedValueRange();
+		}   
+		
 		// create legend
 		var truncatedCells
-        var truncatedLabels
-        if (theme.updateDailyValueRange && moving==false){
-             [truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);// dailyChomin, dailyChomax);
-        } else {
-			[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
-        }
+        var truncatedLabels		
+        
+		[truncatedCells, truncatedLabels]=truncateCellsAndLabels(theme.choroplethCells, theme.choroplethLabels, theme.legendmin, theme.legendmax);
+		theme.legendmin = truncatedCells[0]; 
+		theme.legendmax = truncatedCells[truncatedCells.length-1];
+        
+		
         var circlePaddingWidth = 8*truncatedCells.length
         var circleSize = ((legwidth-circlePaddingWidth)/truncatedCells.length)/2
         if (circleSize >= 15){
@@ -1211,171 +1198,219 @@
 		  .call(legendChoropleth);
 	}
     // Circle Legend --------------------------------------------------------------
-    // the daily minimum and maximum value
-	function dailymaxCirValue(date, valuefunction){
-		var baseFeat = baseFeatures;
-		if(baseFeat, date == undefined){
-			return "undefined";
-		} else {
-			var dailyCirmax = valuefunction(baseFeat.features[0], date);
-			for (let i = 0; i < baseFeat.features.length; i++){
-				var currentValue = valuefunction(baseFeat.features[i], date);
-				if (currentValue > dailyCirmax){
-					dailyCirmax = currentValue;
-				}
-			}
-			return dailyCirmax;
-		}
-	}
-	function dailyminCirValue(date, valuefunction){
-		var baseFeat = baseFeatures;
-		if(baseFeat, date == undefined){
-			return "undefined";
-		} else {   
-			var dailyCirmin = valuefunction(baseFeat.features[0], date);
-			for (let i = 0; i < baseFeat.features.length; i++){
-				var currentValue = valuefunction(baseFeat.features[i], date);
-				if (currentValue < dailyCirmin){
-					dailyCirmin = currentValue;
-				}
-			}
-			return dailyCirmin;
-		}
-	}
     
     // the minimum and maximum value across all features on all dates
-	function minCirValue(valuefunction){
+	function circleValueRange(valuefunction,startDateID, endDateID){
+		var funcStart = performance.now();
 		if(baseFeatures == undefined){
 			return "undefined";
 		} else {
-			var globalmin =dailyminCirValue(dataSource.dates[0],valuefunction);
-			for(let i=1; i < dataSource.dates.length; i++){
-				var currentValue = dailyminCirValue(dataSource.dates[i],valuefunction);
-				if (currentValue < globalmin){
-					globalmin = currentValue;
-				}	
-			}
-			return globalmin;
-		}
-	}
-	function maxCirValue(valuefunction){
-		if(baseFeatures == undefined){
-			return "undefined";
-		} else {
-			var globalmax =dailymaxCirValue(dataSource.dates[0],valuefunction);
-			for(let i=0; i < dataSource.dates.length; i++){
-				var currentValue = dailymaxCirValue(dataSource.dates[i],valuefunction);
-				if (currentValue > globalmax){
-					globalmax = currentValue;
+			var globalmin = valuefunction(baseFeatures.features[0], dataSource.dates[startDateID]);
+			var globalmax = globalmin
+			// sample for efficiency - minimum 10 samples
+			var datestep = Math.round((endDateID-startDateID)/10);
+			if(datestep < 1){datestep=1;}
+			if(datestep > 10){datestep=10;}
+			for(let i=startDateID+1; i < endDateID+1; i+=datestep){
+				for (let j = 0; j < baseFeatures.features.length; j++){
+					var currentValue = valuefunction(baseFeatures.features[j], dataSource.dates[i]);
+					if (currentValue > globalmax){
+						globalmax = currentValue;
+					}	
+					if (currentValue < globalmin){
+						globalmin = currentValue;
+					}
 				}
+
 			}
-			return globalmax;
+			var funcEnd = performance.now();
+			console.log("CIRCLE VALUE RANGE >> " + (funcEnd - funcStart) + 'ms');
+			return [globalmin,globalmax];
 		}
 	}
+
+	// calculates the radius scale factor that will result in the largest circle
+	// occupying the given proportion of the feature area
+	function updateCircleAreaFac(maxOccupancy = 0.35){
+		var funcStart = performance.now();
+		// determine the largest ratio of value/screenarea
+		if(oncartogram){
+			features = cartogramFeatures;
+		} else {
+			features = baseFeatures;
+		}
+
+		
+		
+		if(features == undefined || theme == undefined || $.isNumeric(theme.circleAreaFcn) == true) {
+			return "undefined";
+		} else {
+			// determine the screen factor (ratio of screen coords to geometry coords)
+            mapdiv = document.getElementById('map'); // Do not use #
+			var width = mapdiv.clientWidth;
+			var height = mapdiv.clientHeight;		
+			// shortcut variables
+			var feats = features.features;
+			var f = theme.quickCircleAreaFcn;
+			if(f==undefined){f=theme.circleAreaFcn;}
+			// date range
+			startDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('startDatePicker').value))
+			endDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('endDatePicker').value))
+			
+			// find the date with the largest sum of values
+			var maxValSum = 0;
+			var maxDate = null;
+			if(dataSource.filteredData != undefined){
+				test = dataSource.filteredData(dataSourceFilter);
+			}
+			// sample for efficiency - minimum 10 samples
+			var datestep = Math.round((endDateID-startDateID)/10);
+			if(datestep < 1){datestep=1;}
+			if(datestep > 10){datestep=10;}
+			for(i=startDateID; i<endDateID+1; i+=datestep){
+				var thisDate = dataSource.dates[i];
+				var curValSum = d3.sum(feats, x => f(x,thisDate));
+				if (curValSum > maxValSum){
+					maxValSum = curValSum;
+					maxDate = thisDate;
+				}
+			}			
+			// get areas of all circles and all features
+			var circleArea = 0;
+			var featArea = 0;
+			// check remaining features and update if larger
+			for (let i = 0; i < feats.length; i++){
+				var thisCircleArea = (f(feats[i], maxDate));
+				var thisFeatArea = curZoomFunc.area(feats[i]);
+				circleArea += thisCircleArea;
+				featArea += thisFeatArea;
+			}
+			if (circleArea == 0){
+                return 0;
+            } else {
+            var areaRatio = circleArea/featArea;
+			// calculate radius scale factor needed to make the maxRatio equal to maxOccupancy
+			radScaleFac = maxOccupancy/areaRatio;
+			var funcEnd = performance.now();
+            }
+		}
+    }
+
+
     
     //Load circle legend
-    function loadCircleLegend() {
+    function loadCircleLegend() {		
 		var legwidth = (document.getElementById("circleLegend").offsetWidth);
 		legwidth = $("#map_panel").width();
 		legheight = $("#circleLegend").height();
 		// remove any existing legend
         d3.select("#circleLegend").selectAll('svg').remove();
-		// create svg for circle legend
-		// choose cirRadmax/min based on whether animation is playing or not
-		if (theme.updateDailyValueRange && moving==false){
-			//daily maximum and minimum value
-			  var cirRadmax = dailymaxCirValue(curDate, theme.circleAreaFcn);
-			  var cirRadmin = dailyminCirValue(curDate, theme.circleAreaFcn);
-		} else {
-			//global maximum and minimum value
-			  var cirRadmax = maxCirValue(theme.circleAreaFcn);
-			  var cirRadmin = minCirValue(theme.circleAreaFcn);
-		}   
-		// find minimum and maximum circle radius
-		var maxCircleRadius=function(d){
-			var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
-			if (cRadius >= 43){
-				return 43
-			} else {
-			return cRadius;
-			}
-		};
-		var minCircleRadius=function(d){
-			var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
-			if (cRadius <= 5){
-				return 5
-			} else {
-			return cRadius;
-			}
-		};
-        //domain = value
-        //range = disply pixel size = circle radius
-        var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
-            var legendsvg = d3.select("#circleLegend")
-                .append('svg')
-                .attr('width',legwidth)
-                .attr("height", 125);
-        // make circle transparent when there is no circle symbol on the map
-        if (theme.circle == false){
-            legendsvg.append("g")
-              .attr("class", "legendSize")
-              .attr("transform", "translate(30,40)")
-              .style("fill", "rgba(0, 0, 0, 0)")
-        // show circle legend with color match with the symbol from the map
-        } else {
-            legendsvg.append("g")
-              .attr("class", "legendSize")
-              .attr("transform", "translate(30,40)")
-              .style("fill", "rgba(0, 0, 0, 0.1)")
-              .style("opacity", .65)
-              .style("stroke", "black")
-              .style("stroke-width", "1px");
-        }
-        // legend title
-            var crmin = cirRadmin
-            var crmax = cirRadmax
-            var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
-            var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
-            var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
-            if (crmin >= 1000){
-                crmin = crmin.toString().slice(0,-3) + 'K';
-            } else {
-                crmin = '~1K'
-            }
-            if (crmax >= 1000){
-                crmax = crmax.toString().slice(0,-3) + 'K';
-            }
-            if (cr1 >= 1000){
-                cr1 = cr1.toString().slice(0,-3) + 'K';
-            }
-            if (cr2 >= 1000){
-                cr2 = cr2.toString().slice(0,-3) + 'K';
-            }
-            if (cr3 >= 1000){
-                cr3 = cr3.toString().slice(0,-3) + 'K';
-            }
+		if(theme.circle){
+			
+			// calculate circle parameters
+			updateCircleAreaFac()
+			
+			minDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('startDatePicker').value))
+			maxDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('endDatePicker').value))
+			var circleFunc = theme.quickCircleAreaFcn;
+			
+			if(circleFunc == undefined){circleFunc = theme.circleAreaFcn;}
+			var cirMinMax = circleValueRange(circleFunc,minDateID, maxDateID);
+			var cirRadmin = cirMinMax[0];
+			var cirRadmax = cirMinMax[1];
+			// find minimum and maximum circle radius
+			var maxCircleRadius=function(d){
+				var cRadius = Math.sqrt(radScaleFac * cirRadmax/Math.PI);
+				if (cRadius >= 43){
+					return 43
+				} else {
+				return cRadius;
+				}
+			};
+			var minCircleRadius=function(d){
+				var cRadius = Math.sqrt(radScaleFac * cirRadmin/Math.PI);
+				if (cRadius <= 0){
+					return 0
+				} else {
+				return cRadius;
+				}
+			};
+			//domain = value
+			//range = disply pixel size = circle radius
+			var linearSize = d3.scaleLinear().domain([cirRadmin, cirRadmax]).range([minCircleRadius(cirRadmin),maxCircleRadius(cirRadmax)]);
 
-            legendsvg.append("text")
-              .attr("x", 15)
-              .attr("y", 6)
-              .attr("dy", ".35em")
-              .style("text-align", "left")
-              .text(theme.circleLegendTitle)
-        // legend size and label
-            var legendSize = d3.legendSize()
-              .scale(linearSize)
-              .shape('circle')
-              .shapePadding(20)
-              .labelOffset(15)
-              .orient('horizontal')
-            // truncate to only show integer, added comma in every three digits
-            // label = calculate the values between minimum and maximum values
-            // formular = (((Maximum - Minimum)/10)*7.5) + Minimum
-              .labels([crmin, cr1, cr2, cr3, crmax]);
-            
-            // call function to draw legend in svg
-            legendsvg.select(".legendSize")
-                .call(legendSize)
+			// create svg for circle legend
+			var legendsvg = d3.select("#circleLegend")
+					.append('svg')
+					.attr('width', legwidth/3)
+					.attr("height", 125);
+			// make circle transparent when there is no circle symbol on the map
+			/*
+			if (theme.circle == false){
+				legendsvg.append("g")
+				  .attr("class", "legendSize")
+				  .attr("transform", "translate(30,40)")
+				  .style("fill", "rgba(0, 0, 0, 0)")
+			
+			
+			} else {
+			
+			*/
+			// show circle legend with color match with the symbol from the map
+				legendsvg.append("g")
+				  .attr("class", "legendSize")
+				  .attr("transform", "translate(30,40)")
+				  .style("fill", "rgba(0, 0, 0, 0.1)")
+				  .style("opacity", .65)
+				  .style("stroke", "black")
+				  .style("stroke-width", "1px");
+			//}
+			// legend title
+				var crmin = cirRadmin
+				var crmax = cirRadmax
+				var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
+				var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
+				var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
+				if (crmin >= 1000){
+					crmin = crmin.toString().slice(0,-3) + 'K';
+				} else {
+					crmin = '~1K'
+				}
+				if (crmax >= 1000){
+					crmax = crmax.toString().slice(0,-3) + 'K';
+				}
+				if (cr1 >= 1000){
+					cr1 = cr1.toString().slice(0,-3) + 'K';
+				}
+				if (cr2 >= 1000){
+					cr2 = cr2.toString().slice(0,-3) + 'K';
+				}
+				if (cr3 >= 1000){
+					cr3 = cr3.toString().slice(0,-3) + 'K';
+				}
+
+				legendsvg.append("text")
+				  .attr("x", 15)
+				  .attr("y", 6)
+				  .attr("dy", ".35em")
+				  .style("text-align", "left")
+				  .text(theme.circleLegendTitle)
+			// legend size and label
+				var legendSize = d3.legendSize()
+				  .scale(linearSize)
+				  .shape('circle')
+				  .shapePadding(20)
+				  .labelOffset(15)
+				  .orient('horizontal')
+				// truncate to only show integer, added comma in every three digits
+				// label = calculate the values between minimum and maximum values
+				// formular = (((Maximum - Minimum)/10)*7.5) + Minimum
+				  .labels([crmin, cr1, cr2, cr3, crmax]);
+				
+				// call function to draw legend in svg
+				legendsvg.select(".legendSize")
+					.call(legendSize)
+			}
         }
     
 	// smooth zoom
@@ -1465,8 +1500,8 @@
 		// add event listeners to interactive elements
 		
 		if(showInteractiveElements){
-			if(dataSource.filterValid(dataSourceFilter)){
-				if(dataSource.dataChildName != null){
+			if(dataSource.dataChildName != null){
+				if(dataSource.filterValid(dataSourceFilter)){
 					dataSourceFilter = dataSource.getChildFilter(d);
 					document.getElementById('zoomDown').addEventListener("click",function(){zoomToChild(d)});
 				};
@@ -1584,7 +1619,7 @@
 			} else {
 				// move forward one time step
 				curval = slider.value();
-				if (curval < dataSource.dates.length-1){
+				if (curval < maxDateID){
 					moving = true;
 					slider.value(curval+1);
 					moving = false;
@@ -1593,19 +1628,129 @@
 		}
 	}
 
-  	var loadSlider=function(){return new Promise(function(resolve, reject){
-		// remove existing slider
+
+    function changeDateRange(callerLabel='code',defaultRange=120) {		
+		// updates value, min & max of each date picker to valid values
+		//   make sure slider value is within range of date pickerStart
+		//   if called by user, updates legend color and size ranges 
+
+		prioritizeEndDate=true
+		// get first and last dates of data source in YMD format
+		dataStart = mdyToYmd(dataSource.dates[0]);
+		dataEnd = mdyToYmd(dataSource.dates[dataSource.dates.length-1]);
+
+		// shortcut variables to start and end date picker objects
+		var startPicker = document.getElementById("startDatePicker");
+		var endPicker = document.getElementById("endDatePicker");
+
+		// current values for start and end dates
+		var pickerStart = startPicker.value; 
+		var pickerEnd = endPicker.value;
+
+		// determine if date for start date picker needs to be updated
+		if(pickerStart==''){
+			// if null, set to default time before end date
+			newStartID = dataSource.dates.length-defaultRange;
+			if(newStartID < 0){newStartID = 0;}
+			pickerStart = mdyToYmd(dataSource.dates[newStartID]);
+		} 
+		if(compareDates(pickerStart,dataStart)==-1){pickerStart = dataStart;}  // ensure not before data start
+		if(compareDates(pickerStart,dataEnd) == 1){pickerStart = dataEnd;} // ensure not after data end
+		
+		// update determine if date for end date picker needs to be updated
+		if(pickerEnd==''){pickerEnd = dataEnd;} // if null, set to data end
+		if(compareDates(pickerStart,dataStart)==-1){pickerEnd = dataStart;} // ensure not before data start
+		if(compareDates(pickerStart,dataEnd) == 1){pickerEnd = dataEnd;} // ensure not after data end
+		// ensure not after end picker date
+		if (compareDates(pickerStart,pickerEnd) == 1){
+			// if not, we'll update the one that is not prioritized
+			if (prioritizeEndDate){
+				pickerStart = pickerEnd;
+			} else {
+				pickerEnd = pickerStart
+			}
+		}
+		
+		// set date picker values and min/max ranges		
+		startPicker.value = pickerStart;
+		startPicker.min = dataStart;
+		startPicker.max = pickerEnd;
+		
+		endPicker.value = pickerEnd;
+		endPicker.min = pickerStart;
+		endPicker.max = dataEnd;
+		
+		// update current date
+		if(curDate != null){
+			if(compareDates(mdyToYmd(curDate),startPicker.value)==-1){curDate = ymdToMdy(startPicker.value);}
+			if(compareDates(mdyToYmd(curDate),endPicker.value)==1){curDate = ymdToMdy(endPicker.value);}
+		}
+		// when finished, reload the slider and map (if called by user)
+		// 
+		if (theme != undefined){
+			if(callerLabel=='user'){
+				loadSlider(curDate).then(function(){
+					loadChoroplethLegend();
+					updateMap(slider_update_duration,null,'changeDateRange')
+				});
+			} else {
+				loadSlider();
+			}			
+		}
+    }
+    
+    function resetDateRange(days=-1) {
+        
+		// THIS DOESN'T WORK:
+		//document.getElementById('startDatePicker').setAttribute("value",mdyToYmd(dataSource.dates[0]));
+		//document.getElementById('endDatePicker').setAttribute("value",mdyToYmd(dataSource.dates[dataSource.dates.length-1]));
+		// THIS WORKS:
+		
+		var endID = dataSource.dates.length-1;
+		var startID = 0;
+		if(days != -1){
+			startID = endID - days;
+			if(startID < 0){startID = 0;}
+		} 
+		document.getElementById('startDatePicker').value = mdyToYmd(dataSource.dates[startID]);
+		document.getElementById('endDatePicker').value = mdyToYmd(dataSource.dates[endID]);
+        loadSlider().then(updateMap(slider_update_duration,null,'resetDateRange'));
+        playButton.text("►");
+        moving = false;
+        clearInterval(timer);
+        slider.value(maxDateID);
+    }
+    
+  	var loadSlider=function(targetDate=null){return new Promise(function(resolve, reject){
+        // remove existing slider
 		if (slider_svg != null){
 			slider_svg.remove();
 		}
 		// get available width
-
 		var slider_width = $("#options_panel").width()-60;
 		if(slider_width < 100){slider_width=100;};
+
+        /* Finding index of startDate and endDate selected by user*/
+		var minDate = document.getElementById('startDatePicker').value
+        var minDateID = dataSource.dates.indexOf(ymdToMdy(minDate))
+		var maxDate = document.getElementById('endDatePicker').value
+        var maxDateID = dataSource.dates.indexOf(ymdToMdy(maxDate))
 		
+        if (minDateID == -1){
+            minDateID = 0;
+        }
+        if (maxDateID == -1){
+            maxDateID = dataSource.dates.length-1
+        }
+        if (minDateID >= maxDateID){
+            minDateID = maxDateID
+        }
+		
+       var dtSlice = dataSource.dates.slice(minDateID,maxDateID);
+        
 		var secretCode="Yes please show month!";
 		function dateString(sliderID, showMonthParam){
-			sliderID = parseInt(sliderID);
+			sliderID = Math.round(sliderID);
 			var date = new Date(dataSource.dates[sliderID]);
 			var year = date.getFullYear();
 			var month = date.getMonth()+1;
@@ -1621,13 +1766,16 @@
 			.attr('align','center')
 			.append('svg');
 		textData=[0];
+
 		// load slider
+		
+		console.log("LOAD SLIDER: " + maxDateID);
 		var circlepath ="M -7,0 A 7,7 0,0,1 7,0 A 7,7 180,0,1 -7,0 z"
-		var tick_ids = tickDateIds(dataSource.dates,10);
+		var tick_ids = tickDateIds(dataSource.dates,10,minDateID,maxDateID);
 		slider = d3
 			.sliderHorizontal()
-			.min(0)
-			.max(dataSource.dates.length-1)
+			.min(minDateID)
+			.max(maxDateID)
 			.tickValues(tick_ids)
 			.width(slider_width - 50) // slider should be smaller than the svg
 			.fill('#CA6')
@@ -1637,17 +1785,11 @@
 			.tickFormat(dateString)		
 			.displayValue(true)
 			.on('onchange', function(val) {
-				sliderID=parseInt(slider.value());
-				curDate = dataSource.dates[sliderID];
-				slider.displayValue("Hi there!");
-				d3.select('#value').text("???");
-				if (theme.updateDailyValueRange && moving==false){
-					var dateID = dataSource.dates.indexOf(curDate);
-					updateValueRange(dateID,dateID);
-                } else {
-				//	updateValueRange(playStartID,playEndID);
-				}
-				updateMap(slider_update_duration);
+				//slider.displayValue("Hi there!");
+				//d3.select('#value').text("???");
+				console.log("slider change: " + val);
+				curDate = dataSource.dates[Math.round(val)];
+				updateMap(slider_update_duration,null,'sliderChange');
 			});
 		slider_svg
 			.attr('width', slider_width)
@@ -1656,61 +1798,96 @@
 			.append('g')
 			.attr('transform', 'translate(30,30)')
 			.call(slider);
-		// report that function worked
-		var nearestDate = dataSource.dates.reduce((a,b) => {
-					return Math.abs(Date.parse(b)-Date.parse(curDate)) , Math.abs(Date.parse(a)-Date.parse(curDate)) ? b : a;
-				});
-				curDate = nearestDate
-		// slider.value(dataSource.dates.indexOf(curDate));
+        
+		// define current date
+		var oldDate = curDate;
+		 // change this to get the nearest date
+		if(oldDate != null && curDate != null){
+			// get the nearest date in the new data source to the old date
+			var nearestDate = dataSource.dates.reduce((a,b) => {
+				return Math.abs(Date.parse(b)-Date.parse(oldDate)) , Math.abs(Date.parse(a)-Date.parse(oldDate)) ? b : a;
+			});
+			console.log("handleDataLoaded : " + curDate);
+			curDate = nearestDate
+		} else {
+			console.log("handleDataLoaded : " + curDate);
+			curDate=dataSource.dates[dataSource.dates.length-1];
+		}
+
+		if(targetDate != null){
+			
+			var targetID = dataSource.dates.indexOf(targetDate);
+			if(compareDates(mdyToYmd(targetDate),mdyToYmd(dataSource.dates[minDateID]))==-1){targetID = minDateID;}
+			if(compareDates(mdyToYmd(targetDate),mdyToYmd(dataSource.dates[maxDateID]))==1){targetID = maxDateID;}
+			curDate = dataSource.dates[targetID];
+			slider.value(targetID);
+		};
+
+		//slider.value(dataSource.dates.indexOf(curDate));
+		//curDate = dataSource.dates[slider.value()];
+		console.log("loadSlider : " + curDate);
 		resolve();
 	})}
 
 	function handleDataLoaded(transition=false){
 		return new Promise(function(resolve,reject){
-		// loads new data into the map and updates the slider
-		// update the slider
-		// report current dataset
-		if(dataSource.dataParentName==null){
-			document.getElementById("zoomlabel").style.display="none";
-			document.getElementById("zoomcontrol").style.display="none";
-		} else {
-			document.getElementById("zoomlabel").style.display='block';
-			document.getElementById("zoomlabel").innerHTML="zoomed to: " + dataSourceFilter;
-			document.getElementById("zoomcontrol").style.display="block";
-			document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom out to " + dataSource.dataParentName + "</i>";
-		};
-		// show filter options
-		if(dataSource.dataChildName != null){
-			showFilterSelector();
-		}
-		loadSlider().then(function(){
-			// define current date
-			var oldDate = curDate;
-			 // change this to get the nearest date
-			if(oldDate != null && curDate != null){
-				// get the nearest date in the new data source to the old date
-				var nearestDate = dataSource.dates.reduce((a,b) => {
-					return Math.abs(Date.parse(b)-Date.parse(oldDate)) , Math.abs(Date.parse(a)-Date.parse(oldDate)) ? b : a;
-				});
-				curDate = nearestDate
+			console.log("handleDataLoaded : " + curDate);
+			// loads new data into the map and updates the slider
+			// update the slider
+			// report current dataset
+			if(dataSource.dataParentName==null){
+				document.getElementById("zoomlabel").style.display="none";
+				document.getElementById("zoomcontrol").style.display="none";
 			} else {
-				curDate=dataSource.dates[0];
+				document.getElementById("zoomlabel").style.display='block';
+				document.getElementById("zoomlabel").innerHTML="zoomed to: " + dataSourceFilter;
+				document.getElementById("zoomcontrol").style.display="block";
+				document.getElementById("zoomUpLabel").innerHTML = "<i> Zoom out to " + dataSource.dataParentName + "</i>";
+			};
+			// show filter options
+			if(dataSource.dataChildName != null){
+				showFilterSelector();
 			}
-			// load the map!
-			loadMap(baseFeatures,undefined, undefined, transition).then(function(){
-				//load the Theme
-				loadTheme();
-				// resize everything
-				resize();
-				slider.value(dataSource.dates.indexOf(curDate));
-				// resolve promise
-				resolve();
-			});			
-		});	
-	})};
+
+			loadSlider().then(function(){
+				console.log("AFTER loading slider...");
+				console.log(curDate);
+				// define current date
+				var oldDate = curDate;
+				 // change this to get the nearest date
+				if(oldDate != null && curDate != null){
+					// get the nearest date in the new data source to the old date
+					var nearestDate = dataSource.dates.reduce((a,b) => {
+						return Math.abs(Date.parse(b)-Date.parse(oldDate)) , Math.abs(Date.parse(a)-Date.parse(oldDate)) ? b : a;
+					});
+					console.log("handleDataLoaded : " + curDate);
+					curDate = nearestDate
+				} else {
+					console.log("handleDataLoaded : " + curDate);
+					curDate=dataSource.dates[0];
+				}
+				// load the map!
+				loadMap(baseFeatures,undefined, undefined, transition).then(function(){
+
+					// update date picker min/max values
+					changeDateRange();
+					loadSlider();
+				
+					//load the Theme
+					loadTheme();
+					
+					// resize everything
+					resize();
+					slider.value(dataSource.dates.indexOf(curDate));
+					// resolve promise
+					resolve();
+				});			
+			});	
+		})
+	};
     
-    var sliderID
-    var currentIndex = sliderID;
+    //var sliderID
+    var currentIndex //= sliderID;
     var playButton = d3.select("#play-button");
     var moving = false;
     var looping = false;
@@ -1750,18 +1927,15 @@
 		  // timer = 0;
 		  playButton.text("►");
 		} else { 
-		  if (sliderID == dataSource.dates.length-1) {
-			  currentIndex = defaultPlayStartID;
+			console.log("PLAY " + delay);
+		  if (slider.value() == maxDateID) {
+			  currentIndex = minDateID;
 		  } else {
-			currentIndex = sliderID;
+			currentIndex = slider.value();
 		  }
 		  playStartID = currentIndex;
-		  playEndID = dataSource.dates.length-1;
+		  playEndID = maxDateID;
 		  moving = true;
-          loadCircleLegend();
-		  updateValueRange(playStartID,playEndID);
-		  loadLegend();
-		  //delay = 0;
 		  timer = setInterval(step, delay);
 		  playButton.text("∥"); 
 		}
@@ -1771,25 +1945,25 @@
         .on("click", handlePlayButtonClick);
     
 	function step(){
-        var targetIndex = dataSource.dates.length-1;
+		
+        
+		var startDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('startDatePicker').value))
+        var endDateID = dataSource.dates.indexOf(ymdToMdy(document.getElementById('endDatePicker').value))
+		if(startDateID==-1){startDateID = 0;}
+		if(endDateID==-1){endDateID = dataSource.dates.length;}
+		
 		curDate = dataSource.dates[currentIndex];
+		console.log("STEP : " + curDate);
 		slider.value(currentIndex);
-		if (theme.updateDailyValueRange && moving==false){
-			var dateID = dataSource.dates.indexOf(curDate);
-			updateValueRange(dateID,dateID);
-        } else {
-			// no need to adjust legend, it has been adjusted when we started playing
-		}
-		// pause at end of loop (if looping)
-        if (sliderID == dataSource.dates.length-1 && looping == true) {
+        if (slider.value() == endDateID && looping == true) {
                 var pauseStart = setTimeout(function(){
-                    currentIndex = playStartID;
-                },3000);
+                    currentIndex = startDateID;
+                },5000);
               } else {
                 currentIndex = currentIndex + 1;
               }
 		// stop at end of loop otherwise
-        if (currentIndex > targetIndex && looping == false) {
+        if (currentIndex > maxDateID && looping == false) {
 			moving = false;
 			currentIndex = defaultPlayStartID;
 			clearInterval(timer);
@@ -1872,6 +2046,8 @@
 	}
 
 	loadData(document.getElementById("dataSourceSelector").value).then(function(){
+		// we're not done yet...
+		handlePageLoading()
 		//set 3dots
 		delayIndi();
 		// load the invisible tooltip div...
@@ -1907,18 +2083,9 @@
 				return false;
 			}
 		});
-			
 		
-		var newDataSources = [
-			dataODWG_Canada_Provinces(),
-			dataJHU_USA_Counties(),
-			dataJHU_Europe()
-		];
-		
-		dataSources=dataSources.concat(newDataSources);
-		addDataSourcesToSelector(newDataSources);
-		console.log("data sources added...");
 		handleDataLoaded().then(function(){
+			// handle default data source
 			console.log("handled data loaded...");
 			defaultPlayStartID = dataSource.dates.length-56; // by default play the last 8 weeks
 			if(defaultPlayStartID < 0){defaultPlayStartID = 0;};
@@ -1926,13 +2093,34 @@
 				{
 					orig_duration = slider_update_duration;
 					slider_update_duration = 500;
-					slider.value(dataSource.dates.length-1);
+					slider.value(maxDateID);					
 					slider_update_duration = orig_duration;
 				},500
 			);
-			// Start default animation tour!
-			//playTour();
+			// load additional data sources	
+			var newDataSources = [
+				dataODWG_Canada_Provinces(),
+				dataJHU_USA_Counties(),
+				dataJHU_Europe()
+			];		
+			dataSources=dataSources.concat(newDataSources);
+			var additionalDataItemsLoaded=0;		
+			for(i=0; i<newDataSources.length; i++){
+				newDataSources[i].dataFunc.then(function(){handleAllDataLoaded();});
+			}
+			function handleAllDataLoaded(){
+				additionalDataItemsLoaded += 1;
+				if(additionalDataItemsLoaded == newDataSources.length){
+					console.log("ALL DATA LOADED!!!!!!!");
+					document.getElementById("messagearea").innerHTML="<p><i>Click on any " + dataSource.districtClassLabel + " for more details.</i></p>"			
+					addDataSourcesToSelector(newDataSources);
+					console.log("data sources added...");
+					// Start default animation tour!
+					//playTour();
+				}
+			}
 		});
+
 	});
 
 

@@ -68,9 +68,9 @@ const themeDailyCases = {
     legendmin: null,
     legendmax: null,
 	
-    // true - legend will be updated when user change the date
+    // true - legend will be updated when user changes the date range
     // false - legend will not be updated and have fixed value from above(legendmin & legendmax)
-    updateDailyValueRange: true,
+    fixedChoroplethLegend: false,
 	
 	// String: title to be used on the legend
 	choroplethLegendTitle: "New Cases Per Million",
@@ -82,8 +82,8 @@ const themeDailyCases = {
 
 	// function of (feature, date) or fixed number representing the base radius of the circle symbol (set to zero for no circles).
 	circle: true,
-    circleAreaFcn: function (feat, curDate) {
-		var todayCases = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases',false, true);}, [1]);
+    circleAreaFcn: function (feat, date) {
+		var todayCases = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases',false, true);}, [1]);
 				if(todayCases > 0){
 					return todayCases;
 				} else {
@@ -171,7 +171,7 @@ const themeDailyDeaths = {
 	
     // true - legend will be updated when user change the date
     // false - legend will not be updated and have fixed value from above(legendmin & legendmax)
-    updateDailyValueRange: true,
+    fixedChoroplethLegend: false,
 	
 	// String: title to be used on the legend
 	choroplethLegendTitle: "New Deaths Per Million",
@@ -183,8 +183,8 @@ const themeDailyDeaths = {
 
 	// function of (feature, date) or fixed number representing the base radius of the circle symbol (set to zero for no circles).
 	circle: true,
-    circleAreaFcn: function (feat, curDate) {
-		var todaydeaths = periodAverage(feat, curDate, function(f,d){return getValue(f,d,'deaths',false, true);}, [1]);
+    circleAreaFcn: function (feat, date) {
+		var todaydeaths = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths',false, true);}, [1]);
         if(isNaN(todaydeaths)){return 0;};
         if(todaydeaths > 0){
 					return todaydeaths;
@@ -235,6 +235,11 @@ const themeWeeklyCases = {
 		if(avg < 0.49){avg=0.49};
 		return avg;
 	},
+	quickChoroplethValueFcn: function(feat,date){
+		var dailyCaseRate = parseInt(7*getValue(feat,date,'cases', true, true));
+		if(dailyCaseRate < 0.49){dailyCaseRate=0.49;}
+		return dailyCaseRate;
+	},
 	choroplethColorInterpolator: d3.interpolateMagma,
     choroplethValueScale: function(d){
             if(d < 0){
@@ -249,18 +254,26 @@ const themeWeeklyCases = {
 	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: null,
     legendmax: null,
-    updateDailyValueRange: true,
+    fixedChoroplethLegend: false,
 	choroplethLegendTitle: "New Cases Per Million",
     circleLegendTitle: "New Cases Per Week",
 	datePrefix: "week ending",
 	circle: true,
-    circleAreaFcn: function (feat, curDate) {
-		var weeklyCases = parseInt(7*periodAverage(feat, curDate, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]))
-				if(weeklyCases > 0){
-					return weeklyCases;
-				} else {
-					return 0;
-				}
+    circleAreaFcn: function (feat, date) {
+		var weeklyCases = parseInt(7*periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]))
+		if(weeklyCases > 0){
+			return weeklyCases;
+		} else {
+			return 0;
+		}
+	},
+	quickCircleAreaFcn: function(feat,date){
+		var dailyCases = parseInt(7*getValue(feat,date,'cases', false, true))
+		if(dailyCases > 0){
+			return dailyCases;
+		} else {
+			return 0;
+		}		
 	},
 	circleFill: '#45c',
 	circleStroke: '#459',
@@ -285,6 +298,12 @@ const themeWeeklyDeaths = {
 		if(avg < 0.49){avg=0.49};
 		return avg;
 	},
+	quickChoroplethValueFcn: function(feat,date){
+		var dailyDeathRate = parseInt(7*getValue(feat,date,'deaths', true, true));
+		if(dailyDeathRate < 0.49){dailyCaseRate=0.49;}
+		return dailyDeathRate;
+	},
+
 	aggregateLabelFcn: function(feats,date){
 		var totalDeaths=0;
 		var totalPop=0;
@@ -314,18 +333,26 @@ const themeWeeklyDeaths = {
 	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: null,
     legendmax: null,
-    updateDailyValueRange: true,
+    fixedChoroplethLegend: false,
 	choroplethLegendTitle: "New Deaths Per Million",
     circleLegendTitle: "New Deaths Per Week",
 	datePrefix: "week ending",
     circle: true,
-    circleAreaFcn: function (feat, curDate) {
-		var weeklyDeaths = parseInt(7*periodAverage(feat, curDate, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]))
+    circleAreaFcn: function (feat, date) {
+		var weeklyDeaths = parseInt(7*periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]))
 				if(weeklyDeaths > 0){
 					return weeklyDeaths;
 				} else {
 					return 0;
 				}
+	},
+	quickCircleAreaFcn: function(feat,curd){
+		var dailyDeaths = parseInt(7*getValue(feat,curd,'deaths', false, true))
+		if(dailyDeaths > 0){
+			return dailyDeaths;
+		} else {
+			return 0;
+		}		
 	},
 	circleFill: '#45c',
 	circleStroke: '#459',
@@ -406,11 +433,11 @@ const themeDailyChangeCases = {
 	},
 	legendmin: 0.2,
     legendmax: 1.8,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Increase in cases vs. one week ago",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -474,11 +501,27 @@ const themeWeeklyChangeCases = {
 		return msg;
 	},
 	choroplethValueFcn: function (feat, date) {
-		var currentCases = getValue(feat,date,'cases', false, false)
-		var currentCasesPerMillion = getValue(feat,date,'cases', true, false)
-		var increaseInCases = getValue(feat,date,'cases', false, true)
+		//var currentCases = getValue(feat,date,'cases', false, false)
+		//var currentCasesPerMillion = getValue(feat,date,'cases', true, false)
+		//var increaseInCases = getValue(feat,date,'cases', false, true)
 		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1])
 		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1,1,1,1,1,1,1])
+		if(prior_week==0){
+			if(this_week==0){
+				return 1; // No data, so we want a neutral color. A ratio of 1 means no increase or decrease.
+			} else {
+				return 2; // Increase from zero to a non-zero value, so we want a dark color. An increase of 2x is pretty big.
+			}
+		} else {
+			return this_week/prior_week; // The usual case: just return the increase ratio.
+		}
+	},
+	quickChoroplethValueFcn: function (feat, date) {
+		//var currentCases = getValue(feat,date,'cases', false, false)
+		//var currentCasesPerMillion = getValue(feat,date,'cases', true, false)
+		//var increaseInCases = getValue(feat,date,'cases', false, true)
+		var this_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [1])
+		var prior_week = periodAverage(feat, date, function(f,d){return getValue(f,d,'cases', false, true)}, [0,0,0,0,0,0,0,1])
 		if(prior_week==0){
 			if(this_week==0){
 				return 1; // No data, so we want a neutral color. A ratio of 1 means no increase or decrease.
@@ -504,11 +547,11 @@ const themeWeeklyChangeCases = {
 	},
     legendmin: 0.2,
     legendmax: 1.8,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Increase in cases vs. prior week",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -600,11 +643,11 @@ const themeWeeklyChangeDeaths = {
 	},
     legendmin: 0.2,
     legendmax: 1.8,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Increase in deaths vs. prior week",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#45c',
 	circleStroke: '#459',
 	tooltipTextFcn: function (feat, date) {
@@ -676,11 +719,11 @@ const themeWeeklyPositivityRate = {
     customLabel: function(val){return Math.round(val).toString() + "%"},
     legendmin: 0,
     legendmax: 15,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -753,11 +796,11 @@ const themeWeeklyCaseMortality = {
 	choroplethLabels: ["","~ 1%","","","","3%","","","","5%","","","","7%","","","","9% ~",""], 
     legendmin: 0,
     legendmax: 10,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Deaths as a percent of reported cases.",
 	datePrefix: "week ending",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -816,13 +859,13 @@ const themeCumulativeCases = {
 	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: 0,
     legendmax: 10000,
-    updateDailyValueRange: true,
+    fixedChoroplethLegend: false,
 	choroplethLegendTitle: "Cases Per Million",
     circleLegendTitle: "Total Cases",
 	datePrefix: "total through",
 	circle: true,
-    circleAreaFcn: function (feat, curDate) {
-		var totalCases = getValue(feat,curDate,'cases',false);
+    circleAreaFcn: function (feat, date) {
+		var totalCases = getValue(feat,date,'cases',false);
 		return totalCases;
 	},
 	circleFill: '#45c',
@@ -882,13 +925,13 @@ const themeCumulativeDeaths = {
 	customLabel: function(val){return withCommas(Math.round(val))},
     legendmin: 0,
     legendmax: 10000,
-    updateDailyValueRange: true,
+    fixedChoroplethLegend: false,
 	choroplethLegendTitle: "deaths Per Million",
     circleLegendTitle: "Total deaths",
 	datePrefix: "total through",
 	circle: true,
-    circleAreaFcn: function (feat, curDate) {
-		var totaldeaths = getValue(feat,curDate,'cases',false);
+    circleAreaFcn: function (feat, date) {
+		var totaldeaths = getValue(feat,date,'cases',false);
 		return totaldeaths;
 	},
 	circleFill: '#45c',
@@ -955,11 +998,11 @@ const themeCumulativePositivityRate = {
 	choroplethLabels: ["","~ 1%","","","","5%","","","","","10%","","","","","15% ~"], 
     legendmin: 0,
     legendmax: 15,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Percent of tests with positive result.",
 	datePrefix: "total through",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -1027,11 +1070,11 @@ const themeCumulativeCaseMortality = {
 	choroplethLabels: ["","~ 1%","","","","3%","","","","5%","","","","7%","","","","9% ~",""], 
     legendmin: 0,
     legendmax: 10,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Deaths as a percent of cases",
 	datePrefix: "total through",
     circle: false,
-	circleAreaFcn: function (feat, curDate) {return 0;},
+	circleAreaFcn: function (feat, date) {return 0;},
 	circleFill: '#f47',
 	circleStroke: '#a04',
 	tooltipTextFcn: function (feat, date) {
@@ -1081,7 +1124,7 @@ const themeWeeklyChangeCases = {
 	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
     legendmin: 0.2,
     legendmax: 1.8,
-    updateDailyValueRange: false,
+    fixedChoroplethLegend: true,
 	choroplethLegendTitle: "Increase vs. previous week",
 	circleRadiusFcn: 0,
 	circleFill: '#45c',

@@ -63,11 +63,15 @@ function dataJHU_USA_Counties(){return {
 		// GET SOURCE DATASET (case data)
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
+		var t0case = performance.now();
 		$.ajax({
 			type: "GET",
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv',
 			dataType: "text",
 			success: function(src_data) {
+				var t1case = performance.now();
+				console.log("JHU US case data retrieved in " + (t1case-t0case) + "ms");
+
 				src.case_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -77,11 +81,17 @@ function dataJHU_USA_Counties(){return {
 		// GET SOURCE DATASET (death data)
 		// Typically this will be a data service that provides data in the form of a geojson
 		// object or a CSV file. The example below is for a CSV file, and uses JQuery and PapaParse	
+		var t0death = performance.now();
+
+
 		$.ajax({
 			type: "GET",
 			url: 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv',
 			dataType: "text",
 			success: function(src_data) {
+				var t1death = performance.now();
+				console.log("JHU US case data retrieved in " + (t1death-t0death) + "ms");
+
 				src.death_data = Papa.parse(src_data, {header: true}); // add to src object
 				process_data(); // attempt to process all datasets
 			}
@@ -110,6 +120,8 @@ function dataJHU_USA_Counties(){return {
 			// The following if statement makes sure that processing occurs only
 			// after all data has been acquired
 			if (Object.keys(src).length == target_length){
+				var t0=performance.now();
+				console.log("PROCESSING JHU DATA...");
 				// get tabular data from JHU object
 				var case_data = src.case_data.data;
 				var death_data = src.death_data.data;
@@ -246,6 +258,7 @@ function dataJHU_USA_Counties(){return {
 				
 				// THE DATA OBJECT
 				the_data_object = {
+					name: 'USA counties',
 					briefDescription: "Data from the <a href='https://github.com/CSSEGISandData/COVID-19'>John Hopkins University Center for Systems Science and Engineering (JHU CSSE) COVID-19 Data Repository</a>.",
 					baseFeatures: function(filter=null){
 						if(filter==null){
@@ -277,10 +290,7 @@ function dataJHU_USA_Counties(){return {
 					variableNames: variableNames, 
 					dateDistrictData: dateDistrictData, 
 					filteredData: function(filter){
-							console.log("FILTERING...");
-							console.log(filter);
-							console.log(dateDistrictData[0]);
-							
+							console.log("FILTERING to " + filter);
 						},
 					getID: function(feat){return feat.properties.JHU_key;}, 
 					getLabel: function(feat){return feat.properties.CensusName;}, 
@@ -294,6 +304,9 @@ function dataJHU_USA_Counties(){return {
 						}
 					}		
 				}
+
+				var t1 = performance.now();
+				console.log("Processed JHU in " + (t1-t0) + " ms");
 
 				resolve(the_data_object);
 
