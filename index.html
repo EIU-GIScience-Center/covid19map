@@ -328,6 +328,8 @@
 	// loading
 	function handlePageLoading(){
 		document.getElementById("messagearea").innerHTML="<p><i>Loading data, please wait...</i></p>"
+
+
 		/*
 		msgdiv = document.getElementById('messagearea')
 		msgdiv.style.position='absolute';
@@ -335,7 +337,9 @@
 		msgdiv.style.height='100%';
 		msgdiv.style.width='100%';
 		msgdiv.style.backgroundColor='rgba(1,0,0,0.3)';
+		msgdiv.class="centered";
 		*/
+
 	}
 	handlePageLoading();
 	
@@ -618,7 +622,7 @@
 						// show the description of the data source
 						document.getElementById("regiondescription").innerHTML ="<i>" + dataSource.briefDescription + "</i>";
 						addThemesToSelector(dataSource); // determine which themes are valid for this data source
-						document.getElementById("messagearea").innerHTML="<p><i>Click on any " + dataSource.districtClassLabel + " for more details.</i></p>"
+						document.getElementById("messagearea").innerHTML="<p><i>Click on a " + dataSource.districtClassLabel + " for details.</i></p>"
 						// create a getValue function that can be used in themes
 						getValue = function(feat, date, varName, perMillion=false, getIncrease = false){
 							var featID = dataSource.getID(feat);
@@ -919,10 +923,7 @@
 			var width = mapdiv.offsetWidth;
 			var height = mapdiv.offsetHeight;
 			divid = '#' + divid;
-			
-			// d3.select(divid).selectAll('svg').remove();		
 			// create svg object inside map div
-			
 			if(mapsvg == undefined){
 				mapsvg = d3.select(divid)
 						.append('svg')
@@ -930,10 +931,6 @@
 						.attr('height',height)
 						.on('click',reset);		
 			}
-			// *** TEMP DEBUGGING 
-			//transition = false;
-			// *** END DEBUGGING
-			
 			if(transition){
 				transitionMapData(featdata,categories,category).then(function(){
 					resolve();
@@ -1371,14 +1368,26 @@
 				var cr1 = Math.trunc((((cirRadmax-cirRadmin)/10)*2.5)+cirRadmin)
 				var cr2 = Math.trunc((((cirRadmax-cirRadmin)/10)*5)+cirRadmin)
 				var cr3 = Math.trunc((((cirRadmax-cirRadmin)/10)*7.5)+cirRadmin)
+				var crvals = [cr1,cr2,cr3,crmax];
+				
+				function legstring(val){
+					if(val >= 1000){
+						return val.toString().slice(0,-3) + 'K';
+					} else {
+						return val.toString();
+					}
+				}
+				/*
 				if (crmin >= 1000){
-					crmin = crmin.toString().slice(0,-3) + 'K';
+					var crminstr = crmin.toString().slice(0,-3) + 'K';
 				} else {
-					crmin = '~1K'
+					var crminstr = '~1K'
 				}
 				if (crmax >= 1000){
-					crmax = crmax.toString().slice(0,-3) + 'K';
-				}
+					var crmaxstr = crmax.toString().slice(0,-3) + 'K';
+				} else {
+				
+				} 
 				if (cr1 >= 1000){
 					cr1 = cr1.toString().slice(0,-3) + 'K';
 				}
@@ -1388,6 +1397,8 @@
 				if (cr3 >= 1000){
 					cr3 = cr3.toString().slice(0,-3) + 'K';
 				}
+				*/
+				var crlbls = crvals.map(x => legstring(x));
 
 				legendsvg.append("text")
 				  .attr("x", 15)
@@ -1405,7 +1416,8 @@
 				// truncate to only show integer, added comma in every three digits
 				// label = calculate the values between minimum and maximum values
 				// formular = (((Maximum - Minimum)/10)*7.5) + Minimum
-				  .labels([crmin, cr1, cr2, cr3, crmax]);
+				  .cells(crvals)
+				  .labels(crlbls);
 				
 				// call function to draw legend in svg
 				legendsvg.select(".legendSize")
@@ -1634,10 +1646,15 @@
 		//   make sure slider value is within range of date pickerStart
 		//   if called by user, updates legend color and size ranges 
 
+		console.log("FUNCTION CHANGEDATERANGE");
+
 		prioritizeEndDate=true
 		// get first and last dates of data source in YMD format
 		dataStart = mdyToYmd(dataSource.dates[0]);
 		dataEnd = mdyToYmd(dataSource.dates[dataSource.dates.length-1]);
+
+		console.log("data start: " + dataStart);
+		console.log("data end: " + dataEnd);
 
 		// shortcut variables to start and end date picker objects
 		var startPicker = document.getElementById("startDatePicker");
@@ -1646,6 +1663,11 @@
 		// current values for start and end dates
 		var pickerStart = startPicker.value; 
 		var pickerEnd = endPicker.value;
+
+		console.log("picker start: " + pickerStart);
+		console.log("picker end: " + pickerEnd);
+
+
 
 		// determine if date for start date picker needs to be updated
 		if(pickerStart==''){
@@ -1680,6 +1702,9 @@
 		endPicker.min = pickerStart;
 		endPicker.max = dataEnd;
 		
+		console.log("startPicker value: " + pickerStart);
+		console.log("endPicker value: " + pickerEnd);
+		
 		// update current date
 		if(curDate != null){
 			if(compareDates(mdyToYmd(curDate),startPicker.value)==-1){curDate = ymdToMdy(startPicker.value);}
@@ -1694,6 +1719,7 @@
 					updateMap(slider_update_duration,null,'changeDateRange')
 				});
 			} else {
+				console.log("calling loadSlider from changeDateRange");
 				loadSlider();
 			}			
 		}
@@ -1731,10 +1757,23 @@
 		if(slider_width < 100){slider_width=100;};
 
         /* Finding index of startDate and endDate selected by user*/
+		console.log("FUNCTION loadSlider");
+		
 		var minDate = document.getElementById('startDatePicker').value
         var minDateID = dataSource.dates.indexOf(ymdToMdy(minDate))
 		var maxDate = document.getElementById('endDatePicker').value
         var maxDateID = dataSource.dates.indexOf(ymdToMdy(maxDate))
+		
+		console.log("min date: " + minDate);
+		console.log("max date: " + maxDate);
+		
+		console.log("min date: " + ymdToMdy(minDate));
+		console.log("max date: " + ymdToMdy(maxDate));
+		
+		console.log("minDateID: " + minDateID);
+		console.log("maxDateID: " + maxDateID);
+		
+		console.log(dataSource.dates);
 		
         if (minDateID == -1){
             minDateID = 0;
