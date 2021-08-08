@@ -23,11 +23,19 @@ function mdyToYmd(mdy){
 	if(mdy==''){
 		return ''
 	} else {
-		mdy = mdy.replace(',',''); // remove comma
-		var year = mdy.slice(7,11);
-		var month = monthID(mdy.slice(0,3));
-		month = ("0" + month).slice(-2);
-		var day = mdy.slice(4,6);
+		var dateObj = new Date(mdy);
+		var year = dateObj.getFullYear().toString();
+		var month = dateObj.getMonth()+1
+		month = month.toString();
+		if(month.length==1){month = '0' + month;}
+		var day = dateObj.getDate().toString();
+		if(day.length==1){day = '0' + day;}
+		
+//		mdy = mdy.replace(',',''); // remove comma
+//		// var year = mdy.slice(7,11);
+//		var month = monthID(mdy.slice(0,3));
+//		month = ("0" + month).slice(-2);
+//		var day = mdy.slice(4,6);
 		return year + '-' + month + '-' + day;
 	}
 }

@@ -797,7 +797,7 @@ const themeWeeklyCaseMortality = {
     legendmin: 0,
     legendmax: 10,
     fixedChoroplethLegend: true,
-	choroplethLegendTitle: "Deaths as a percent of reported cases.",
+	choroplethLegendTitle: "Ratio of deaths in the past 7 days to new cases 3 weeks earlier..",
 	datePrefix: "week ending",
     circle: false,
 	circleAreaFcn: function (feat, date) {return 0;},

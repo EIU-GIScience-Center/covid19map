@@ -178,7 +178,7 @@ function dataODWG_Canada_Provinces(){return {
 					var year = pieces[2];
 					month = monthString(month);
 					// month =  ("0" + string(monthID(month))).slice(-2);
-					// day = ("0" + day).slice(-2);
+					day = ("0" + day).slice(-2);
 					// var this_date = new Date(year, month-1, day,0,0,0,0).toDateString(); //why month-1???
 					var this_date = month + ' ' + day + ', ' + year
 					return this_date;
