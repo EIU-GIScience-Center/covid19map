@@ -244,7 +244,7 @@ function dataODWG_Canada_Provinces(){return {
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['cases'] = case_data[i]["cumulative_cases"];
+							dateDistrictData[cur_date][cur_districtID]['cases'] = parseInt(case_data[i]["cumulative_cases"]);
 						}
 					}
 				}
@@ -257,7 +257,7 @@ function dataODWG_Canada_Provinces(){return {
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['deaths'] = death_data[i]["cumulative_deaths"];
+							dateDistrictData[cur_date][cur_districtID]['deaths'] = parseInt(death_data[i]["cumulative_deaths"]);
 						}
 					}
 				}
@@ -274,7 +274,7 @@ function dataODWG_Canada_Provinces(){return {
 					if(dateDistrictData[cur_date] != undefined){
 						if(dateDistrictData[cur_date][cur_districtID] != undefined){
 							// transfer to vals object
-							dateDistrictData[cur_date][cur_districtID]['tests'] = testing_data[i]["cumulative_testing"];
+							dateDistrictData[cur_date][cur_districtID]['tests'] = parseInt(testing_data[i]["cumulative_testing"]);
 						}
 					}
 				}
