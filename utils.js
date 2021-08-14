@@ -4,21 +4,33 @@
 /**
  * Provides the 3-letter abbrev. for a given month ID # (1-12)
  */
-/*transform year month date to month date year
-ex) 2021-06-08 to Jun 08, 2021*/
+ 
+/*
+transforms <year-month-date> to <month date, year>
+input: "xxxx-xx-xx"  (including leading zeroes for 1-digit numbers)
+output: "xxx xx, xxxx" (including 3-letter month abbrev., leading zeroes)
+example: "2021-06-08" will be converted to "Jun 08, 2021"
+*/
 function ymdToMdy(ymd){
-	if(ymd=='')
-	{
+	// first check that the input is not empty
+	if(ymd==''){
 		return '';
 	} else {
+		// get year, month and day based on character positions
 		var year = ymd.slice(0,4)
 		var month = ymd.slice(5,7)
 		var day = ymd.slice(8,10)
+		// get 3-letter month abbeviation
 		var mtm = monthString(month)
+		// put the pieces together into a single string
 		return mtm+" "+day+", "+year
 	}
 }
 
+/*
+transforms <year-month-date> to <month date, year>
+example: "Jun 08, 2021" will be converted to "2021-06-08"
+*/
 function mdyToYmd(mdy){
 	if(mdy==''){
 		return ''
@@ -30,12 +42,6 @@ function mdyToYmd(mdy){
 		if(month.length==1){month = '0' + month;}
 		var day = dateObj.getDate().toString();
 		if(day.length==1){day = '0' + day;}
-		
-//		mdy = mdy.replace(',',''); // remove comma
-//		// var year = mdy.slice(7,11);
-//		var month = monthID(mdy.slice(0,3));
-//		month = ("0" + month).slice(-2);
-//		var day = mdy.slice(4,6);
 		return year + '-' + month + '-' + day;
 	}
 }
@@ -359,16 +365,13 @@ function nearestDate(date,dates){
 
 function tickDateIds(dates,maxMonthTicks,minDateID,maxDateID){
 	var out_ids = [];
+	// get id of first date
+	out_ids.push(minDateID);
 	// get ids of all dates with new month
-	var this_date_str = dates[0];
-	var date = new Date(this_date_str);
-	var last_month = date.getDate();
 	for(let i=minDateID; i <= maxDateID; i++){
-		this_date_str = dates[i];
-		date = new Date(this_date_str);
-		var month = date.getMonth();
-		if(month != last_month){
-			last_month = month;
+		var thisdate = new Date(dates[i]);
+		var day = thisdate.getDate();
+		if(day ==1 && i > minDateID + 15){
 			out_ids.push(i);
 		}
 	}

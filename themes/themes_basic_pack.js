@@ -42,7 +42,7 @@ const themeDailyCases = {
 	},
 
 	// color interpolators to determine the feature fill color associated with a given value
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePlasma,
 
 	// function to transform choropleth values to a linear range (e.g. from 0 to 1)
     choroplethValueScale: function(d){
@@ -143,7 +143,7 @@ const themeDailyDeaths = {
 	},
 
 	// color interpolators to determine the feature fill color associated with a given value
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePlasma,
 
 	// function to transform choropleth values to a linear range (e.g. from 0 to 1)
     choroplethValueScale: function(d){
@@ -240,12 +240,12 @@ const themeWeeklyCases = {
 		if(dailyCaseRate < 0.49){dailyCaseRate=0.49;}
 		return dailyCaseRate;
 	},
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePlasma,
     choroplethValueScale: function(d){
             if(d < 0){
-                return Math.pow(Math.log(0 + 10),0.7);
+                return Math.pow(Math.log(0 + 10),1);
             } else {
-                return Math.pow(Math.log(d + 10),0.7);
+                return Math.pow(Math.log(d + 10),1);
             }
         },
 	invertColorScale: true,
@@ -319,7 +319,7 @@ const themeWeeklyDeaths = {
 		return msg;
 	},
 
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePlasma,
     choroplethValueScale: function(d){
             if(d < 0){
                 return Math.pow(Math.log(0 + 10),0.7);
@@ -540,9 +540,9 @@ const themeWeeklyChangeCases = {
 	choroplethLabels: ["","-50%","","-20%","","even","","+20%","","+50%",""],
     customLabel: function(val){
 		if(val < 1){
-			return "-" + Math.round(1-curVal).toString() + "%"
+			return "-" + Math.round(1-val).toString() + "%"
 		} else {
-			return "+" + Math.round(curVal-1).toString() + "%"
+			return "+" + Math.round(val-1).toString() + "%"
 		}
 	},
     legendmin: 0.2,
@@ -852,7 +852,7 @@ const themeCumulativeCases = {
 			return (d);
 		}
 	},
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePlasma,
 	invertColorScale: true,
 	choroplethCells: expBase10CellsAndLabels()[0],
 	choroplethLabels: expBase10CellsAndLabels()[1],
@@ -918,7 +918,7 @@ const themeCumulativeDeaths = {
 			return (d);
 		}
 	},
-	choroplethColorInterpolator: d3.interpolateMagma,
+	choroplethColorInterpolator: d3.interpolatePlasma,
 	invertColorScale: true,
 	choroplethCells: expBase10CellsAndLabels()[0],
 	choroplethLabels: expBase10CellsAndLabels()[1],
