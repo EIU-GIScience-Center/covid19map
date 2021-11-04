@@ -505,7 +505,7 @@
 			var datestep = Math.round((endDateID-startDateID)/10);
 			if(datestep < 1){datestep=1;}
 			if(datestep > 10){datestep=10;} // don't skip more than 10 days
-			if(datestep==7){datestep=6;} // avoid weekly periodicity
+			if(datestep % 7==0){datestep=datestep-1;} // avoid weekly periodicity
 			
 			for (let dateID = startDateID; dateID < endDateID+1; dateID+=datestep){
 				var thisDate = dataSource.dates[dateID];
@@ -549,7 +549,8 @@
 		if(startDateID == -1){startDateID = 0;}
 		if(endDateID == -1){endDateID = dataSource.dates.length-1;}
 		// get function for determining values for each district & date
-		var choroFunc = theme.quickChoroplethValueFcn; // use quick function
+		//var choroFunc = theme.quickChoroplethValueFcn; // use quick function
+		var choroFunc = theme.choroplethValueFcn; // use quick function
 		if(choroFunc == undefined){choroFunc = theme.choroplethValueFcn;} // use full calculation if there is no quick function
 		if(endDateID-startDateID < 50){choroFunc = theme.choroplethValueFcn;} // use full calculation unless we've got a lot of data to process
 		// calculate quartile values
@@ -573,6 +574,9 @@
 				// should be changed to local (module-level) variables
 			}
 			var domainVals = qvals.map(x => theme.choroplethValueScale(x));
+			console.log("DEBUGGING updateChoroplethValueRange");
+			console.log("qvals: " + qvals);
+			console.log("domainVals: " + domainVals);
 			var unitIntervalScale = d3.scaleLinear()
 			.domain(domainVals)
 			.range([0,0.25,0.5,0.75,1]);
@@ -1200,7 +1204,7 @@
 			.orient("horizontal")
 			.labels(truncatedLabels)
 			.scale(choroplethColorScale)
-            .shapePadding(4)
+            .shapePadding(7)
             .shapeRadius(circleSize)
 			.labelOffset(16); 
         } else {
