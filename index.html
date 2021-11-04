@@ -440,6 +440,7 @@
 
 	function truncateCellsAndLabels(cells,labels, lowVal, highVal){
 		// get indices of highest cell below lowVal, and lowest cell above highVal
+		if(lowVal < 0){lowVal = 0;}
 		var lowIndex=0;
 		var highIndex=cells.length-1;
 		var gotHigh = false;
