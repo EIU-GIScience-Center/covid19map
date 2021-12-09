@@ -1112,7 +1112,7 @@
 				// console.log("---starting transition---")
 				mapsvg.selectAll('path')
 					.transition()
-					.ease(d3.easeLinear)
+					.ease(d3.easeSin)
 					.attr("d",function(d,i){return curZoomFunc(todata.features[i]);})
                     //.attr("d",curZoomFunc) 
 					.attr("stroke",localFeatureStroke)
@@ -1821,7 +1821,7 @@
 				//d3.select('#value').text("???");
 				// console.log("slider change: " + val);
 				curDate = dataSource.dates[Math.round(val)];
-				updateMap(delay*3,null,'sliderChange',updateR=false);
+				updateMap(delay*2,null,'sliderChange',updateR=false);
 			});
 		slider_svg
 			.attr('width', slider_width)
