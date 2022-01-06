@@ -752,34 +752,37 @@ const themeWeeklyCaseMortality = {
 	requiredVariables: ["cases","deaths"],
 	dateRange: [-6,0],
 	aggregateLabelFcn: function(feats,date){
-		var newCases=0;
-		var newDeaths=0;
+		var totNewCases=0;
+		var totNewDeaths=0;
 		var dateID = dataSource.dates.indexOf(date);
 		var prevDate = dataSource.dates[dateID-21];
 		for(i=0;i<feats.length;i++){
 			var feat = feats[i];
-			newCases += periodAverage(feat, prevDate, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
-			newDeaths += periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', true, true)}, [1,1,1,1,1,1,1]);
+			var newCases = 7*periodAverage(feat, prevDate, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
+			var newDeaths = 7*periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]);
+			totNewCases += newCases;
+			totNewDeaths += newDeaths;
 		}
 		var aggLbl = "overall: ";
 		if(dataSource.aggregateLabel != undefined){aggLbl = dataSource.aggregateLabel() + " overall: ";};
-		if(newCases==0){
+		if(totNewCases==0){
 			aggLbl += "no case data"; 
 		} else {
-			var pct = 100*newDeaths/newCases;
+			var pct = 100*totNewDeaths/totNewCases;
 			aggLbl += pct.toFixed(1) + "%";
 		}
+		console.log(aggLbl);
 		return aggLbl;
 	},
 	choroplethValueFcn: function (feat, date) {
 		var dateID = dataSource.dates.indexOf(date);
-		if(dateID < 7){
+		if(dateID < 21){
 			return 0;
 		} else {			
 			var prevDate = dataSource.dates[dateID-21];
 			var state = feat.properties["ABBREV"];		
-			var cases = periodAverage(feat, prevDate, function(f,d){return getValue(f,d,'cases', true, true)}, [1,1,1,1,1,1,1]);
-			var deaths = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', true, true)}, [1,1,1,1,1,1,1]);
+			var cases = periodAverage(feat, prevDate, function(f,d){return getValue(f,d,'cases', false, true)}, [1,1,1,1,1,1,1]);
+			var deaths = periodAverage(feat, date, function(f,d){return getValue(f,d,'deaths', false, true)}, [1,1,1,1,1,1,1]);
 			if(cases==0){return 0;} else {return 100*deaths/cases;}
 		}
 	},
