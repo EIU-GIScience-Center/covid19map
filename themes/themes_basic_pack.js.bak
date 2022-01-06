@@ -949,7 +949,7 @@ const themeCumulativeDeaths = {
 		}
 		msg = "<p>Population: " + withCommas(pop) + "</p>";
 		msg += "<p>" + withCommas(death_count) + " deaths</p>";
-		msg += "<p><b>" + toAppropriateDecimals(death_rate) + " deaths per million</b></p>";	
+		msg += "<p><b>" + withCommas(toAppropriateDecimals(death_rate)) + " deaths per million</b></p>";	
         msg += "<p>Total Mortality: " + tdr.toFixed(2) + "%</p>";
 		return msg;
 	}

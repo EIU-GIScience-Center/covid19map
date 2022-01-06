@@ -931,7 +931,7 @@ const themeCumulativeDeaths = {
 	datePrefix: "total through",
 	circle: true,
     circleAreaFcn: function (feat, date) {
-		var totaldeaths = getValue(feat,date,'cases',false);
+		var totaldeaths = getValue(feat,date,'deaths',false);
 		return totaldeaths;
 	},
 	circleFill: '#45c',
